@@ -264,9 +264,16 @@ function ReelPost({ reel }) {
 
 const scrollKeys = { ArrowDown: 1, PageDown: 1, ArrowUp: -1, PageUp: -1 }
 
-function Reels({ category = 'sports' }) {
+function Reels({ category = 'sports', onGoHome }) {
   const categoryReels = reels.filter((reel) => reel.category === category)
   const pageRef = useRef(null)
+
+  // Sem onGoHome (tela aberta isolada), o link "/" recarrega a página inicial.
+  function handleGoHome(event) {
+    if (!onGoHome) return
+    event.preventDefault()
+    onGoHome()
+  }
 
   // Setas/PageUp/PageDown passam de vídeo, como no Shorts e no TikTok.
   useEffect(() => {
@@ -294,7 +301,12 @@ function Reels({ category = 'sports' }) {
         </form>
       </header>
 
-      <a className="reels-brand" href="/" aria-label="Choosen - voltar para a página inicial">
+      <a
+        className="reels-brand"
+        href="/"
+        onClick={handleGoHome}
+        aria-label="Choosen - voltar para a página inicial"
+      >
         <img src={logoMark} alt="" width="90" height="90" />
         <span className="reels-brand-name">Choosen</span>
       </a>
@@ -316,7 +328,7 @@ function Reels({ category = 'sports' }) {
               className="reels-menu-item"
               key={item.label}
               type="button"
-              onClick={handleNotImplemented}
+              onClick={item.label === 'Home' ? handleGoHome : handleNotImplemented}
               aria-label={item.label}
             >
               <img src={item.icon} alt="" width="22" height="22" />
