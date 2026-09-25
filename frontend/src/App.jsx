@@ -1,4 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
+import ListsView from './ListsView'
+import SearchView from './SearchView'
+import useLists from './useLists'
+import { videoCatalog } from './videoCatalog'
 import './App.css'
 
 const navigationItems = [
@@ -10,72 +14,30 @@ const navigationItems = [
 ]
 
 const categories = [
-  { name: 'Humor', count: 32, icon: '😄', tone: 'gold' },
-  { name: 'Cute', count: 24, icon: '♥', tone: 'rose' },
-  { name: 'Tips', count: 18, icon: '💡', tone: 'green' },
-  { name: 'Technology', count: 27, icon: '▣', tone: 'blue' },
-  { name: 'Sports', count: 15, icon: '⚽', tone: 'teal' },
-  { name: 'Curiosities', count: 21, icon: '✣', tone: 'purple' },
-]
+  { name: 'Humor', icon: '😄', tone: 'gold' },
+  { name: 'Cute', icon: '♥', tone: 'rose' },
+  { name: 'Tips', icon: '💡', tone: 'green' },
+  { name: 'Technology', icon: '▣', tone: 'blue' },
+  { name: 'Sports', icon: '⚽', tone: 'teal' },
+  { name: 'Curiosities', icon: '✣', tone: 'purple' },
+].map((category) => ({
+  ...category,
+  count: videoCatalog.filter((video) => video.category === category.name).length,
+}))
 
-const initialHistory = [
-  {
-    id: 1,
-    title: 'Why cats always land on their feet',
-    creator: '@curiouslab',
-    category: 'Curiosities',
-    watchedAt: '14:32',
-    group: 'Today',
-    duration: '0:42',
-    thumbnailClass: 'history-thumb--amber',
-  },
-  {
-    id: 2,
-    title: '3 shortcuts every developer should know',
-    creator: '@codequick',
-    category: 'Tips',
-    watchedAt: '12:18',
-    group: 'Today',
-    duration: '0:58',
-    thumbnailClass: 'history-thumb--blue',
-  },
-  {
-    id: 3,
-    title: 'A tiny kitchen with a clever layout',
-    creator: '@smallspaces',
-    category: 'Ideas',
-    watchedAt: '09:47',
-    group: 'Today',
-    duration: '1:12',
-    thumbnailClass: 'history-thumb--green',
-  },
-  {
-    id: 4,
-    title: 'The science behind a perfect espresso',
-    creator: '@dailybrew',
-    category: 'Curiosities',
-    watchedAt: '21:06',
-    group: 'Yesterday',
-    duration: '0:51',
-    thumbnailClass: 'history-thumb--brown',
-  },
-  {
-    id: 5,
-    title: 'One minute mobility routine',
-    creator: '@movebetter',
-    category: 'Wellness',
-    watchedAt: '18:24',
-    group: 'Yesterday',
-    duration: '1:00',
-    thumbnailClass: 'history-thumb--purple',
-  },
-]
+const historyTimes = ['14:32', '12:18', '09:47', '21:06', '18:24']
+const initialHistory = videoCatalog.slice(0, 5).map((video, index) => ({
+  ...video,
+  watchedAt: historyTimes[index],
+  group: index < 3 ? 'Today' : 'Yesterday',
+}))
 
 function App() {
   const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('Home')
   const [searchTerm, setSearchTerm] = useState('')
   const [historyItems, setHistoryItems] = useState(initialHistory)
+  const { lists, updateLists, storageError } = useLists()
 
   const filteredCategories = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase()
@@ -99,14 +61,13 @@ function App() {
 
   const handleCategoryClick = (categoryName) => {
     setSearchTerm(categoryName)
+    setActiveTab('Search')
   }
 
   const handleNavigation = (tab) => {
     setActiveTab(tab)
 
-    if (tab !== 'Home') {
-      setSearchTerm('')
-    }
+    setSearchTerm('')
   }
 
   if (isLoading) {
@@ -151,7 +112,7 @@ function App() {
 
               <span className="category-copy">
                 <strong>{category.name}</strong>
-                <small>{category.count} videos</small>
+                <small>{category.count} {category.count === 1 ? 'video' : 'videos'}</small>
               </span>
             </button>
           ))}
@@ -242,14 +203,6 @@ function App() {
     </div>
   )
 
-  const renderPlaceholder = (title) => (
-    <div className="home-main">
-      <p className="home-eyebrow">{title.toUpperCase()}</p>
-      <h1>{title}</h1>
-      <p className="home-subtitle">This section is still under development.</p>
-    </div>
-  )
-
   const renderActiveContent = () => {
     switch (activeTab) {
       case 'Home':
@@ -267,10 +220,19 @@ function App() {
         return renderProfile()
 
       case 'Search':
-        return renderPlaceholder('Search')
+        return (
+          <SearchView
+            videos={videoCatalog}
+            query={searchTerm}
+            onQueryChange={setSearchTerm}
+            lists={lists}
+            onListsChange={updateLists}
+            storageError={storageError}
+          />
+        )
 
       case 'Lists':
-        return renderPlaceholder('Lists')
+        return <ListsView lists={lists} onListsChange={updateLists} availableVideos={videoCatalog} storageError={storageError} />
 
       default:
         return renderHome()
@@ -307,21 +269,21 @@ function App() {
         <header className="top-bar">
           <div className="top-bar-brand">CHOOSEN</div>
 
-          <label className="search-box">
+          <form className="search-box" role="search" aria-label="Quick video search" onSubmit={(event) => { event.preventDefault(); setActiveTab('Search') }}>
             <span className="search-box-icon" aria-hidden="true">
               ⌕
             </span>
 
-            <span className="visually-hidden">Search videos</span>
+            <label className="visually-hidden" htmlFor="quick-video-search">Search videos</label>
 
             <input
+              id="quick-video-search"
               type="search"
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
               placeholder="Search videos..."
-              disabled={activeTab !== 'Home'}
             />
-          </label>
+          </form>
 
           <button
             className="notification-button"
