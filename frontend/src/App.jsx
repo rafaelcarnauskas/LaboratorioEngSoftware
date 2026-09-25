@@ -38,6 +38,13 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('')
   const [historyItems, setHistoryItems] = useState(initialHistory)
   const { lists, updateLists, storageError } = useLists()
+  const [profileView, setProfileView] = useState('overview')
+  const [usageLimit, setUsageLimit] = useState(60)
+  const [reminders, setReminders] = useState({
+    bedtime: true,
+    screenTime: true,
+    weekly: false,
+  })
 
   const filteredCategories = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase()
@@ -67,7 +74,18 @@ function App() {
   const handleNavigation = (tab) => {
     setActiveTab(tab)
 
+    if (tab === 'Profile') {
+      setProfileView('overview')
+    }
+
     setSearchTerm('')
+  }
+
+  const toggleReminder = (key) => {
+    setReminders((current) => ({
+      ...current,
+      [key]: !current[key],
+    }))
   }
 
   if (isLoading) {
@@ -181,7 +199,11 @@ function App() {
 
         <div className="profile-column">
           <ProfileSection title="USAGE">
-            <ProfileAction icon="◷" label="My time" />
+            <ProfileAction
+              icon="◷"
+              label="My time"
+              onClick={() => setProfileView('myTime')}
+            />
             <ProfileAction
               icon="≡"
               label="History"
@@ -217,7 +239,15 @@ function App() {
         )
 
       case 'Profile':
-        return renderProfile()
+        return profileView === 'myTime' ? (
+          <MyTimeView
+            usageLimit={usageLimit}
+            onUsageLimitChange={setUsageLimit}
+            reminders={reminders}
+            onToggleReminder={toggleReminder}
+            onBack={() => setProfileView('overview')}
+          />
+        ) : renderProfile()
 
       case 'Search':
         return (
@@ -297,6 +327,218 @@ function App() {
         {renderActiveContent()}
       </section>
     </main>
+  )
+}
+
+function MyTimeView({
+  usageLimit,
+  onUsageLimitChange,
+  reminders,
+  onToggleReminder,
+  onBack,
+}) {
+  const todayMinutes = 42
+  const weekUsage = [
+    { day: 'Mon', minutes: 35 },
+    { day: 'Tue', minutes: 48 },
+    { day: 'Wed', minutes: 42 },
+    { day: 'Thu', minutes: 28 },
+    { day: 'Fri', minutes: 55 },
+    { day: 'Sat', minutes: 31 },
+    { day: 'Sun', minutes: 42, current: true },
+  ]
+  const limitOptions = [
+    { minutes: 30, label: '30 min' },
+    { minutes: 45, label: '45 min' },
+    { minutes: 60, label: '1 hour' },
+    { minutes: 90, label: '1.5 hours' },
+    { minutes: 120, label: '2 hours' },
+  ]
+
+  const dailyAverage = Math.round(
+    weekUsage.reduce((total, day) => total + day.minutes, 0) / weekUsage.length,
+  )
+  const rawPercentage = Math.round((todayMinutes / usageLimit) * 100)
+  const screenPercentage = Math.min(rawPercentage, 100)
+  const remainingMinutes = Math.max(usageLimit - todayMinutes, 0)
+  const isOverLimit = todayMinutes >= usageLimit
+  const chartMax = Math.max(...weekUsage.map((day) => day.minutes), 60)
+
+  return (
+    <div className="my-time-view">
+      <button className="my-time-back" type="button" onClick={onBack}>
+        ← Back to Profile
+      </button>
+
+      <header className="my-time-heading">
+        <h1>My Time</h1>
+        <p>
+          Track your active screen time, set boundaries, and manage digital
+          health habits.
+        </p>
+      </header>
+
+      <div className="my-time-layout">
+        <div className="my-time-column my-time-column--main">
+          <section className="time-card screen-time-card">
+            <div className="time-card-title-row">
+              <h2>Today&apos;s Screen Time</h2>
+              <span
+                className={`time-status${isOverLimit ? ' time-status--warning' : ''}`}
+              >
+                {isOverLimit ? 'Limit reached' : 'On Track'}
+              </span>
+            </div>
+
+            <div className="screen-time-content">
+              <div
+                className="screen-time-ring"
+                style={{ '--screen-progress': `${screenPercentage * 3.6}deg` }}
+                aria-label={`${rawPercentage}% of daily limit used`}
+              >
+                <div className="screen-time-ring-inner">
+                  <strong>{rawPercentage}%</strong>
+                  <span>of limit</span>
+                </div>
+              </div>
+
+              <div className="screen-time-summary">
+                <div className="screen-time-number-row">
+                  <strong>{todayMinutes} min</strong>
+                  <span>{usageLimit} min limit</span>
+                </div>
+
+                <div className="time-progress" aria-hidden="true">
+                  <span style={{ width: `${screenPercentage}%` }} />
+                </div>
+
+                <p>
+                  {isOverLimit
+                    ? `You have reached your daily limit of ${usageLimit} minutes.`
+                    : `You have ${remainingMinutes} minutes remaining before your daily limit is reached.`}
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section className="time-card usage-limit-card">
+            <h2>Daily Usage Limit</h2>
+            <p>
+              Choose a daily screen time limit. We&apos;ll send you an alert when
+              you reach this threshold.
+            </p>
+
+            <div className="usage-limit-options" aria-label="Daily usage limit">
+              {limitOptions.map((option) => (
+                <button
+                  className={usageLimit === option.minutes ? 'is-selected' : ''}
+                  key={option.minutes}
+                  type="button"
+                  onClick={() => onUsageLimitChange(option.minutes)}
+                  aria-pressed={usageLimit === option.minutes}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section className="time-card reminder-card">
+            <h2>Alert Preferences &amp; Reminders</h2>
+
+            <ReminderRow
+              title="Bedtime Reminder"
+              description="Remind me to wind down 15 minutes before my set bedtime (10:30 PM)."
+              enabled={reminders.bedtime}
+              onToggle={() => onToggleReminder('bedtime')}
+            />
+            <ReminderRow
+              title="Screen Time Alerts"
+              description="Get an instant notification as soon as the daily usage limit is reached."
+              enabled={reminders.screenTime}
+              onToggle={() => onToggleReminder('screenTime')}
+            />
+            <ReminderRow
+              title="Weekly Summary Report"
+              description="Receive a weekly alert summarizing your screen time trends and accomplishments."
+              enabled={reminders.weekly}
+              onToggle={() => onToggleReminder('weekly')}
+              isLast
+            />
+          </section>
+        </div>
+
+        <div className="my-time-column my-time-column--side">
+          <section className="time-card weekly-card">
+            <div className="weekly-heading">
+              <div>
+                <h2>Last 7 days</h2>
+                <p>Activity trend this week</p>
+              </div>
+
+              <div className="weekly-average">
+                <span>Daily average</span>
+                <strong>{dailyAverage} min</strong>
+              </div>
+            </div>
+
+            <div className="weekly-chart" aria-label="Screen time during the last 7 days">
+              {weekUsage.map((day) => (
+                <div className="weekly-bar-item" key={day.day}>
+                  <span className={day.current ? 'weekly-value is-current' : 'weekly-value'}>
+                    {day.minutes}
+                  </span>
+                  <div className="weekly-bar-track">
+                    <span
+                      className={day.current ? 'weekly-bar is-current' : 'weekly-bar'}
+                      style={{ height: `${(day.minutes / chartMax) * 100}%` }}
+                    />
+                  </div>
+                  <span className="weekly-day">{day.day}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="time-card rewards-card">
+            <h2>Digital Wellness Rewards</h2>
+
+            <div className="reward-content">
+              <div className="reward-badge" aria-hidden="true">✦</div>
+              <div>
+                <strong>Balanced Scholar Badge</strong>
+                <p>
+                  You stayed under your limit for 5 out of the last 7 days.
+                  Amazing work keeping focus!
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ReminderRow({ title, description, enabled, onToggle, isLast = false }) {
+  return (
+    <div className={`reminder-row${isLast ? ' reminder-row--last' : ''}`}>
+      <div>
+        <strong>{title}</strong>
+        <p>{description}</p>
+      </div>
+
+      <button
+        className={`time-toggle${enabled ? ' is-enabled' : ''}`}
+        type="button"
+        role="switch"
+        aria-checked={enabled}
+        aria-label={`${title}: ${enabled ? 'enabled' : 'disabled'}`}
+        onClick={onToggle}
+      >
+        <span />
+      </button>
+    </div>
   )
 }
 

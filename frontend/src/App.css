@@ -870,3 +870,478 @@
     display: none;
   }
 }
+
+/* My Time */
+.my-time-view {
+  width: min(100%, 1180px);
+  margin: 0 auto;
+  padding: 22px 8px 44px;
+  color: #f5f7fb;
+}
+
+.my-time-back {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #9eabbc;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.68rem;
+  transition: color 160ms ease;
+}
+
+.my-time-back:hover {
+  color: #f2b844;
+}
+
+.my-time-heading {
+  margin-top: 10px;
+  margin-bottom: 24px;
+}
+
+.my-time-heading h1 {
+  margin: 0;
+  color: #f5f7fb;
+  font-size: clamp(1.9rem, 3vw, 2.55rem);
+  font-weight: 750;
+  letter-spacing: -0.045em;
+  line-height: 1;
+}
+
+.my-time-heading p {
+  margin: 8px 0 0;
+  color: #9eabbc;
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.my-time-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.02fr) minmax(360px, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.my-time-column {
+  display: grid;
+  gap: 18px;
+}
+
+.time-card {
+  border: 1px solid #50617a;
+  border-radius: 14px;
+  background: #40516a;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.025) inset;
+}
+
+.time-card h2 {
+  margin: 0;
+  color: #f2f5f9;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.time-card p {
+  color: #a9b4c4;
+}
+
+.screen-time-card {
+  padding: 19px 20px 18px;
+}
+
+.time-card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.time-status {
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(242, 184, 68, 0.14);
+  color: #f2b844;
+  font-size: 0.58rem;
+  font-weight: 750;
+}
+
+.time-status--warning {
+  background: rgba(235, 133, 88, 0.16);
+  color: #ffb08e;
+}
+
+.screen-time-content {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+}
+
+.screen-time-ring {
+  --screen-progress: 252deg;
+  width: 86px;
+  height: 86px;
+  flex: 0 0 86px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: conic-gradient(#f2b844 0 var(--screen-progress), #627087 var(--screen-progress) 360deg);
+  position: relative;
+}
+
+.screen-time-ring::after {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border-radius: inherit;
+  background: #40516a;
+}
+
+.screen-time-ring-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.screen-time-ring-inner strong {
+  color: #f5f7fb;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.screen-time-ring-inner span {
+  margin-top: 5px;
+  color: #9ca9bb;
+  font-size: 0.52rem;
+}
+
+.screen-time-summary {
+  min-width: 0;
+  flex: 1;
+}
+
+.screen-time-number-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.screen-time-number-row strong {
+  color: #f4f6fa;
+  font-size: 1.16rem;
+}
+
+.screen-time-number-row span {
+  color: #9eabbc;
+  font-size: 0.66rem;
+}
+
+.time-progress {
+  width: 100%;
+  height: 7px;
+  overflow: hidden;
+  margin-top: 7px;
+  border-radius: 999px;
+  background: #607087;
+}
+
+.time-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #f2b844;
+  transition: width 220ms ease;
+}
+
+.screen-time-summary p {
+  margin: 8px 0 0;
+  font-size: 0.62rem;
+  line-height: 1.4;
+}
+
+.usage-limit-card {
+  padding: 19px 20px 17px;
+}
+
+.usage-limit-card > p {
+  margin: 12px 0 13px;
+  font-size: 0.64rem;
+  line-height: 1.45;
+}
+
+.usage-limit-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.usage-limit-options button {
+  padding: 7px 11px;
+  border: 1px solid #56647a;
+  border-radius: 9px;
+  background: #292f39;
+  color: #d3dae4;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.62rem;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.usage-limit-options button:hover {
+  border-color: #f2b844;
+}
+
+.usage-limit-options button.is-selected {
+  border-color: #f2b844;
+  background: #f2b844;
+  color: #283143;
+  font-weight: 750;
+}
+
+.reminder-card {
+  padding: 19px 20px 7px;
+}
+
+.reminder-card > h2 {
+  margin-bottom: 6px;
+}
+
+.reminder-row {
+  min-height: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  padding: 9px 0;
+  border-bottom: 1px solid #53627a;
+}
+
+.reminder-row--last {
+  border-bottom: 0;
+}
+
+.reminder-row strong {
+  display: block;
+  color: #f0f3f7;
+  font-size: 0.67rem;
+}
+
+.reminder-row p {
+  max-width: 390px;
+  margin: 4px 0 0;
+  font-size: 0.58rem;
+  line-height: 1.35;
+}
+
+.time-toggle {
+  width: 34px;
+  height: 18px;
+  flex: 0 0 34px;
+  padding: 2px;
+  border: 0;
+  border-radius: 999px;
+  background: #7f8da1;
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+
+.time-toggle span {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #eef2f7;
+  transition: transform 160ms ease;
+}
+
+.time-toggle.is-enabled {
+  background: #f2b844;
+}
+
+.time-toggle.is-enabled span {
+  transform: translateX(16px);
+  background: #fff7e4;
+}
+
+.weekly-card {
+  padding: 19px 20px 17px;
+}
+
+.weekly-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.weekly-heading > div:first-child p {
+  margin: 5px 0 0;
+  font-size: 0.62rem;
+}
+
+.weekly-average {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.weekly-average span {
+  color: #9eabbc;
+  font-size: 0.58rem;
+}
+
+.weekly-average strong {
+  margin-top: 3px;
+  color: #f5f7fb;
+  font-size: 1.05rem;
+}
+
+.weekly-chart {
+  height: 142px;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(28px, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+  padding: 13px 12px 8px;
+  border-radius: 10px;
+  background: #4a5b73;
+}
+
+.weekly-bar-item {
+  min-width: 0;
+  display: grid;
+  grid-template-rows: 15px 1fr 17px;
+  justify-items: center;
+  gap: 3px;
+}
+
+.weekly-value {
+  color: #aeb9c8;
+  font-size: 0.53rem;
+}
+
+.weekly-value.is-current {
+  color: #f2b844;
+  font-weight: 700;
+}
+
+.weekly-bar-track {
+  width: 22px;
+  height: 82px;
+  display: flex;
+  align-items: flex-end;
+}
+
+.weekly-bar {
+  width: 100%;
+  min-height: 5px;
+  border-radius: 5px 5px 2px 2px;
+  background: #c3d1df;
+  transition: height 220ms ease;
+}
+
+.weekly-bar.is-current {
+  background: #f2b844;
+}
+
+.weekly-day {
+  color: #9eaabc;
+  font-size: 0.55rem;
+}
+
+.rewards-card {
+  padding: 19px 20px;
+}
+
+.reward-content {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin-top: 13px;
+}
+
+.reward-badge {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: #68726f;
+  color: #f2b844;
+  font-size: 1rem;
+}
+
+.reward-content strong {
+  color: #edf1f6;
+  font-size: 0.68rem;
+}
+
+.reward-content p {
+  margin: 5px 0 0;
+  font-size: 0.58rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 980px) {
+  .my-time-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .my-time-column--side {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .my-time-column--side {
+    grid-template-columns: 1fr;
+  }
+
+  .screen-time-content {
+    align-items: flex-start;
+  }
+
+  .weekly-chart {
+    gap: 6px;
+    padding-inline: 8px;
+  }
+}
+
+@media (max-width: 560px) {
+  .my-time-view {
+    padding-inline: 0;
+  }
+
+  .screen-time-content {
+    flex-direction: column;
+  }
+
+  .screen-time-ring {
+    align-self: center;
+  }
+
+  .screen-time-summary {
+    width: 100%;
+  }
+
+  .screen-time-number-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .weekly-chart {
+    overflow-x: auto;
+    grid-template-columns: repeat(7, 42px);
+    justify-content: start;
+  }
+
+  .reminder-row {
+    gap: 12px;
+  }
+}
