@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react'
+import Reels from './pages/Reels'
 import './App.css'
 
 function App() {
+  const params = new URLSearchParams(window.location.search)
+  const screen = params.get('tela')
+
   const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('Home')
 
@@ -26,6 +30,10 @@ function App() {
         </div>
       </main>
     )
+  }
+
+  if (screen === 'reels') {
+    return <Reels category={params.get('categoria') ?? 'sports'} />
   }
 
   const navigationItems = [
