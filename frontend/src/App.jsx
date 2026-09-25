@@ -1,9 +1,38 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import './App.css'
+
+const navigationItems = [
+  { label: 'Home', icon: '⌂' },
+  { label: 'Search', icon: '⌕' },
+  { label: 'Lists', icon: '≡' },
+  { label: 'History', icon: '◷' },
+  { label: 'Profile', icon: '♙' },
+]
+
+const categories = [
+  { name: 'Humor', count: 32, icon: '😄', tone: 'gold' },
+  { name: 'Cute', count: 24, icon: '♥', tone: 'rose' },
+  { name: 'Tips', count: 18, icon: '💡', tone: 'green' },
+  { name: 'Technology', count: 27, icon: '▣', tone: 'blue' },
+  { name: 'Sports', count: 15, icon: '⚽', tone: 'teal' },
+  { name: 'Curiosities', count: 21, icon: '✣', tone: 'purple' },
+]
 
 function App() {
   const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('Home')
+  const [searchTerm, setSearchTerm] = useState('')
+  const filteredCategories = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase()
+
+    if (!normalizedSearch) {
+      return categories
+    }
+
+    return categories.filter((category) =>
+      category.name.toLowerCase().includes(normalizedSearch),
+    )
+  }, [searchTerm])
 
   useEffect(() => {
     const loadingTimer = setTimeout(() => {
@@ -28,13 +57,9 @@ function App() {
     )
   }
 
-  const navigationItems = [
-    { label: 'Home', icon: '⌂' },
-    { label: 'Search', icon: '⌕' },
-    { label: 'Lists', icon: '≡' },
-    { label: 'History', icon: '◷' },
-    { label: 'Profile', icon: '♙' },
-  ]
+  const handleCategoryClick = (categoryName) => {
+    setSearchTerm(categoryName)
+  }
 
   return (
     <main className="home-page" aria-label="Choosen home page">
@@ -55,7 +80,58 @@ function App() {
           ))}
         </nav>
       </aside>
-      <section className="home-content" aria-label={`${activeTab} content`} />
+      <section className="home-content" aria-label={`${activeTab} content`}>
+        <header className="top-bar">
+          <div className="top-bar-brand">CHOOSEN</div>
+          <label className="search-box">
+            <span className="search-box-icon" aria-hidden="true">⌕</span>
+            <span className="visually-hidden">Search videos</span>
+            <input
+              type="search"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Search videos..."
+            />
+          </label>
+          <button className="notification-button" type="button" aria-label="Notifications">
+            ♧
+          </button>
+        </header>
+
+        <div className="home-main">
+          <p className="home-eyebrow">HOME</p>
+          <h1>Hi, Victor <span aria-hidden="true">👋</span></h1>
+          <p className="home-subtitle">What do you want to watch today?</p>
+
+          <section className="category-section" aria-labelledby="category-title">
+            <h2 id="category-title">Categories</h2>
+            <div className="category-grid">
+              {filteredCategories.map((category) => (
+                <button
+                  className={`category-card category-card--${category.tone}`}
+                  key={category.name}
+                  type="button"
+                  onClick={() => handleCategoryClick(category.name)}
+                >
+                  <span className="category-icon" aria-hidden="true">{category.icon}</span>
+                  <span className="category-copy">
+                    <strong>{category.name}</strong>
+                    <small>{category.count} videos</small>
+                  </span>
+                </button>
+              ))}
+            </div>
+            {searchTerm && filteredCategories.length === 0 && (
+              <p className="empty-search">No categories found for “{searchTerm}”.</p>
+            )}
+          </section>
+
+          <section className="continue-section" aria-labelledby="continue-title">
+            <h2 id="continue-title">Continue watching</h2>
+            <p className="empty-state">Your recently watched videos will appear here.</p>
+          </section>
+        </div>
+      </section>
     </main>
   )
 }
