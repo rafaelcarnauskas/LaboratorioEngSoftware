@@ -3,6 +3,7 @@ import './App.css'
 
 function App() {
   const [isLoading, setIsLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState('Home')
 
   useEffect(() => {
     const loadingTimer = setTimeout(() => {
@@ -27,7 +28,36 @@ function App() {
     )
   }
 
-  return <main className="home-page" aria-label="Choosen home page" />
+  const navigationItems = [
+    { label: 'Home', icon: '⌂' },
+    { label: 'Search', icon: '⌕' },
+    { label: 'Lists', icon: '≡' },
+    { label: 'History', icon: '◷' },
+    { label: 'Profile', icon: '♙' },
+  ]
+
+  return (
+    <main className="home-page" aria-label="Choosen home page">
+      <aside className="sidebar" aria-label="Main navigation">
+        <div className="sidebar-brand">CHOOSEN</div>
+        <nav className="sidebar-nav">
+          {navigationItems.map((item) => (
+            <button
+              className={`sidebar-item${activeTab === item.label ? ' sidebar-item--active' : ''}`}
+              key={item.label}
+              type="button"
+              onClick={() => setActiveTab(item.label)}
+              aria-current={activeTab === item.label ? 'page' : undefined}
+            >
+              <span className="sidebar-icon" aria-hidden="true">{item.icon}</span>
+              <span>{item.label}</span>
+            </button>
+          ))}
+        </nav>
+      </aside>
+      <section className="home-content" aria-label={`${activeTab} content`} />
+    </main>
+  )
 }
 
 export default App
