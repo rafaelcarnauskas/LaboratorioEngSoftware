@@ -1,121 +1,62 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
+import { useEffect, useState } from 'react'
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [isLoading, setIsLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState('Home')
+
+  useEffect(() => {
+    const loadingTimer = setTimeout(() => {
+      setIsLoading(false)
+    }, 1500)
+
+    return () => clearTimeout(loadingTimer)
+  }, [])
+
+  if (isLoading) {
+    return (
+      <main className="loading-page" aria-label="Loading Choosen">
+        <div className="loading-content">
+          <div className="loading-mark" aria-hidden="true">
+            <span className="loading-dot" />
+            <span className="loading-dot loading-dot--active" />
+          </div>
+          <h1>Choosen</h1>
+          <p>Watch what you choose.</p>
+        </div>
+      </main>
+    )
+  }
+
+  const navigationItems = [
+    { label: 'Home', icon: '⌂' },
+    { label: 'Search', icon: '⌕' },
+    { label: 'Lists', icon: '≡' },
+    { label: 'History', icon: '◷' },
+    { label: 'Profile', icon: '♙' },
+  ]
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+    <main className="home-page" aria-label="Choosen home page">
+      <aside className="sidebar" aria-label="Main navigation">
+        <div className="sidebar-brand">CHOOSEN</div>
+        <nav className="sidebar-nav">
+          {navigationItems.map((item) => (
+            <button
+              className={`sidebar-item${activeTab === item.label ? ' sidebar-item--active' : ''}`}
+              key={item.label}
+              type="button"
+              onClick={() => setActiveTab(item.label)}
+              aria-current={activeTab === item.label ? 'page' : undefined}
+            >
+              <span className="sidebar-icon" aria-hidden="true">{item.icon}</span>
+              <span>{item.label}</span>
+            </button>
+          ))}
+        </nav>
+      </aside>
+      <section className="home-content" aria-label={`${activeTab} content`} />
+    </main>
   )
 }
 
