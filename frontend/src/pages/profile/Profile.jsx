@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import MyPlan from './MyPlan'
 
 const profileRoutes = {
   '/profile': { title: 'Profile Settings', description: 'Manage your personal information, subscription plan, and workspace preferences.' },
@@ -32,6 +33,10 @@ function Profile({ path = '/profile', onNavigate }) {
         onBack={() => onNavigate('/profile')}
       />
     )
+  }
+
+  if (path === '/profile/plan') {
+    return <MyPlan onBack={() => onNavigate('/profile')} />
   }
 
   if (path !== '/profile') {

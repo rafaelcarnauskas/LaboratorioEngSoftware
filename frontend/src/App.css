@@ -184,6 +184,250 @@
   font-size: 0.68rem;
 }
 
+.plan-page {
+  max-width: 1080px;
+}
+
+.plan-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.plan-heading h1 {
+  margin: 0;
+  color: #f5f7fb;
+  font-size: clamp(1.7rem, 3vw, 2.3rem);
+  line-height: 1.1;
+}
+
+.plan-heading p:last-child {
+  max-width: 470px;
+  margin: 8px 0 0;
+  color: #aeb9c9;
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+.plan-cycle {
+  display: flex;
+  flex-shrink: 0;
+  padding: 4px;
+  border-radius: 8px;
+  background: #40516c;
+}
+
+.plan-cycle button {
+  min-height: 31px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #aeb9c9;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.62rem;
+}
+
+.plan-cycle button.is-selected {
+  background: #f2b844;
+  color: #2d374c;
+  font-weight: 700;
+}
+
+.plan-cycle span {
+  margin-left: 3px;
+  color: #4d4938;
+  font-size: 0.53rem;
+  font-weight: 700;
+}
+
+.plan-current {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+  padding: 13px 15px;
+  border: 1px solid rgba(242, 184, 68, 0.4);
+  border-radius: 9px;
+  background: rgba(242, 184, 68, 0.08);
+}
+
+.plan-current-label {
+  display: block;
+  margin-bottom: 4px;
+  color: #f2b844;
+  font-size: 0.51rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.plan-current strong {
+  color: #f5f7fb;
+  font-size: 0.85rem;
+}
+
+.plan-current p {
+  display: inline;
+  margin: 0 0 0 9px;
+  color: #aeb9c9;
+  font-size: 0.62rem;
+}
+
+.plan-current-status {
+  padding: 5px 9px;
+  border-radius: 20px;
+  background: #3f5046;
+  color: #9dd5ad;
+  font-size: 0.56rem;
+  font-weight: 700;
+}
+
+.plan-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.plan-card {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  padding: 18px;
+  border: 1px solid rgba(174, 185, 201, 0.15);
+  border-radius: 9px;
+  background: #40516c;
+}
+
+.plan-card--featured {
+  border-color: #f2b844;
+  background: #465773;
+}
+
+.plan-card--current {
+  box-shadow: inset 0 0 0 1px rgba(242, 184, 68, 0.22);
+}
+
+.plan-badge {
+  position: absolute;
+  top: -10px;
+  right: 14px;
+  padding: 4px 8px;
+  border-radius: 5px;
+  background: #f2b844;
+  color: #2d374c;
+  font-size: 0.52rem;
+  font-weight: 750;
+}
+
+.plan-card-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.plan-card h2 {
+  margin: 0;
+  color: #f5f7fb;
+  font-size: 1rem;
+}
+
+.plan-card-check {
+  color: #f2b844;
+  font-size: 0.9rem;
+}
+
+.plan-description {
+  min-height: 38px;
+  margin: 8px 0 14px;
+  color: #aeb9c9;
+  font-size: 0.62rem;
+  line-height: 1.5;
+}
+
+.plan-price {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  color: #aeb9c9;
+}
+
+.plan-price strong {
+  color: #f5f7fb;
+  font-size: 1.55rem;
+}
+
+.plan-price span,
+.plan-billed {
+  font-size: 0.58rem;
+}
+
+.plan-billed {
+  min-height: 15px;
+  margin: 3px 0 0;
+  color: #aeb9c9;
+}
+
+.plan-button {
+  width: 100%;
+  min-height: 35px;
+  margin: 17px 0;
+  border: 1px solid #71809a;
+  border-radius: 6px;
+  background: transparent;
+  color: #f5f7fb;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.62rem;
+  font-weight: 700;
+}
+
+.plan-button:hover {
+  border-color: #f2b844;
+  color: #f2b844;
+}
+
+.plan-button--current {
+  border-color: #f2b844;
+  background: #f2b844;
+  color: #2d374c;
+  cursor: default;
+}
+
+.plan-features {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 14px 0 0;
+  border-top: 1px solid rgba(174, 185, 201, 0.12);
+  list-style: none;
+}
+
+.plan-features li {
+  display: flex;
+  gap: 8px;
+  color: #d5dce7;
+  font-size: 0.61rem;
+  line-height: 1.35;
+}
+
+.plan-features li span {
+  color: #f2b844;
+  font-weight: 700;
+}
+
+.plan-footnote {
+  margin: 16px 0 0;
+  color: #8f9bad;
+  font-size: 0.59rem;
+  text-align: center;
+}
+
 .profile-heading h1 {
   margin: 0;
   color: #f5f7fb;
@@ -512,6 +756,20 @@
 
   .profile-subpage {
     padding: 28px 14px 100px;
+  }
+
+  .plan-heading {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .plan-cycle {
+    align-self: flex-start;
+  }
+
+  .plan-grid {
+    grid-template-columns: 1fr;
   }
 
   .profile-layout {
