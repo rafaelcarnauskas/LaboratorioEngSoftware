@@ -10,7 +10,7 @@ from selenium.webdriver.support import expected_conditions as EC
 
 
 URL = os.environ.get("URL_APP", "http://localhost:5173")
-EVIDENCE_DIR = Path(__file__).resolve().parent / "test-results" / "selenium" / "victor"
+EVIDENCE_DIR = Path(__file__).resolve().parent / "test-results" / "victor"
 
 
 class TestChoosen(unittest.TestCase):

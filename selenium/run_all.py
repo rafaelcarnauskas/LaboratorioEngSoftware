@@ -5,10 +5,10 @@ import unittest
 
 
 def main():
-    frontend = Path(__file__).resolve().parent
+    aqui = Path(__file__).resolve().parent
     test_files = (
-        ("tests_victor", frontend / "test_selenium.py"),
-        ("tests_murilo", frontend.parent / "selenium" / "test_reels.py"),
+        ("tests_victor", aqui / "test_app.py"),
+        ("tests_murilo", aqui / "test_reels.py"),
     )
     suite = unittest.TestSuite()
     for name, path in test_files:
