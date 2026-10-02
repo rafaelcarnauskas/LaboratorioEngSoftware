@@ -36,7 +36,7 @@
   background: var(--reels-bg);
   color: var(--reels-text);
   font-family: 'ABeeZee', 'Segoe UI', sans-serif;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .reels-page::-webkit-scrollbar {
@@ -135,12 +135,14 @@
 }
 
 .reels-search input {
-  width: 60px;
+  /* Largura acompanha o aumento da fonte para não reduzir o número de
+     caracteres visíveis no campo. */
+  width: 68px;
   border: 0;
   background: transparent;
   color: var(--reels-text);
   font-family: 'Segoe UI', sans-serif;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 300;
   outline: none;
 }
@@ -178,7 +180,7 @@
 .reels-brand-name {
   margin-top: 48px;
   font-family: 'Inter', sans-serif;
-  font-size: clamp(28px, 2.7vw, 52px);
+  font-size: clamp(32px, 3vw, 58px);
   font-weight: 600;
   letter-spacing: -1px;
 }
@@ -281,7 +283,7 @@
   background: rgb(43 63 90 / 85%);
   color: var(--reels-text);
   font-family: 'Roboto', sans-serif;
-  line-height: 16px;
+  line-height: 18px;
   white-space: nowrap;
   text-shadow: none;
 }
@@ -294,7 +296,7 @@
   display: flex;
   align-items: baseline;
   margin-top: 10px;
-  line-height: 18px;
+  line-height: 20px;
 }
 
 .reels-caption-text {
@@ -323,7 +325,7 @@
 
 .reels-time {
   margin-top: 6px;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.2px;
   opacity: 0.8;
   text-transform: uppercase;
@@ -345,7 +347,7 @@
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  font-size: 12px;
+  font-size: 13px;
   transition: transform 120ms ease;
 }
 
@@ -392,14 +394,14 @@
 
 .reels-comments-header h2 {
   font-family: 'Segoe UI', sans-serif;
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 600;
 }
 
 .reels-comments-close {
   padding: 2px 6px;
   color: var(--reels-footer);
-  font-size: 16px;
+  font-size: 18px;
 }
 
 .reels-comments-close:hover {
@@ -425,7 +427,7 @@
   flex-direction: column;
   gap: 10px;
   margin-top: 12px;
-  line-height: 18px;
+  line-height: 20px;
   overflow-wrap: anywhere;
 }
 
@@ -442,7 +444,7 @@
   margin-top: 4px;
   padding: 8px 12px;
   border-radius: 6px;
-  font-size: 13px;
+  font-size: 15px;
 }
 
 .reels-feedback--erro {
@@ -546,7 +548,7 @@
 
 .reels-profile-names {
   gap: 8px;
-  line-height: 18px;
+  line-height: 20px;
 }
 
 .reels-profile-user,
@@ -563,7 +565,7 @@
   flex: 0 0 auto;
   color: var(--reels-blue);
   font-family: 'Segoe UI', sans-serif;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
 }
 
@@ -575,9 +577,9 @@
   padding-top: 12px;
   color: var(--reels-muted);
   font-family: 'Segoe UI', sans-serif;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
-  line-height: 18px;
+  line-height: 20px;
 }
 
 .reels-suggestions ul {
@@ -598,7 +600,7 @@
 
 .reels-suggestion-desc {
   overflow: hidden;
-  font-size: 12px;
+  font-size: 13px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -606,8 +608,8 @@
 .reels-footer {
   padding-top: 12px;
   color: var(--reels-footer);
-  font-size: 11px;
-  line-height: 13px;
+  font-size: 12px;
+  line-height: 15px;
 }
 
 .reels-footer-links {

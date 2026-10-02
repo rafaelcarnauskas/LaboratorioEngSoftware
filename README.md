@@ -2,11 +2,31 @@
 
 Projeto de PCS3642 - Laboratório de Engenharia de Software I (2026).
 
+## Estrutura
+
+```
+frontend/          Aplicação React + Vite
+  src/
+    App.jsx        Shell da aplicação (Home, Profile, My Time, History)
+    pages/         Telas: Reels, ListsView, SearchView (cada uma com seu CSS)
+    hooks/         Hooks reutilizáveis (useLists)
+    data/          Dados de demonstração (reels, videoCatalog)
+    assets/        Imagens e ícones
+selenium/          Testes end-to-end em Python
+  run_all.py       Executa as duas suítes
+  test_app.py      Suíte de Victor
+  test_reels.py    Suíte de Murilo
+  evidencias/      Capturas anteriores, preservadas
+```
+
 ## Aplicação integrada
 
 A versão integrada reúne Home, Profile, My Time, History, Lists e Search da
 branch `victor`, os Reels de `murilo/reels` e os testes Selenium dos dois autores.
 Os dados são de demonstração; as listas são salvas no navegador.
+
+O `package.json` existe apenas dentro de `frontend/`. Rode os comandos npm a
+partir dessa pasta, não da raiz do repositório.
 
 ```powershell
 cd frontend
@@ -25,9 +45,9 @@ Pré-requisitos: Node.js, Python 3.10 ou superior e Google Chrome. Mantenha o ap
 rodando em um terminal. Em outro terminal, na raiz do repositório:
 
 ```powershell
-python -m venv frontend/.venv
-./frontend/.venv/Scripts/python.exe -m pip install -r selenium/requirements.txt
-./frontend/.venv/Scripts/python.exe frontend/run_selenium.py
+python -m venv .venv
+./.venv/Scripts/python.exe -m pip install -r selenium/requirements.txt
+./.venv/Scripts/python.exe selenium/run_all.py
 ```
 
 Use `py` no primeiro comando se esse for o comando Python disponível. Se nenhum
@@ -37,31 +57,31 @@ o ambiente virtual. A pasta `.venv` é local e não deve ser versionada nem copi
 entre máquinas. Na primeira execução, o Selenium Manager pode precisar de
 internet para obter o driver compatível com o Chrome.
 
-O runner executa as duas suítes e os testes de integração, retornando código 1
-se algum teste falhar. Cada teste usa uma sessão nova do navegador.
+O runner executa as duas suítes, incluindo os testes de integração, e retorna
+código 1 se algum teste falhar. Cada teste usa uma sessão nova do navegador.
 
 Para rodar sem abrir janelas, ou apontar para outro endereço:
 
 ```powershell
 $env:HEADLESS = '1'
 $env:URL_APP = 'http://localhost:5173'
-./frontend/.venv/Scripts/python.exe frontend/run_selenium.py
+./.venv/Scripts/python.exe selenium/run_all.py
 ```
 
 Para executar separadamente:
 
 ```powershell
-./frontend/.venv/Scripts/python.exe frontend/test_selenium.py
-./frontend/.venv/Scripts/python.exe selenium/test_reels.py
+./.venv/Scripts/python.exe selenium/test_app.py
+./.venv/Scripts/python.exe selenium/test_reels.py
 ```
 
 - Victor: Home, Profile, My Time, History e criação/validação de Lists.
 - Murilo: comentários válidos/inválidos e navegação por teclado nos Reels.
-- Integração: Home → Reels → Home → Lists → Search e salvar um resultado de
-  Search em uma nova lista.
+- Integração (em `test_app.py`): Home → Reels → Home → Lists → Search e salvar
+  um resultado de Search em uma nova lista.
 
-As novas capturas ficam em `frontend/test-results/selenium/victor/` (ignorado pelo
-Git). As capturas anteriores em `frontend/selenium_evidencias/` foram preservadas.
+As novas capturas ficam em `selenium/test-results/victor/` (ignorado pelo Git).
+As capturas anteriores em `selenium/evidencias/` foram preservadas.
 
 ## Verificações do frontend
 
