@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import MyPlan from './MyPlan'
+import GroupSettings from './GroupSettings'
 
 const profileRoutes = {
   '/profile': { title: 'Profile Settings', description: 'Manage your personal information, subscription plan, and workspace preferences.' },
@@ -37,6 +38,10 @@ function Profile({ path = '/profile', onNavigate }) {
 
   if (path === '/profile/plan') {
     return <MyPlan onBack={() => onNavigate('/profile')} />
+  }
+
+  if (path === '/profile/group-settings') {
+    return <GroupSettings onBack={() => onNavigate('/profile')} />
   }
 
   if (path !== '/profile') {
