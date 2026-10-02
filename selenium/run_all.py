@@ -1,14 +1,15 @@
-"""Executa juntos os testes de Victor e Murilo, de qualquer diretório."""
+"""Executa juntas as suítes Selenium (login, telas principais e Reels), de qualquer diretório."""
 import importlib.util
 from pathlib import Path
 import unittest
 
 
 def main():
-    frontend = Path(__file__).resolve().parent
+    pasta = Path(__file__).resolve().parent
     test_files = (
-        ("tests_victor", frontend / "test_selenium.py"),
-        ("tests_murilo", frontend.parent / "selenium" / "test_reels.py"),
+        ("tests_login", pasta / "test_login.py"),
+        ("tests_app", pasta / "test_app.py"),
+        ("tests_reels", pasta / "test_reels.py"),
     )
     suite = unittest.TestSuite()
     for name, path in test_files:

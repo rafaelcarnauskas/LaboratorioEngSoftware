@@ -6,7 +6,9 @@ import useLists from './hooks/useLists'
 import { videoCatalog } from './data/videoCatalog'
 import Profile from './pages/profile/Profile'
 import History from './pages/History'
+import Login from './pages/Login'
 import { reels } from './data/reels'
+import { clearSession, getSession } from './hooks/session'
 import './App.css'
 
 const reelCategories = new Set(reels.map((reel) => reel.category))
@@ -50,6 +52,7 @@ const initialHistory = videoCatalog.slice(0, 5).map((video, index) => ({
 
 function App() {
   const [isLoading, setIsLoading] = useState(true)
+  const [session, setSession] = useState(getSession)
   const [reelsCategory, setReelsCategory] = useState(getReelsCategoryFromUrl)
   const [profilePath, setProfilePath] = useState(() => getProfilePathFromUrl() ?? '/profile')
   const [activeTab, setActiveTab] = useState(() => getProfilePathFromUrl() ? 'Profile' : 'Home')
@@ -108,6 +111,17 @@ function App() {
     setActiveTab('Search')
   }
 
+  // Sair apaga a sessão salva: na próxima abertura o login aparece de novo.
+  const handleSignOut = () => {
+    clearSession()
+    window.history.pushState(null, '', '/')
+    setReelsCategory(null)
+    setProfilePath('/profile')
+    setActiveTab('Home')
+    setSearchTerm('')
+    setSession(null)
+  }
+
   const handleNavigation = (tab) => {
     if (tab === 'Profile') {
       navigateProfile('/profile')
@@ -125,6 +139,9 @@ function App() {
       </main>
     )
   }
+
+  // Login só na primeira vez: com sessão salva, o app abre direto (inclusive pelos links de Reels).
+  if (!session) return <Login onLogin={setSession} />
 
   if (reelsCategory) return <Reels category={reelsCategory} onGoHome={closeReels} />
 
@@ -148,7 +165,7 @@ function App() {
     switch (activeTab) {
       case 'Home': return renderHome()
       case 'History': return <History historyItems={historyItems} onClearHistory={() => setHistoryItems([])} />
-      case 'Profile': return <Profile path={profilePath} onNavigate={navigateProfile} />
+      case 'Profile': return <Profile path={profilePath} onNavigate={navigateProfile} onSignOut={handleSignOut} />
       case 'Search': return <SearchView videos={videoCatalog} query={searchTerm} onQueryChange={setSearchTerm} lists={lists} onListsChange={updateLists} storageError={storageError} />
       case 'Lists': return <ListsView lists={lists} onListsChange={updateLists} availableVideos={videoCatalog} storageError={storageError} />
       default: return renderHome()

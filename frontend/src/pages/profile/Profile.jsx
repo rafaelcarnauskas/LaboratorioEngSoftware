@@ -13,7 +13,7 @@ const profileRoutes = {
   '/profile/sign-out': { title: 'Sign Out' },
 }
 
-function Profile({ path = '/profile', onNavigate }) {
+function Profile({ path = '/profile', onNavigate, onSignOut }) {
   const [usageLimit, setUsageLimit] = useState(60)
   const [reminders, setReminders] = useState({ bedtime: true, screenTime: true, weekly: false })
   const route = profileRoutes[path] ?? profileRoutes['/profile']
@@ -38,10 +38,10 @@ function Profile({ path = '/profile', onNavigate }) {
     return <ProfilePlaceholder title={route.title} onBack={() => onNavigate('/profile')} />
   }
 
-  return <ProfileOverview onNavigate={onNavigate} />
+  return <ProfileOverview onNavigate={onNavigate} onSignOut={onSignOut} />
 }
 
-function ProfileOverview({ onNavigate }) {
+function ProfileOverview({ onNavigate, onSignOut }) {
   return (
     <div className="profile-main">
       <div className="profile-heading">
@@ -69,7 +69,7 @@ function ProfileOverview({ onNavigate }) {
           </ProfileSection>
 
           <ProfileSection title="SYSTEM">
-            <ProfileAction className="profile-action--danger" icon="⇥" label="Sign Out" onClick={() => onNavigate('/profile/sign-out')} />
+            <ProfileAction className="profile-action--danger" icon="⇥" label="Sign Out" onClick={onSignOut ?? (() => onNavigate('/profile/sign-out'))} />
           </ProfileSection>
         </div>
 

@@ -22,6 +22,14 @@ class TestChoosen(unittest.TestCase):
         self.driver = webdriver.Chrome(options=options)
         self.addCleanup(self.driver.quit)
         self.wait = WebDriverWait(self.driver, 10)
+
+        # Estes testes começam já logados: grava a sessão do usuário de teste
+        # e recarrega, para pular a tela de login (testada em test_login.py).
+        self.driver.get(URL)
+        self.driver.execute_script(
+            "localStorage.setItem('choosen.session', JSON.stringify("
+            "{email: 'victor@email.com', name: 'Victor Mendes'}))"
+        )
         self.driver.get(URL)
 
         # A navegacao so aparece depois da tela inicial de loading.
