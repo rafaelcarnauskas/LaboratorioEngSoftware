@@ -1,4 +1,12 @@
 :root {
+  /* Escala tipográfica global. Neste projeto, rem é usado apenas para
+     font-size (espaçamentos e larguras são px), então mudar este valor
+     aumenta ou diminui só o texto, sem alterar o layout.
+     112.5% = 18px de base, contra os 16px padrão do navegador.
+     Em porcentagem em vez de px para respeitar o tamanho de fonte
+     configurado pelo usuário no navegador. */
+  font-size: 112.5%;
+
   font-family: 'Segoe UI', sans-serif;
   color: #f5f7fb;
   background: #2d374c;
