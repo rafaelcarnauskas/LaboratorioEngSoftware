@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import ListsView from './ListsView'
-import SearchView from './SearchView'
-import useLists from './useLists'
-import { videoCatalog } from './videoCatalog'
+import ListsView from './pages/ListsView'
+import SearchView from './pages/SearchView'
 import Reels from './pages/Reels'
+import useLists from './hooks/useLists'
+import { videoCatalog } from './data/videoCatalog'
 import { reels } from './data/reels'
 import './App.css'
 
