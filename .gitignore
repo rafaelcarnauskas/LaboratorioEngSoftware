@@ -1,1 +1,8 @@
 node_modules
+
+# Ambientes locais e resultados gerados dos testes
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+test-results/

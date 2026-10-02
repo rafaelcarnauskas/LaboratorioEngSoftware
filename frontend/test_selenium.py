@@ -1,3 +1,4 @@
+import os
 import unittest
 from pathlib import Path
 
@@ -8,13 +9,17 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 
-URL = "http://localhost:5173"
-EVIDENCE_DIR = Path("selenium_evidencias")
+URL = os.environ.get("URL_APP", "http://localhost:5173")
+EVIDENCE_DIR = Path(__file__).resolve().parent / "test-results" / "selenium" / "victor"
 
 
 class TestChoosen(unittest.TestCase):
     def setUp(self):
-        self.driver = webdriver.Chrome()
+        options = webdriver.ChromeOptions()
+        options.add_argument("--window-size=1920,1080")
+        if os.environ.get("HEADLESS") == "1":
+            options.add_argument("--headless=new")
+        self.driver = webdriver.Chrome(options=options)
         self.addCleanup(self.driver.quit)
         self.wait = WebDriverWait(self.driver, 10)
         self.driver.get(URL)
@@ -23,7 +28,7 @@ class TestChoosen(unittest.TestCase):
         self.wait.until(
             EC.presence_of_element_located((By.CSS_SELECTOR, ".sidebar-nav"))
         )
-        EVIDENCE_DIR.mkdir(exist_ok=True)
+        EVIDENCE_DIR.mkdir(parents=True, exist_ok=True)
 
     def clicar(self, xpath):
         elemento = self.wait.until(
@@ -235,6 +240,59 @@ class TestChoosen(unittest.TestCase):
         )
         self.assertEqual(campo.get_attribute("aria-invalid"), "true")
         self.screenshot("07_lista_nome_invalido.png")
+
+
+    # Regressões da integração entre as branches victor e murilo/reels.
+    def test_home_reels_lists_search_integrados(self):
+        for category, first_reel in (("Sports", "sports-1"), ("Cute", "cute-1")):
+            with self.subTest(category=category):
+                self.clicar(
+                    f"//button[contains(@class, 'category-card')][.//strong[text()='{category}']]"
+                )
+                self.wait.until(EC.visibility_of_element_located(
+                    (By.CSS_SELECTOR, f'[data-reel-id="{first_reel}"]')
+                ))
+                self.clicar("//button[@aria-label='Home']")
+                self.wait.until(EC.visibility_of_element_located(
+                    (By.CSS_SELECTOR, ".category-grid")
+                ))
+
+        self.navegar("Lists")
+        self.wait.until(EC.visibility_of_element_located(
+            (By.CSS_SELECTOR, ".lists-view h1")
+        ))
+        self.navegar("Search")
+        self.wait.until(EC.element_to_be_clickable(
+            (By.ID, "discover-videos")
+        )).send_keys("3D")
+        self.wait.until(lambda driver: len(driver.find_elements(
+            By.CSS_SELECTOR, ".search-video-card"
+        )) == 1)
+        self.assertEqual(
+            self.driver.find_element(By.CSS_SELECTOR, ".search-video-card h3").text,
+            "How a 3D printer builds layer by layer",
+        )
+
+    def test_search_salva_video_em_nova_lista(self):
+        self.navegar("Search")
+        self.wait.until(EC.element_to_be_clickable(
+            (By.ID, "discover-videos")
+        )).send_keys("3D")
+        self.clicar("//button[@aria-label='Save How a 3D printer builds layer by layer']")
+        self.clicar("//dialog//button[contains(., 'Create a new list')]")
+        self.wait.until(EC.element_to_be_clickable(
+            (By.CSS_SELECTOR, ".search-new-list-field input")
+        )).send_keys("Integração Search e Lists")
+        self.clicar("//dialog//button[@type='submit']")
+        self.wait.until(EC.text_to_be_present_in_element(
+            (By.CSS_SELECTOR, ".search-feedback"), "saved in 1 list."
+        ))
+        self.navegar("Lists")
+        self.clicar("//button[@aria-label='Open Integração Search e Lists']")
+        video = self.wait.until(EC.visibility_of_element_located(
+            (By.CSS_SELECTOR, ".lists-video-copy h2")
+        ))
+        self.assertEqual(video.text, "How a 3D printer builds layer by layer")
 
 
 if __name__ == "__main__":

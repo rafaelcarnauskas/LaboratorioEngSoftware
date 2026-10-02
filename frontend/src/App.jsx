@@ -3,7 +3,18 @@ import ListsView from './ListsView'
 import SearchView from './SearchView'
 import useLists from './useLists'
 import { videoCatalog } from './videoCatalog'
+import Reels from './pages/Reels'
+import { reels } from './data/reels'
 import './App.css'
+
+// Categorias que já têm tela de reels (ex.: 'sports', 'cute').
+const reelCategories = new Set(reels.map((reel) => reel.category))
+
+// A tela de reels também abre direto pela URL: ?tela=reels&categoria=sports
+function getReelsCategoryFromUrl() {
+  const params = new URLSearchParams(window.location.search)
+  return params.get('tela') === 'reels' ? params.get('categoria') ?? 'sports' : null
+}
 
 const navigationItems = [
   { label: 'Home', icon: '⌂' },
@@ -22,7 +33,9 @@ const categories = [
   { name: 'Curiosities', icon: '✣', tone: 'purple' },
 ].map((category) => ({
   ...category,
-  count: videoCatalog.filter((video) => video.category === category.name).length,
+  count:
+    videoCatalog.filter((video) => video.category === category.name).length +
+    reels.filter((reel) => reel.category === category.name.toLowerCase()).length,
 }))
 
 const historyTimes = ['14:32', '12:18', '09:47', '21:06', '18:24']
@@ -34,6 +47,7 @@ const initialHistory = videoCatalog.slice(0, 5).map((video, index) => ({
 
 function App() {
   const [isLoading, setIsLoading] = useState(true)
+  const [reelsCategory, setReelsCategory] = useState(getReelsCategoryFromUrl)
   const [activeTab, setActiveTab] = useState('Home')
   const [searchTerm, setSearchTerm] = useState('')
   const [historyItems, setHistoryItems] = useState(initialHistory)
@@ -66,7 +80,33 @@ function App() {
     return () => clearTimeout(loadingTimer)
   }, [])
 
+  // Mantém a tela certa ao usar o botão "voltar" do navegador.
+  useEffect(() => {
+    const handlePopState = () => setReelsCategory(getReelsCategoryFromUrl())
+
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+
+  const openReels = (category) => {
+    window.history.pushState(null, '', `?tela=reels&categoria=${category}`)
+    setReelsCategory(category)
+  }
+
+  const closeReels = () => {
+    window.history.pushState(null, '', window.location.pathname)
+    setReelsCategory(null)
+    setActiveTab('Home')
+  }
+
   const handleCategoryClick = (categoryName) => {
+    const reelCategory = categoryName.toLowerCase()
+
+    if (reelCategories.has(reelCategory)) {
+      openReels(reelCategory)
+      return
+    }
+
     setSearchTerm(categoryName)
     setActiveTab('Search')
   }
@@ -101,6 +141,10 @@ function App() {
         </div>
       </main>
     )
+  }
+
+  if (reelsCategory) {
+    return <Reels category={reelsCategory} onGoHome={closeReels} />
   }
 
   const renderHome = () => (
