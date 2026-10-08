@@ -1,5 +1,7 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { reels, suggestions } from '../data/reels'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { suggestions } from '../data/reels'
+import { findCommunity } from '../data/communities'
+import { selectReels } from '../lib/reelsIndex'
 import logoMark from '../assets/reels/icons/logo-mark.svg'
 import searchIcon from '../assets/reels/icons/search.svg'
 import likeIcon from '../assets/reels/icons/like.svg'
@@ -17,17 +19,19 @@ import './Reels.css'
 
 const currentUser = { username: 'mendesvictor', name: 'Victor Grandolfo Mendes' }
 
+// `isHome` identifica o item de navegação da Home sem depender do rótulo,
+// que agora é traduzido.
 const menuItems = [
-  { label: 'Home', icon: navHomeIcon },
-  { label: 'New post', icon: navNewPostIcon },
-  { label: 'Explore', icon: navExploreIcon },
-  { label: 'Activity', icon: navActivityIcon },
-  { label: 'Profile', icon: meSmallAvatar },
+  { label: 'Início', icon: navHomeIcon, isHome: true },
+  { label: 'Nova publicação', icon: navNewPostIcon },
+  { label: 'Explorar', icon: navExploreIcon },
+  { label: 'Atividade', icon: navActivityIcon },
+  { label: 'Perfil', icon: meSmallAvatar },
 ]
 
 const footerLinks = [
-  'About', 'Press', 'API', 'Jobs', 'Privacy', 'Terms', 'Locations',
-  'Top Accounts', 'Hashtags', 'Language',
+  'Sobre', 'Imprensa', 'API', 'Carreiras', 'Privacidade', 'Termos', 'Localizações',
+  'Contas em destaque', 'Hashtags', 'Idioma',
 ]
 
 // Placeholder: os botões já são clicáveis, as funções entram nos próximos passos.
@@ -37,7 +41,7 @@ function formatCount(count) {
   return count.toLocaleString('pt-BR')
 }
 
-function ReelPost({ reel }) {
+function ReelPost({ reel, community, isJoined, onJoinCommunity, onLeaveCommunity }) {
   const commentInputId = `comentario-${reel.id}`
   const feedbackId = `feedback-${reel.id}`
   const commentsPanelId = `comentarios-${reel.id}`
@@ -71,10 +75,10 @@ function ReelPost({ reel }) {
     if (isCommentsOpen) document.getElementById(commentInputId)?.focus()
   }, [isCommentsOpen, commentInputId])
 
-  // Ao publicar, a lista rola até o comentário novo.
+  // Ao publicar, a lista rola até o topo, onde o comentário novo foi inserido.
   useEffect(() => {
     const list = commentListRef.current
-    if (comments.length > 0 && list) list.scrollTop = list.scrollHeight
+    if (comments.length > 0 && list) list.scrollTop = 0
   }, [comments])
 
   function handleCommentChange(event) {
@@ -91,7 +95,7 @@ function ReelPost({ reel }) {
       return
     }
 
-    setComments([...comments, { id: Date.now(), author: currentUser.username, text }])
+    setComments([{ id: Date.now(), author: currentUser.username, text }, ...comments])
     setCommentText('')
     setFeedback({ status: 'sucesso', message: 'Comentário publicado.' })
   }
@@ -140,8 +144,29 @@ function ReelPost({ reel }) {
               <span className="reels-post-author">@{reel.author}</span>
             </button>
             <button className="reels-follow" type="button" onClick={handleNotImplemented}>
-              Follow +
+              Seguir +
             </button>
+            {community && (
+              // Sem role="status"/"alert" aqui: os testes do Reels procuram
+              // essas live regions dentro do post para ler o feedback de
+              // comentário. O próprio botão comunica o estado via aria-pressed.
+              <button
+                className={`reels-community${isJoined ? ' reels-community--joined' : ''}`}
+                type="button"
+                onClick={() => (isJoined ? onLeaveCommunity(community.id) : onJoinCommunity(community.id))}
+                aria-pressed={isJoined}
+                aria-label={
+                  isJoined
+                    ? `Sair da comunidade ${community.name}`
+                    : `Entrar na comunidade ${community.name}`
+                }
+                data-testid="acao-comunidade"
+                data-community-id={community.id}
+              >
+                <span aria-hidden="true">{community.icon}</span>
+                {isJoined ? `Participando de ${community.name}` : `Entrar em ${community.name}`}
+              </button>
+            )}
           </div>
 
           <div className={`reels-caption${isCaptionExpanded ? ' reels-caption--expanded' : ''}`}>
@@ -153,7 +178,7 @@ function ReelPost({ reel }) {
                 onClick={() => setIsCaptionExpanded(true)}
                 aria-label="Ver legenda completa"
               >
-                more
+                mais
               </button>
             )}
           </div>
@@ -241,7 +266,7 @@ function ReelPost({ reel }) {
                 id={commentInputId}
                 name="comentario"
                 type="text"
-                placeholder="Add a comment..."
+                placeholder="Escreva um comentário..."
                 value={commentText}
                 onChange={handleCommentChange}
                 aria-invalid={hasError}
@@ -252,7 +277,7 @@ function ReelPost({ reel }) {
                 type="submit"
                 data-testid="acao-principal"
               >
-                Post
+                Publicar
               </button>
             </form>
           </div>
@@ -264,9 +289,134 @@ function ReelPost({ reel }) {
 
 const scrollKeys = { ArrowDown: 1, PageDown: 1, ArrowUp: -1, PageUp: -1 }
 
-function Reels({ category = 'sports', onGoHome }) {
-  const categoryReels = reels.filter((reel) => reel.category === category)
+// Permanência mínima para o reel contar como visto.
+export const MIN_DWELL_MS = 3000
+
+// Teto por visualização individual. NÃO é teto do total acumulado por reel:
+// o histórico soma as visualizações, então assistir dez vezes soma dez
+// visualizações. Este teto só existe para descartar permanências absurdas,
+// como uma aba esquecida aberta.
+export const MAX_ATTRIBUTED_SECONDS = 90
+
+// Função pura exportada daqui porque é parte do contrato do rastreio desta
+// tela; o custo é perder fast refresh neste arquivo durante o dev.
+// eslint-disable-next-line react-refresh/only-export-components
+export function attributedSeconds(dwellMs) {
+  if (!Number.isFinite(dwellMs) || dwellMs < MIN_DWELL_MS) return 0
+  return Math.min(Math.round(dwellMs / 1000), MAX_ATTRIBUTED_SECONDS)
+}
+
+// Qual reel ocupa a maior parte da viewport. A rolagem nativa continua sendo o
+// mecanismo de navegação: o observer apenas observa.
+function useFocusedReel(pageRef, reelIds) {
+  const [focusedId, setFocusedId] = useState(reelIds[0] ?? null)
+
+  useEffect(() => {
+    // Sem IntersectionObserver o rastreio é desligado em silêncio: a tela
+    // continua funcionando, só não registra visualização.
+    if (!('IntersectionObserver' in window)) return
+    const posts = pageRef.current?.querySelectorAll('[data-reel-id]')
+    if (!posts || posts.length === 0) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0]
+        if (visible) setFocusedId(visible.target.dataset.reelId)
+      },
+      { threshold: [0.25, 0.5, 0.75] },
+    )
+
+    posts.forEach((post) => observer.observe(post))
+    return () => observer.disconnect()
+  }, [pageRef, reelIds])
+
+  return focusedId
+}
+
+// Na troca de foco, o reel anterior é contabilizado se ficou tempo suficiente.
+function useWatchTracking(focusedId, onReelWatched) {
+  const startedAt = useRef(null)
+  const previousId = useRef(null)
+
+  useEffect(() => {
+    const now = Date.now()
+    const previous = previousId.current
+
+    if (previous !== null && startedAt.current !== null) {
+      const seconds = attributedSeconds(now - startedAt.current)
+      if (seconds > 0) onReelWatched(previous, seconds)
+    }
+
+    previousId.current = focusedId
+    startedAt.current = focusedId === null ? null : now
+  }, [focusedId, onReelWatched])
+
+  // Sair da tela de reels também fecha a visualização em andamento.
+  useEffect(() => () => {
+    if (previousId.current !== null && startedAt.current !== null) {
+      const seconds = attributedSeconds(Date.now() - startedAt.current)
+      if (seconds > 0) onReelWatched(previousId.current, seconds)
+    }
+  }, [onReelWatched])
+}
+
+function Reels({
+  category = null,
+  communityId = null,
+  niches = [],
+  initialReelId = null,
+  onReelWatched = handleNotImplemented,
+  onGoHome,
+  memberships = [],
+  onJoinCommunity = handleNotImplemented,
+  onLeaveCommunity = handleNotImplemented,
+}) {
+  // Seletor único: categoria, comunidade e nichos em conjunção.
+  // `niches` vazio significa "todos" os nichos da comunidade.
+  const nicheKey = niches.join('|')
+  const visibleReels = useMemo(
+    () => selectReels({ category, communityId, niches }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [category, communityId, nicheKey],
+  )
+
+  const community = communityId === null ? null : findCommunity(communityId)
+
+  const feedLabel = community
+    ? `Vídeos da comunidade ${community.name}`
+    : category
+      ? `Vídeos da categoria ${category}`
+      : 'Vídeos'
+
+  // Com nichos ativos, o vazio é consequência do filtro, não da comunidade.
+  const emptyMessage = niches.length > 0
+    ? 'Nenhum vídeo encontrado para os nichos selecionados.'
+    : community
+      ? `Nenhum vídeo encontrado na comunidade ${community.name}.`
+      : category
+        ? `Nenhum vídeo encontrado na categoria "${category}".`
+        : 'Nenhum vídeo encontrado.'
+
+  const joinedIds = new Set(memberships.map((membership) => membership.id))
   const pageRef = useRef(null)
+
+  // Identidade estável enquanto o feed não muda, para o observer não ser
+  // recriado a cada pintura.
+  const reelIds = useMemo(() => visibleReels.map((reel) => reel.id), [visibleReels])
+  const focusedId = useFocusedReel(pageRef, reelIds)
+  useWatchTracking(focusedId, onReelWatched)
+
+  // Abertura por reel específico: o feed já nasce posicionado nele, antes da
+  // primeira pintura, para não aparecer um salto de rolagem.
+  useLayoutEffect(() => {
+    if (!initialReelId) return
+
+    const selector = `[data-reel-id="${CSS?.escape ? CSS.escape(initialReelId) : initialReelId}"]`
+    const target = pageRef.current?.querySelector(selector)
+    target?.scrollIntoView({ block: 'start' })
+  }, [initialReelId, visibleReels])
 
   // Sem onGoHome (tela aberta isolada), o link "/" recarrega a página inicial.
   function handleGoHome(event) {
@@ -295,9 +445,9 @@ function Reels({ category = 'sports', onGoHome }) {
     <div className="reels-page" ref={pageRef}>
       <header className="reels-topbar">
         <form className="reels-search" role="search" onSubmit={(event) => event.preventDefault()}>
-          <label className="reels-visually-hidden" htmlFor="reels-busca">Search</label>
+          <label className="reels-visually-hidden" htmlFor="reels-busca">Buscar</label>
           <img src={searchIcon} alt="" width="10" height="10" />
-          <input id="reels-busca" type="search" placeholder="Search" />
+          <input id="reels-busca" type="search" placeholder="Buscar" />
         </form>
       </header>
 
@@ -311,13 +461,22 @@ function Reels({ category = 'sports', onGoHome }) {
         <span className="reels-brand-name">Choosen</span>
       </a>
 
-      <main className="reels-feed" aria-label={`Vídeos da categoria ${category}`}>
-        {categoryReels.length === 0 ? (
+      <main className="reels-feed" aria-label={feedLabel}>
+        {visibleReels.length === 0 ? (
           <p className="reels-empty" role="status">
-            Nenhum vídeo encontrado na categoria "{category}".
+            {emptyMessage}
           </p>
         ) : (
-          categoryReels.map((reel) => <ReelPost key={reel.id} reel={reel} />)
+          visibleReels.map((reel) => (
+            <ReelPost
+              key={reel.id}
+              reel={reel}
+              community={findCommunity(reel.communityId)}
+              isJoined={joinedIds.has(reel.communityId)}
+              onJoinCommunity={onJoinCommunity}
+              onLeaveCommunity={onLeaveCommunity}
+            />
+          ))
         )}
       </main>
 
@@ -328,7 +487,7 @@ function Reels({ category = 'sports', onGoHome }) {
               className="reels-menu-item"
               key={item.label}
               type="button"
-              onClick={item.label === 'Home' ? handleGoHome : handleNotImplemented}
+              onClick={item.isHome ? handleGoHome : handleNotImplemented}
               aria-label={item.label}
             >
               <img src={item.icon} alt="" width="22" height="22" />
@@ -350,12 +509,12 @@ function Reels({ category = 'sports', onGoHome }) {
             </span>
           </button>
           <button className="reels-link-button" type="button" onClick={handleNotImplemented}>
-            Switch
+            Trocar
           </button>
         </section>
 
         <section className="reels-suggestions" aria-labelledby="reels-suggestions-title">
-          <h2 id="reels-suggestions-title">Suggestions For You</h2>
+          <h2 id="reels-suggestions-title">Sugestões para você</h2>
           <ul>
             {suggestions.map((suggestion) => (
               <li key={suggestion.username}>
@@ -368,11 +527,11 @@ function Reels({ category = 'sports', onGoHome }) {
                   <img className="reels-avatar" src={suggestion.avatar} alt="" width="32" height="32" />
                   <span className="reels-suggestion-names">
                     <span className="reels-suggestion-user">{suggestion.username}</span>
-                    <span className="reels-suggestion-desc">Followed by {suggestion.username} + 2 more</span>
+                    <span className="reels-suggestion-desc">Seguido por {suggestion.username} + 2 outros</span>
                   </span>
                 </button>
                 <button className="reels-link-button" type="button" onClick={handleNotImplemented}>
-                  Follow
+                  Seguir
                 </button>
               </li>
             ))}

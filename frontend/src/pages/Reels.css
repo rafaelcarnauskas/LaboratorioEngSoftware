@@ -292,6 +292,38 @@
   background: var(--reels-button-hover);
 }
 
+/* Pílula de comunidade, ao lado do Follow. Segue a altura e o raio do
+   .reels-follow para as duas ações ficarem alinhadas na mesma linha. */
+.reels-community {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  background: rgb(91 141 239 / 90%);
+  color: #0f1726;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+  white-space: nowrap;
+  text-shadow: none;
+}
+
+.reels-community:hover {
+  background: rgb(111 155 242 / 95%);
+}
+
+.reels-community--joined {
+  background: rgb(46 204 113 / 20%);
+  color: #9be7b8;
+}
+
+.reels-community--joined:hover {
+  background: rgb(46 204 113 / 30%);
+}
+
 .reels-caption {
   display: flex;
   align-items: baseline;
