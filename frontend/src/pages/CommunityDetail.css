@@ -1,0 +1,203 @@
+/* Tela_Comunidade. Prefixo community-detail- / community-niche- /
+   community-video- de propósito: CommunityView.css já usa .community-card e
+   .community-icon, e as duas telas podem coexistir no mesmo bundle. */
+
+.community-detail {
+  width: 100%;
+  max-width: 1000px;
+  padding: 38px 22px 60px;
+}
+
+.community-detail-back {
+  margin: 0 0 18px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #8cb9f0;
+  font-family: inherit;
+  font-size: 0.62rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.community-detail-back:hover,
+.community-detail-back:focus-visible {
+  text-decoration: underline;
+}
+
+.community-detail-header {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.community-detail-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.community-detail-header h1 {
+  margin: 0;
+  color: #f5f7fb;
+  font-size: clamp(1.9rem, 3.2vw, 2.6rem);
+  font-weight: 600;
+}
+
+.community-detail-description {
+  margin: 6px 0 0;
+  color: #b0b8c5;
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.community-detail-meta {
+  margin: 6px 0 0;
+  color: #9aa5b5;
+  font-size: 0.58rem;
+}
+
+.community-detail-error {
+  margin: 14px 0 0;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: rgb(255 107 107 / 15%);
+  color: #ffb4b4;
+  font-size: 0.65rem;
+}
+
+.community-niches {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 26px;
+}
+
+.community-niche-chip {
+  padding: 6px 14px;
+  border: 1px solid rgb(245 247 251 / 35%);
+  border-radius: 999px;
+  background: transparent;
+  color: #e4e9f2;
+  font-family: inherit;
+  font-size: 0.62rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.community-niche-chip:hover,
+.community-niche-chip:focus-visible {
+  border-color: rgb(245 247 251 / 60%);
+  background: rgb(245 247 251 / 8%);
+}
+
+.community-niche-chip.is-selected {
+  border-color: transparent;
+  background: #5b8def;
+  color: #0f1726;
+}
+
+.community-niche-chip.is-selected:hover,
+.community-niche-chip.is-selected:focus-visible {
+  background: #6f9bf2;
+}
+
+.community-niche-clear {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #8cb9f0;
+  font-family: inherit;
+  font-size: 0.62rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.community-niche-clear:hover,
+.community-niche-clear:focus-visible {
+  text-decoration: underline;
+}
+
+.community-detail-count {
+  margin: 18px 0 10px;
+  color: #f5f7fb;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.community-detail-empty {
+  margin: 0;
+  color: #8f9bad;
+  font-size: 0.65rem;
+  line-height: 1.4;
+}
+
+.community-video-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (max-width: 760px) {
+  .community-video-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.community-video-card {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 12px;
+  width: 100%;
+  padding: 10px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: #3a4252;
+  color: inherit;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.community-video-card:hover,
+.community-video-card:focus-visible {
+  border-color: rgb(245 247 251 / 35%);
+}
+
+.community-video-thumb {
+  width: 96px;
+  height: 64px;
+  border-radius: 7px;
+  object-fit: cover;
+}
+
+.community-video-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.community-video-copy strong {
+  color: #f5f7fb;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.community-video-copy small {
+  color: #9aa5b5;
+  font-size: 0.58rem;
+}
+
+.community-video-niche {
+  color: #8cb9f0;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}

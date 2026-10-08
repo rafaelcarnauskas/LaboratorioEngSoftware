@@ -1,0 +1,179 @@
+/* Classes com prefixo community- de propósito: a Home conta .category-card
+   nos testes Selenium, então nada aqui pode reusar aquela classe. */
+
+.community-view {
+  width: 100%;
+  max-width: 1000px;
+  padding: 38px 22px 60px;
+}
+
+.community-eyebrow {
+  margin: 0 0 6px;
+  color: #8f9bad;
+  font-size: 0.55rem;
+  letter-spacing: 0.18em;
+}
+
+.community-view h1 {
+  margin: 0;
+  color: #f5f7fb;
+  font-size: clamp(1.9rem, 3.2vw, 2.6rem);
+  font-weight: 600;
+}
+
+.community-subtitle {
+  margin: 6px 0 0;
+  color: #b0b8c5;
+  font-size: 0.72rem;
+}
+
+.community-error {
+  margin: 14px 0 0;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: rgb(255 107 107 / 15%);
+  color: #ffb4b4;
+  font-size: 0.65rem;
+}
+
+.community-section {
+  margin-top: 26px;
+}
+
+.community-section h2 {
+  margin: 0 0 10px;
+  color: #f5f7fb;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.community-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 760px) {
+  .community-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.community-card {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: #3a4252;
+}
+
+.community-card--gold { background: #504c3e; border-color: #827241; }
+.community-card--rose { background: #503d49; border-color: #805b71; }
+.community-card--green { background: #3f5046; border-color: #66816c; }
+.community-card--blue { background: #3e4a5a; border-color: #66809c; }
+.community-card--teal { background: #3e5151; border-color: #64837f; }
+.community-card--purple { background: #4a4058; border-color: #806d96; }
+
+.community-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.community-copy {
+  min-width: 0;
+}
+
+.community-copy h3 {
+  margin: 0;
+  color: #f5f7fb;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.community-description {
+  margin: 4px 0 0;
+  color: #cdd4df;
+  font-size: 0.65rem;
+  line-height: 1.4;
+}
+
+.community-meta {
+  margin: 6px 0 0;
+  color: #9aa5b5;
+  font-size: 0.58rem;
+}
+
+.community-actions {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.community-primary-button,
+.community-secondary-button {
+  padding: 6px 14px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 0.62rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.community-primary-button {
+  background: #5b8def;
+  color: #0f1726;
+}
+
+.community-primary-button:hover,
+.community-primary-button:focus-visible {
+  background: #6f9bf2;
+}
+
+.community-secondary-button {
+  background: transparent;
+  border-color: rgb(245 247 251 / 35%);
+  color: #e4e9f2;
+}
+
+.community-secondary-button:hover,
+.community-secondary-button:focus-visible {
+  border-color: rgb(245 247 251 / 60%);
+  background: rgb(245 247 251 / 8%);
+}
+
+.community-badge {
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgb(46 204 113 / 18%);
+  color: #9be7b8;
+  font-size: 0.6rem;
+  font-weight: 600;
+}
+
+.community-link-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #8cb9f0;
+  font-family: inherit;
+  font-size: 0.62rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.community-link-button:hover,
+.community-link-button:focus-visible {
+  text-decoration: underline;
+}
+
+.community-empty {
+  margin: 0;
+  color: #8f9bad;
+  font-size: 0.65rem;
+}

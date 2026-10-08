@@ -6,13 +6,13 @@ const contentCategories = [...new Set(videoCatalog.map((video) => video.category
 const initialGroups = [
   {
     id: 'family',
-    name: 'Family circle',
-    type: 'Family',
-    description: 'A calmer space for the whole family.',
+    name: 'Círculo da família',
+    type: 'Família',
+    description: 'Um espaço mais tranquilo para toda a família.',
     members: [
-      { name: 'Victor Mendes', role: 'Owner', initials: 'V' },
-      { name: 'Lia Mendes', role: 'Child', initials: 'L' },
-      { name: 'Rafael Mendes', role: 'Child', initials: 'R' },
+      { name: 'Victor Mendes', role: 'Responsável', initials: 'V' },
+      { name: 'Lia Mendes', role: 'Criança', initials: 'L' },
+      { name: 'Rafael Mendes', role: 'Criança', initials: 'R' },
     ],
     dailyLimit: 90,
     allowedCategories: ['Humor', 'Cute', 'Tips', 'Technology', 'Sports', 'Curiosities'],
@@ -20,13 +20,13 @@ const initialGroups = [
   },
   {
     id: 'friends',
-    name: 'Weekend friends',
-    type: 'Friends',
-    description: 'Shared discoveries for your close friends.',
+    name: 'Amigos do fim de semana',
+    type: 'Amigos',
+    description: 'Descobertas compartilhadas para os seus amigos mais próximos.',
     members: [
-      { name: 'Victor Mendes', role: 'Owner', initials: 'V' },
-      { name: 'Ana Costa', role: 'Member', initials: 'A' },
-      { name: 'Bruno Lima', role: 'Member', initials: 'B' },
+      { name: 'Victor Mendes', role: 'Responsável', initials: 'V' },
+      { name: 'Ana Costa', role: 'Integrante', initials: 'A' },
+      { name: 'Bruno Lima', role: 'Integrante', initials: 'B' },
     ],
     dailyLimit: 120,
     allowedCategories: contentCategories,
@@ -35,6 +35,13 @@ const initialGroups = [
 ]
 
 const limitOptions = [30, 60, 90, 120, 180]
+
+// Vírgula decimal e plural só a partir de duas horas: `90` vira `1,5 h`.
+function groupLimitLabel(minutes) {
+  if (minutes < 60) return `${minutes} min`
+  const hours = minutes / 60
+  return `${String(hours).replace('.', ',')} ${hours < 2 ? 'hora' : 'horas'}`
+}
 
 export default function GroupSettings({ onBack }) {
   const [groups, setGroups] = useState(initialGroups)
@@ -64,23 +71,23 @@ export default function GroupSettings({ onBack }) {
   }
 
   function saveChanges() {
-    setNotice(`${selectedGroup.name} settings saved for this session.`)
+    setNotice(`Configurações de ${selectedGroup.name} salvas para esta sessão.`)
   }
 
   return (
     <div className="profile-subpage group-settings-page">
-      <button className="profile-back-button" type="button" onClick={onBack}>← Back to Profile</button>
+      <button className="profile-back-button" type="button" onClick={onBack}>← Voltar ao perfil</button>
 
       <header className="group-settings-heading">
         <div>
-          <p className="profile-eyebrow">SHARED SPACE</p>
-          <h1>Group settings</h1>
-          <p>Choose what your group can watch and set a daily rhythm that works for everyone.</p>
+          <p className="profile-eyebrow">ESPAÇO COMPARTILHADO</p>
+          <h1>Configurações do grupo</h1>
+          <p>Escolha o que o seu grupo pode assistir e defina um ritmo diário que funcione para todos.</p>
         </div>
-        <button className="group-save-button" type="button" onClick={saveChanges}>Save changes</button>
+        <button className="group-save-button" type="button" onClick={saveChanges}>Salvar alterações</button>
       </header>
 
-      <div className="group-picker" role="tablist" aria-label="Choose a group">
+      <div className="group-picker" role="tablist" aria-label="Escolher um grupo">
         {groups.map((group) => (
           <button
             className={selectedGroupId === group.id ? 'is-selected' : ''}
@@ -90,19 +97,19 @@ export default function GroupSettings({ onBack }) {
             aria-selected={selectedGroupId === group.id}
             onClick={() => { setSelectedGroupId(group.id); setNotice('') }}
           >
-            <span className="group-picker-icon" aria-hidden="true">{group.type === 'Family' ? '⌂' : '♧'}</span>
-            <span><strong>{group.name}</strong><small>{group.type} · {group.members.length} members</small></span>
+            <span className="group-picker-icon" aria-hidden="true">{group.type === 'Família' ? '⌂' : '♧'}</span>
+            <span><strong>{group.name}</strong><small>{group.type} · {group.members.length} integrantes</small></span>
           </button>
         ))}
-        <button className="group-add-button" type="button" onClick={() => setNotice('New group creation will be available here.')}>+ New group</button>
+        <button className="group-add-button" type="button" onClick={() => setNotice('A criação de novos grupos ficará disponível aqui.')}>+ Novo grupo</button>
       </div>
 
       <div className="group-settings-layout">
         <div className="group-settings-main">
           <section className="group-panel group-content-panel">
             <div className="group-panel-heading">
-              <div><span className="group-panel-kicker">CONTENT ACCESS</span><h2>What {selectedGroup.name} can watch</h2><p>{selectedGroup.description}</p></div>
-              <span className="group-count">{selectedGroup.allowedVideos.length}/{videoCatalog.length} videos</span>
+              <div><span className="group-panel-kicker">ACESSO AO CONTEÚDO</span><h2>O que {selectedGroup.name} pode assistir</h2><p>{selectedGroup.description}</p></div>
+              <span className="group-count">{selectedGroup.allowedVideos.length}/{videoCatalog.length} vídeos</span>
             </div>
 
             <div className="group-category-grid">
@@ -113,13 +120,13 @@ export default function GroupSettings({ onBack }) {
                   <label className={`group-category-option${isAllowed ? ' is-selected' : ''}`} key={category}>
                     <input type="checkbox" checked={isAllowed} onChange={() => toggleCategory(category)} />
                     <span className="group-checkmark" aria-hidden="true">{isAllowed ? '✓' : ''}</span>
-                    <span><strong>{category}</strong><small>{categoryCount} {categoryCount === 1 ? 'video' : 'videos'}</small></span>
+                    <span><strong>{category}</strong><small>{categoryCount} {categoryCount === 1 ? 'vídeo' : 'vídeos'}</small></span>
                   </label>
                 )
               })}
             </div>
 
-            <div className="group-video-heading"><h3>Individual content</h3><span>Fine-tune access for this group</span></div>
+            <div className="group-video-heading"><h3>Conteúdo individual</h3><span>Ajuste o acesso deste grupo em detalhe</span></div>
             <div className="group-video-list">
               {videoCatalog.map((video) => {
                 const isAllowed = selectedGroup.allowedVideos.includes(video.id)
@@ -128,7 +135,7 @@ export default function GroupSettings({ onBack }) {
                     <input type="checkbox" checked={isAllowed} onChange={() => toggleVideo(video.id)} />
                     <span className="group-video-art" style={{ '--video-color': video.color }} aria-hidden="true">{video.artwork.slice(0, 1).toUpperCase()}</span>
                     <span><strong>{video.title}</strong><small>{video.category} · {video.duration}</small></span>
-                    <span className="group-video-state">{isAllowed ? 'Allowed' : 'Blocked'}</span>
+                    <span className="group-video-state">{isAllowed ? 'Liberado' : 'Bloqueado'}</span>
                   </label>
                 )
               })}
@@ -138,21 +145,21 @@ export default function GroupSettings({ onBack }) {
 
         <aside className="group-settings-side">
           <section className="group-panel group-time-panel">
-            <span className="group-panel-kicker">TIME BOUNDARIES</span>
-            <h2>Daily screen time</h2>
-            <p>Set the maximum watch time for each member of this group.</p>
-            <div className="group-limit-options" role="group" aria-label="Daily screen time limit">
-              {limitOptions.map((minutes) => <button className={selectedGroup.dailyLimit === minutes ? 'is-selected' : ''} key={minutes} type="button" aria-pressed={selectedGroup.dailyLimit === minutes} onClick={() => updateSelectedGroup({ dailyLimit: minutes })}>{minutes >= 60 ? `${minutes / 60} hr` : `${minutes} min`}</button>)}
+            <span className="group-panel-kicker">LIMITES DE TEMPO</span>
+            <h2>Tempo de tela diário</h2>
+            <p>Defina o tempo máximo de uso para cada integrante deste grupo.</p>
+            <div className="group-limit-options" role="group" aria-label="Limite diário de tempo de tela">
+              {limitOptions.map((minutes) => <button className={selectedGroup.dailyLimit === minutes ? 'is-selected' : ''} key={minutes} type="button" aria-pressed={selectedGroup.dailyLimit === minutes} onClick={() => updateSelectedGroup({ dailyLimit: minutes })}>{groupLimitLabel(minutes)}</button>)}
             </div>
-            <div className="group-limit-summary"><strong>{selectedGroup.dailyLimit} min</strong><span>per member, per day</span></div>
+            <div className="group-limit-summary"><strong>{selectedGroup.dailyLimit} min</strong><span>por integrante, por dia</span></div>
           </section>
 
           <section className="group-panel group-members-panel">
-            <div className="group-panel-heading"><div><span className="group-panel-kicker">PEOPLE</span><h2>Members</h2></div><span className="group-count">{selectedGroup.members.length}</span></div>
+            <div className="group-panel-heading"><div><span className="group-panel-kicker">PESSOAS</span><h2>Integrantes</h2></div><span className="group-count">{selectedGroup.members.length}</span></div>
             <div className="group-members-list">
-              {selectedGroup.members.map((member) => <div className="group-member" key={member.name}><span className="group-member-avatar">{member.initials}</span><span><strong>{member.name}</strong><small>{member.role}</small></span><button type="button" aria-label={`Manage ${member.name}`} onClick={() => setNotice(`Member controls for ${member.name} will be available here.`)}>›</button></div>)}
+              {selectedGroup.members.map((member) => <div className="group-member" key={member.name}><span className="group-member-avatar">{member.initials}</span><span><strong>{member.name}</strong><small>{member.role}</small></span><button type="button" aria-label={`Gerenciar ${member.name}`} onClick={() => setNotice(`Os controles de ${member.name} ficarão disponíveis aqui.`)}>›</button></div>)}
             </div>
-            <button className="group-invite-button" type="button" onClick={() => setNotice('Invite flow will be available here.')}>+ Invite member</button>
+            <button className="group-invite-button" type="button" onClick={() => setNotice('O fluxo de convite ficará disponível aqui.')}>+ Convidar integrante</button>
           </section>
         </aside>
       </div>
