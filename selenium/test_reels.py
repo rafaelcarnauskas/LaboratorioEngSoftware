@@ -90,13 +90,10 @@ class TestReels(unittest.TestCase):
     def test_seta_para_baixo_mostra_proximo_video(self):
         self.driver.find_element(By.TAG_NAME, "body").send_keys(Keys.ARROW_DOWN)
 
-        # O segundo vídeo precisa "encaixar" logo abaixo da barra do topo.
+        # O segundo vídeo precisa encaixar no topo do feed, sem a barra do template.
         segundo_reel = self.driver.find_element(By.CSS_SELECTOR, SEGUNDO_REEL)
-        topo_da_pagina = self.driver.find_element(By.CSS_SELECTOR, ".reels-topbar")
-        altura_topbar = topo_da_pagina.size["height"]
-
         self.wait.until(
-            lambda driver: abs(segundo_reel.rect["y"] - altura_topbar) <= 2
+            lambda driver: abs(segundo_reel.rect["y"]) <= 2
         )
         self.assertTrue(segundo_reel.is_displayed())
 
