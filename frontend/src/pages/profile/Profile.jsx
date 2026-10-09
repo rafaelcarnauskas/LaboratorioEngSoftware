@@ -32,7 +32,7 @@ const fallbackMyTime = {
   toggleReminder: noop,
 }
 
-function Profile({ path = '/profile', onNavigate, events = [], clearHistory, myTime = fallbackMyTime }) {
+function Profile({ path = '/profile', onNavigate, onSignOut, events = [], clearHistory, myTime = fallbackMyTime }) {
   const route = profileRoutes[path] ?? profileRoutes['/profile']
   const [profile, setProfile] = useState({
     name: 'Victor Mendes',
@@ -90,10 +90,10 @@ function Profile({ path = '/profile', onNavigate, events = [], clearHistory, myT
     return <ProfilePlaceholder title={route.title} onBack={() => onNavigate('/profile')} />
   }
 
-  return <ProfileOverview profile={profile} onNavigate={onNavigate} />
+  return <ProfileOverview profile={profile} onNavigate={onNavigate} onSignOut={onSignOut} />
 }
 
-function ProfileOverview({ profile, onNavigate }) {
+function ProfileOverview({ profile, onNavigate, onSignOut }) {
   return (
     <div className="profile-main">
       <div className="profile-heading">
@@ -123,7 +123,7 @@ function ProfileOverview({ profile, onNavigate }) {
           </ProfileSection>
 
           <ProfileSection id="profile-system" title="SISTEMA">
-            <ProfileAction className="profile-action--danger" icon="⇥" label="Sair" onClick={() => onNavigate('/profile/sign-out')} />
+            <ProfileAction className="profile-action--danger" icon="⇥" label="Sair" onClick={onSignOut ?? (() => onNavigate('/profile/sign-out'))} />
           </ProfileSection>
         </div>
 

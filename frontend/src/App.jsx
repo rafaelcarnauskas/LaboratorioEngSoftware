@@ -12,6 +12,8 @@ import useMyTime from './hooks/useMyTime'
 import { videoCatalog } from './data/videoCatalog'
 import Profile from './pages/profile/Profile'
 import History from './pages/History'
+import Login from './pages/Login'
+import { clearSession, getSession } from './hooks/session'
 import { findCommunity, partitionCommunities } from './data/communities'
 import { countByCommunity, hydrate } from './lib/reelsIndex'
 import { formatTime, recentlyWatched } from './lib/usage'
@@ -66,6 +68,7 @@ function CommunityTile({ community, onOpen }) {
 
 function App() {
   const [isLoading, setIsLoading] = useState(true)
+  const [session, setSession] = useState(getSession)
   const [nav, setNav] = useState(() => parseUrl(window.location.search))
   const [profilePath, setProfilePath] = useState(() => getProfilePathFromUrl() ?? '/profile')
   const [activeTab, setActiveTab] = useState(() => getProfilePathFromUrl() ? 'Profile' : 'Home')
@@ -171,6 +174,16 @@ function App() {
     setActiveTab('Profile')
   }
 
+  // Sair apaga a sessão salva: na próxima abertura o login aparece de novo.
+  const handleSignOut = () => {
+    clearSession()
+    window.history.pushState(null, '', '/')
+    setNav(homeState)
+    setProfilePath('/profile')
+    setActiveTab('Home')
+    setSession(null)
+  }
+
   const handleNavigation = (tab) => {
     if (tab === 'Profile') {
       navigateProfile('/profile')
@@ -192,6 +205,9 @@ function App() {
       </main>
     )
   }
+
+  // Login só na primeira vez: com sessão salva, o app abre direto (inclusive pelos links de Reels).
+  if (!session) return <Login onLogin={setSession} />
 
   if (nav.screen === 'reels') {
     return (
@@ -290,7 +306,7 @@ function App() {
     switch (activeTab) {
       case 'Home': return renderHome()
       case 'History': return <History events={events} onClearHistory={clearHistory} />
-      case 'Profile': return <Profile path={profilePath} onNavigate={navigateProfile} events={events} clearHistory={clearHistory} myTime={myTime} />
+      case 'Profile': return <Profile path={profilePath} onNavigate={navigateProfile} onSignOut={handleSignOut} events={events} clearHistory={clearHistory} myTime={myTime} />
       case 'Search': return <SearchView videos={videoCatalog} lists={lists} onListsChange={updateLists} storageError={storageError} />
       case 'Community': return <CommunityView memberships={memberships} onJoin={joinCommunity} onLeave={leaveCommunity} onOpenCommunity={(communityId) => openCommunity(communityId)} storageError={communityStorageError} />
       case 'Lists': return <ListsView lists={lists} onListsChange={updateLists} availableVideos={videoCatalog} storageError={storageError} />

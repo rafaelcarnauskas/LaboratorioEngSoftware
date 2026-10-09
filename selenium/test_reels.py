@@ -28,6 +28,13 @@ class TestReels(unittest.TestCase):
         self.addCleanup(self.driver.quit)
         self.wait = WebDriverWait(self.driver, 10)
 
+        # Começa já logado: grava a sessão do usuário de teste antes de abrir os
+        # Reels, para pular a tela de login (testada em test_login.py).
+        self.driver.get(URL_APP)
+        self.driver.execute_script(
+            "localStorage.setItem('choosen.session', JSON.stringify("
+            "{email: 'victor@email.com', name: 'Victor Mendes'}))"
+        )
         self.driver.get(URL_REELS)
 
         # Aguarda a tela de loading sumir e o primeiro vídeo aparecer.
