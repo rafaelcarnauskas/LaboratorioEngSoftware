@@ -6,6 +6,7 @@ import ChangePassword from './ChangePassword'
 import Notifications from './Notifications'
 import WhatsappAlerts from './WhatsappAlerts'
 import ManageCommunities from './ManageCommunities'
+import SystemAdmin from './SystemAdmin'
 import { limitOptions } from '../../hooks/useMyTime'
 import { dailyAverage, limitState, minutesToday, weeklyUsage, wellnessDays } from '../../lib/usage'
 
@@ -18,6 +19,7 @@ const profileRoutes = {
   '/profile/group-settings': { title: 'Configurações do grupo' },
   '/profile/notifications': { title: 'Notificações' },
   '/profile/whatsapp-alerts': { title: 'Alertas no WhatsApp' },
+  '/profile/system-admin': { title: 'Administrador do sistema' },
   '/profile/sign-out': { title: 'Sair' },
 }
 
@@ -40,6 +42,8 @@ function Profile({ path = '/profile', onNavigate, onSignOut, events = [], clearH
     email: 'victor@email.com',
     description: 'Compartilhando o que escolho assistir.',
     photo: '',
+    isCommunityAdmin: true,
+    isSystemAdmin: true,
   })
 
   if (path === '/profile/my-time') {
@@ -83,7 +87,11 @@ function Profile({ path = '/profile', onNavigate, onSignOut, events = [], clearH
   }
 
   if (path === '/profile/admin') {
-    return <ManageCommunities onBack={() => onNavigate('/profile')} />
+    return <ManageCommunities onBack={() => onNavigate('/profile')} onOpenSystemAdmin={() => onNavigate('/profile/system-admin')} />
+  }
+
+  if (path === '/profile/system-admin') {
+    return <SystemAdmin onBack={() => onNavigate('/profile')} />
   }
 
   if (path !== '/profile') {
@@ -114,7 +122,12 @@ function ProfileOverview({ profile, onNavigate, onSignOut }) {
                 {profile.description && <small className="profile-description">{profile.description}</small>}
               </div>
             </div>
-            <ProfileLink className="admin-button" label="▣  Administrar comunidades ↗" onClick={() => onNavigate('/profile/admin')} />
+            {profile.isCommunityAdmin && (
+              <ProfileLink className="admin-button" label="▣  Administrar comunidades ↗" onClick={() => onNavigate('/profile/admin')} />
+            )}
+            {profile.isSystemAdmin && (
+              <ProfileLink className="admin-button profile-system-admin-button" label="⚙  Administração do sistema ↗" onClick={() => onNavigate('/profile/system-admin')} />
+            )}
           </section>
 
           <ProfileSection id="profile-account" title="CONTA">
