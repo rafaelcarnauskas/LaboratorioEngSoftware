@@ -1,0 +1,209 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+/* Cores e medidas do frame "login" no Figma (página Entrega). */
+.login-page {
+  --login-bg: #2a374a;
+  --login-card: #2b3f5a;
+  --login-input: #22303f;
+  --login-input-border: #3d4d66;
+  --login-text: #fafafa;
+  --login-label: #d4dae3;
+  --login-muted: #8f9cae;
+  --login-placeholder: #7d8ca1;
+  --login-accent: #f2b844;
+  --login-accent-text: #1e2a3b;
+  --login-error: #ff6b6b;
+  --login-error-text: #ffb4b4;
+
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  padding: 32px 16px;
+  background: var(--login-bg);
+  color: var(--login-text);
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+
+:where(.login-page) :where(h1, p) {
+  margin: 0;
+}
+
+:where(.login-page) button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.login-page :focus-visible {
+  outline: 2px solid var(--login-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.login-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.login-brand-name {
+  font-size: 52px;
+  font-weight: 600;
+  letter-spacing: -1px;
+}
+
+.login-card {
+  width: min(440px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 40px;
+  border: 1px solid rgb(255 255 255 / 8%);
+  border-radius: 12px;
+  background: var(--login-card);
+}
+
+.login-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.login-header h1 {
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.login-header p {
+  color: var(--login-muted);
+  font-size: 15px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.login-banner {
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgb(255 107 107 / 15%);
+  color: var(--login-error-text);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.login-field label {
+  color: var(--login-label);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.login-input {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  border: 1px solid var(--login-input-border);
+  border-radius: 8px;
+  background: var(--login-input);
+}
+
+.login-input:focus-within {
+  border-color: var(--login-accent);
+}
+
+.login-input:has(input[aria-invalid='true']) {
+  border-color: var(--login-error);
+  box-shadow: 0 0 0 0.5px var(--login-error);
+}
+
+.login-input input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--login-text);
+  font: inherit;
+  font-size: 15px;
+  outline: none;
+}
+
+.login-input input::placeholder {
+  color: var(--login-placeholder);
+}
+
+.login-show-password {
+  flex: 0 0 auto;
+  color: var(--login-label);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.login-show-password:hover {
+  color: var(--login-text);
+}
+
+.login-field-error {
+  color: var(--login-error-text);
+  font-size: 13px;
+}
+
+.login-forgot-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.login-link {
+  color: var(--login-accent);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.login-link:hover {
+  text-decoration: underline;
+}
+
+.login-link--strong {
+  font-weight: 600;
+}
+
+.login-submit {
+  height: 48px;
+  border-radius: 8px;
+  background: var(--login-accent);
+  color: var(--login-accent-text);
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  transition: filter 120ms ease;
+}
+
+.login-submit:hover {
+  filter: brightness(1.06);
+}
+
+.login-submit:active {
+  filter: brightness(0.95);
+}
+
+.login-signup {
+  color: var(--login-muted);
+  font-size: 14px;
+  text-align: center;
+}

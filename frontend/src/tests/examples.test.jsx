@@ -46,7 +46,9 @@ afterEach(() => {
 })
 
 // Monta o App já passado da tela de carregamento e devolve o `user-event`.
+// Começa com sessão salva para pular a tela de login (testada no Selenium).
 async function mountApp() {
+  stub.seed({ 'choosen.session': JSON.stringify({ email: 'victor@email.com', name: 'Victor Mendes' }) })
   vi.useFakeTimers()
   try {
     // `createElement` em vez de JSX: a configuração atual do Vitest transforma

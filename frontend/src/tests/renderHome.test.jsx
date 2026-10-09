@@ -74,7 +74,9 @@ function buildEvents(plans, now) {
 const reelsById = new Map(reels.map((reel) => [reel.id, reel]))
 
 // App exibe uma tela de carregamento por 1,5s antes do conteúdo.
+// Começa com sessão salva para pular a tela de login (testada no Selenium).
 function renderApp() {
+  stub.seed({ 'choosen.session': JSON.stringify({ email: 'victor@email.com', name: 'Victor Mendes' }) })
   vi.useFakeTimers()
   const utils = render(<App />)
   act(() => {

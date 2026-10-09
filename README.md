@@ -35,11 +35,17 @@ npm run dev
 ```
 
 Abra http://localhost:5173/. O Vite usa porta fixa e informa um erro caso esteja
-ocupada. Os cards Sports e Cute abrem os Reels. As demais categorias abrem Search.
+ocupada.
+
+Na primeira vez o app pede login. Enquanto não há backend, use o usuário de teste
+**victor@email.com** / **choosen123** (definido em `frontend/src/hooks/session.js`).
+O login fica salvo no navegador; o botão Sair, no Perfil, encerra a sessão e volta ao login.
+
+Os cards Sports e Cute abrem os Reels. As demais categorias abrem Search.
 Também é possível abrir http://localhost:5173/?tela=reels&categoria=sports.
 O botão Home dos Reels retorna à aplicação principal.
 
-## Testes Selenium de Victor e Murilo
+## Testes Selenium
 
 Pré-requisitos: Node.js, Python 3.10 ou superior e Google Chrome. Mantenha o app
 rodando em um terminal. Em outro terminal, na raiz do repositório:
@@ -57,8 +63,10 @@ o ambiente virtual. A pasta `.venv` é local e não deve ser versionada nem copi
 entre máquinas. Na primeira execução, o Selenium Manager pode precisar de
 internet para obter o driver compatível com o Chrome.
 
-O runner executa as duas suítes, incluindo os testes de integração, e retorna
-código 1 se algum teste falhar. Cada teste usa uma sessão nova do navegador.
+O runner executa as três suítes (login, telas principais e Reels), incluindo os
+testes de integração, e retorna código 1 se algum teste falhar. Cada teste usa uma
+sessão nova do navegador. As suítes de telas principais e Reels já começam logadas;
+o login é testado à parte.
 
 Para rodar sem abrir janelas, ou apontar para outro endereço:
 
@@ -71,12 +79,15 @@ $env:URL_APP = 'http://localhost:5173'
 Para executar separadamente:
 
 ```powershell
+./.venv/Scripts/python.exe selenium/test_login.py
 ./.venv/Scripts/python.exe selenium/test_app.py
 ./.venv/Scripts/python.exe selenium/test_reels.py
 ```
 
+- Murilo (login): login válido e lembrado, campos vazios, e-mail inválido, senha
+  incorreta e Sair.
 - Victor: Home, Profile, My Time, History e criação/validação de Lists.
-- Murilo: comentários válidos/inválidos e navegação por teclado nos Reels.
+- Murilo (Reels): comentários válidos/inválidos e navegação por teclado.
 - Integração (em `test_app.py`): Home → Reels → Home → Lists → Search e salvar
   um resultado de Search em uma nova lista.
 

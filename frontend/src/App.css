@@ -664,6 +664,25 @@
   white-space: nowrap;
 }
 
+.manage-communities-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.manage-system-button {
+  min-height: 31px;
+  padding: 0 10px;
+  border: 1px solid rgba(242, 184, 68, 0.55);
+  border-radius: 6px;
+  background: transparent;
+  color: #f2b844;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.57rem;
+  font-weight: 700;
+}
+
 .manage-communities-layout {
   display: grid;
   grid-template-columns: 250px minmax(0, 1fr);
@@ -960,6 +979,422 @@
   color: #8ed6a0;
 }
 
+.system-admin-page {
+  min-height: calc(100vh - 68px);
+  padding: 28px 30px 60px;
+  background: #202b40;
+}
+
+.system-admin-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1180px;
+  margin: 0 auto 28px;
+}
+
+.system-admin-topbar .profile-back-button {
+  margin: 0;
+}
+
+.system-admin-badge,
+.system-admin-eyebrow,
+.system-admin-kicker {
+  color: #8f9bad;
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.system-admin-badge {
+  padding: 5px 8px;
+  border: 1px solid rgba(238, 119, 119, 0.35);
+  border-radius: 999px;
+  color: #ee9999;
+}
+
+.system-admin-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  max-width: 1180px;
+  margin: 0 auto 28px;
+}
+
+.system-admin-header h1 {
+  margin: 7px 0 0;
+  color: #f5f7fb;
+  font-size: clamp(1.55rem, 3vw, 2.15rem);
+}
+
+.system-admin-header p {
+  max-width: 550px;
+  margin: 8px 0 0;
+  color: #aeb9c9;
+  font-size: 0.68rem;
+  line-height: 1.5;
+}
+
+.system-admin-user {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 12px;
+  border: 1px solid rgba(174, 185, 201, 0.18);
+  border-radius: 8px;
+  background: #2f3d55;
+  white-space: nowrap;
+}
+
+.system-admin-avatar {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #f2b844;
+  border-radius: 50%;
+  color: #f5f7fb;
+  font-size: 0.7rem;
+}
+
+.system-admin-user strong,
+.system-admin-user small {
+  display: block;
+}
+
+.system-admin-user strong {
+  color: #f5f7fb;
+  font-size: 0.61rem;
+}
+
+.system-admin-user small {
+  margin-top: 3px;
+  color: #aeb9c9;
+  font-size: 0.52rem;
+}
+
+.system-admin-layout {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 990px);
+  gap: 24px;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.system-admin-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.system-admin-nav button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #aeb9c9;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.63rem;
+  text-align: left;
+}
+
+.system-admin-nav button:hover,
+.system-admin-nav button.is-active {
+  background: #35445f;
+  color: #f5f7fb;
+}
+
+.system-admin-nav button.is-active {
+  box-shadow: inset 3px 0 #f2b844;
+}
+
+.system-admin-nav b {
+  min-width: 16px;
+  margin-left: auto;
+  border-radius: 999px;
+  background: #ee7777;
+  color: #2d374c;
+  font-size: 0.5rem;
+  text-align: center;
+}
+
+.system-admin-content {
+  min-width: 0;
+}
+
+.system-admin-title-row,
+.system-admin-panel-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.system-admin-title-row {
+  margin-bottom: 17px;
+}
+
+.system-admin-title-row h2 {
+  margin: 5px 0 0;
+  color: #f5f7fb;
+  font-size: 1.05rem;
+}
+
+.system-admin-updated {
+  color: #8ed6a0;
+  font-size: 0.56rem;
+}
+
+.system-admin-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 17px;
+}
+
+.system-admin-metric,
+.system-admin-panel,
+.system-admin-community-card {
+  border: 1px solid rgba(174, 185, 201, 0.13);
+  border-radius: 8px;
+  background: #2f3d55;
+}
+
+.system-admin-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+}
+
+.system-admin-metric > span {
+  color: #aeb9c9;
+  font-size: 0.57rem;
+}
+
+.system-admin-metric strong {
+  color: #f5f7fb;
+  font-size: 1.15rem;
+}
+
+.system-admin-metric small {
+  font-size: 0.54rem;
+}
+
+.is-positive { color: #8ed6a0; }
+.is-warning { color: #f2b844 !important; }
+
+.system-admin-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: 17px;
+}
+
+.system-admin-panel {
+  padding: 17px;
+}
+
+.system-admin-panel-heading {
+  margin-bottom: 13px;
+}
+
+.system-admin-panel-heading h3 {
+  margin: 5px 0 0;
+  color: #f5f7fb;
+  font-size: 0.78rem;
+}
+
+.system-health-dot {
+  color: #8ed6a0;
+  font-size: 0.55rem;
+}
+
+.system-services-list,
+.moderation-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.system-service,
+.moderation-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 54px;
+  border-bottom: 1px solid rgba(174, 185, 201, 0.1);
+}
+
+.system-service:last-child,
+.moderation-item:last-child {
+  border-bottom: 0;
+}
+
+.system-service-indicator {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #8ed6a0;
+}
+
+.system-service-indicator.is-warning {
+  background: #f2b844;
+}
+
+.system-service > span:nth-child(2),
+.moderation-item > span:nth-child(2) {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.system-service strong,
+.moderation-item strong {
+  color: #f5f7fb;
+  font-size: 0.61rem;
+}
+
+.system-service small,
+.moderation-item small {
+  overflow: hidden;
+  color: #aeb9c9;
+  font-size: 0.54rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.system-service em {
+  margin-left: auto;
+  color: #8ed6a0;
+  font-size: 0.54rem;
+  font-style: normal;
+}
+
+.system-admin-panel-heading button,
+.moderation-item button,
+.system-admin-community-card button {
+  border: 0;
+  background: transparent;
+  color: #f2b844;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.55rem;
+  font-weight: 700;
+}
+
+.moderation-item {
+  gap: 8px;
+}
+
+.moderation-icon {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 6px;
+  background: rgba(242, 184, 68, 0.15);
+  color: #f2b844;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.moderation-icon--info {
+  background: rgba(113, 164, 218, 0.15);
+  color: #8db9e5;
+}
+
+.moderation-item button {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.system-admin-empty,
+.system-admin-notice {
+  color: #aeb9c9;
+  font-size: 0.61rem;
+}
+
+.system-admin-notice {
+  color: #8ed6a0;
+}
+
+.moderation-panel--expanded {
+  max-width: 720px;
+}
+
+.system-admin-community-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.system-admin-community-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px;
+}
+
+.system-admin-community-card > span {
+  font-size: 1.25rem;
+}
+
+.system-admin-community-card > div {
+  min-width: 0;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.system-admin-community-card strong {
+  color: #f5f7fb;
+  font-size: 0.63rem;
+}
+
+.system-admin-community-card small {
+  color: #aeb9c9;
+  font-size: 0.54rem;
+}
+
+.system-admin-placeholder {
+  min-height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  border: 1px dashed rgba(174, 185, 201, 0.25);
+  border-radius: 9px;
+  text-align: center;
+}
+
+.system-admin-placeholder-icon {
+  color: #f2b844;
+  font-size: 1.6rem;
+}
+
+.system-admin-placeholder h2 {
+  margin: 12px 0 0;
+  color: #f5f7fb;
+  font-size: 0.9rem;
+}
+
+.system-admin-placeholder p {
+  max-width: 330px;
+  margin: 7px 0 0;
+  color: #aeb9c9;
+  font-size: 0.61rem;
+  line-height: 1.5;
+}
+
 @media (max-width: 700px) {
   .manage-communities-heading {
     align-items: flex-start;
@@ -982,6 +1417,30 @@
 
   .manage-community-item {
     border-top: 1px solid rgba(174, 185, 201, 0.1);
+  }
+
+  .system-admin-page {
+    padding: 22px 14px 50px;
+  }
+
+  .system-admin-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .system-admin-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .system-admin-nav {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .system-admin-metrics,
+  .system-admin-grid,
+  .system-admin-community-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -1323,6 +1782,12 @@
   font: inherit;
   font-size: 0.57rem;
   font-weight: 700;
+}
+
+.profile-system-admin-button {
+  margin-top: 7px;
+  background: #35445f;
+  color: #f2b844;
 }
 
 .profile-section h2 {
