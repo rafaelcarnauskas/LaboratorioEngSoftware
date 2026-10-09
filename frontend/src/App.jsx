@@ -282,6 +282,9 @@ function App() {
           onClearNiches={() => clearNiches(activeCommunity.id)}
           onOpenReel={(reelId) => openReels(activeCommunity.id, reelId)}
           onBack={leaveCommunityDetail}
+          isJoined={memberships.some((membership) => membership.id === activeCommunity.id)}
+          onJoin={joinCommunity}
+          onLeave={leaveCommunity}
           storageError={nicheStorageError}
         />
       )

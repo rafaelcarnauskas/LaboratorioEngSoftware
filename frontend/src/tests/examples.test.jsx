@@ -232,6 +232,20 @@ describe('Tela_Comunidade', () => {
     expect(screen.queryByRole('button', { name: 'Limpar filtros' })).toBeNull()
   })
 
+  it('permite participar e sair pela própria página da comunidade', async () => {
+    window.history.pushState(null, '', '/?tela=comunidade&comunidade=poli-usp')
+    const user = await mountApp()
+
+    await user.click(screen.getByRole('button', { name: 'Participar de Poli USP' }))
+
+    expect(screen.getByText('Participando')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Sair de Poli USP' })).toBeTruthy()
+
+    await user.click(screen.getByRole('button', { name: 'Sair de Poli USP' }))
+
+    expect(screen.getByRole('button', { name: 'Participar de Poli USP' })).toBeTruthy()
+  })
+
   // nicho sem vídeo mostra a mensagem e o filtro fica de pé.
   it('exibe o estado vazio de vídeos sem desfazer o filtro de nicho', async () => {
     window.history.pushState(null, '', '/?tela=comunidade&comunidade=poli-usp')
