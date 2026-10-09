@@ -4,7 +4,7 @@ import { hydrate } from '../lib/reelsIndex'
 import { findCommunity } from '../data/communities'
 import '../App.css'
 
-export default function History({ events = [], onClearHistory }) {
+export default function History({ events = [], onClearHistory, onBack }) {
   // O relógio é lido uma única vez, na montagem: os rótulos "Hoje" e
   // "Ontem" ficam estáveis entre re-renderizações da tela.
   const [now] = useState(() => Date.now())
@@ -17,6 +17,7 @@ export default function History({ events = [], onClearHistory }) {
 
   return (
     <div className="history-view">
+      {onBack && <button className="profile-back-button history-back-button" type="button" onClick={onBack}>← Voltar ao perfil</button>}
       <header className="history-header">
         <div>
           <span className="history-eyebrow">SUA ATIVIDADE</span>
