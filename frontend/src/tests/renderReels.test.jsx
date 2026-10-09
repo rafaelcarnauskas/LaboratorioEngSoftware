@@ -72,7 +72,7 @@ describe('Reels — renderização do feed', () => {
   // **Cada reel renderizado expõe autor, avatar, legenda e
   // `data-reel-id`**
 
-  it('renderiza cada reel do filtro com autor, avatar, legenda e data-reel-id, sob uma única topbar', () => {
+  it('renderiza cada reel do filtro com autor, avatar, legenda e data-reel-id, sem a barra superior do template', () => {
     fc.assert(
       fc.property(feedScenario, ({ category, communityId, niches }) => {
         cleanup()
@@ -82,8 +82,8 @@ describe('Reels — renderização do feed', () => {
           <Reels category={category} communityId={communityId} niches={niches} />,
         )
 
-        // A topbar é contrato da Suite_Selenium: exatamente uma, sempre.
-        expect(container.querySelectorAll('.reels-topbar')).toHaveLength(1)
+        // A tela deixou de usar a barra e os ícones do template do Instagram.
+        expect(container.querySelector('.reels-topbar')).toBeNull()
 
         const posts = [...container.querySelectorAll('.reels-post')]
         expect(posts.map((post) => post.dataset.reelId)).toEqual(expected.map((reel) => reel.id))
@@ -100,6 +100,57 @@ describe('Reels — renderização do feed', () => {
       { numRuns: RUNS },
     )
   }, PROPERTY_TIMEOUT_MS)
+})
+
+describe('Reels — ações e comunidades', () => {
+  it('alterna a curtida com a marca Choosen e atualiza o contador', async () => {
+    const reel = reels[0]
+    const user = userEvent.setup()
+    const { container } = render(<Reels communityId={reel.communityId} niches={[reel.nicheId]} />)
+    const post = within(container.querySelector(`[data-reel-id="${reel.id}"]`))
+    const like = post.getByTestId('acao-curtir')
+
+    expect(like.getAttribute('aria-pressed')).toBe('false')
+    expect(like.getAttribute('aria-label')).toBe('Curtir')
+    expect(like.textContent).toBe(formatCount(reel.likes))
+
+    await user.click(like)
+
+    expect(like.getAttribute('aria-pressed')).toBe('true')
+    expect(like.getAttribute('aria-label')).toBe('Remover curtida')
+    expect(like.textContent).toBe(formatCount(reel.likes + 1))
+    expect(like.querySelector('.reels-like-mark--liked')).toBeTruthy()
+    expect(like.querySelectorAll('.reels-like-mark > span')).toHaveLength(1)
+
+    await user.click(like)
+
+    expect(like.getAttribute('aria-pressed')).toBe('false')
+    expect(like.textContent).toBe(formatCount(reel.likes))
+  })
+
+  it('substitui recomendações de perfis por comunidades e permite entrar sem sair do vídeo', async () => {
+    const user = userEvent.setup()
+    const joined = []
+    const { container, getByRole, queryByText } = render(
+      <Reels
+        communityId="vida-de-pet"
+        onJoinCommunity={(communityId) => joined.push(communityId)}
+      />,
+    )
+
+    expect(getByRole('heading', { name: 'Comunidades relacionadas' })).toBeTruthy()
+    expect(queryByText('Sugestões para você')).toBeNull()
+    expect(container.querySelector('.reels-menu')).toBeNull()
+    expect(
+      within(container.querySelector('.reels-side')).queryByRole('button', {
+        name: 'Entrar na comunidade Vida de Pet',
+      }),
+    ).toBeNull()
+
+    await user.click(getByRole('button', { name: 'Entrar na comunidade Poli USP' }))
+
+    expect(joined).toEqual(['poli-usp'])
+  })
 })
 
 describe('Reels — comentário válido', () => {

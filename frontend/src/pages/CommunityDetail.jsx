@@ -12,6 +12,9 @@ export default function CommunityDetail({
   onClearNiches,      // () => void
   onOpenReel,         // (reelId) => void
   onBack,             // () => void — Requisito 11.8, sem history.back()
+  isJoined,           // boolean — adesão persistida da comunidade
+  onJoin,             // (communityId) => void
+  onLeave,            // (communityId) => void
   storageError,       // string — Erro_Armazenamento do Servico_Nichos
 }) {
   const videos = selectReels({ communityId: community.id, niches: selectedNiches })
@@ -33,6 +36,30 @@ export default function CommunityDetail({
             <span aria-hidden="true"> · </span>
             {countByCommunity(community.id)} vídeos
           </p>
+        </div>
+        <div className="community-detail-membership">
+          {isJoined ? (
+            <>
+              <span className="community-detail-badge">Participando</span>
+              <button
+                className="community-detail-leave"
+                type="button"
+                onClick={() => onLeave(community.id)}
+                aria-label={`Sair de ${community.name}`}
+              >
+                Sair
+              </button>
+            </>
+          ) : (
+            <button
+              className="community-detail-join"
+              type="button"
+              onClick={() => onJoin(community.id)}
+              aria-label={`Participar de ${community.name}`}
+            >
+              Participar
+            </button>
+          )}
         </div>
       </header>
 

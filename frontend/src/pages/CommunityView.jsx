@@ -11,16 +11,23 @@ function CommunityCard({ community, isJoined, onJoin, onLeave, onOpen }) {
 
   return (
     <article className={`community-card community-card--${community.tone}`}>
-      <span className="community-icon" aria-hidden="true">{community.icon}</span>
-      <div className="community-copy">
-        <h3>{community.name}</h3>
-        <p className="community-description">{community.description}</p>
-        <p className="community-meta">
-          {formatMembers(community.memberCount)} membros
-          <span aria-hidden="true"> · </span>
-          {videoCount} {videoCount === 1 ? 'vídeo' : 'vídeos'}
-        </p>
-      </div>
+      <button
+        className="community-card-open"
+        type="button"
+        onClick={() => onOpen(community)}
+        aria-label={`Abrir ${community.name}`}
+      >
+        <span className="community-icon" aria-hidden="true">{community.icon}</span>
+        <span className="community-copy">
+          <strong>{community.name}</strong>
+          <span className="community-description">{community.description}</span>
+          <span className="community-meta">
+            {formatMembers(community.memberCount)} membros
+            <span aria-hidden="true"> · </span>
+            {videoCount} {videoCount === 1 ? 'vídeo' : 'vídeos'}
+          </span>
+        </span>
+      </button>
       <div className="community-actions">
         {isJoined ? (
           <>
@@ -44,14 +51,6 @@ function CommunityCard({ community, isJoined, onJoin, onLeave, onOpen }) {
             Participar
           </button>
         )}
-        <button
-          className="community-link-button"
-          type="button"
-          onClick={() => onOpen(community)}
-          aria-label={`Abrir ${community.name}`}
-        >
-          Abrir comunidade
-        </button>
       </div>
     </article>
   )

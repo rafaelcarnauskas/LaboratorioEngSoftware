@@ -1,44 +1,28 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { suggestions } from '../data/reels'
-import { findCommunity } from '../data/communities'
+import { communities, findCommunity } from '../data/communities'
 import { selectReels } from '../lib/reelsIndex'
 import logoMark from '../assets/reels/icons/logo-mark.svg'
-import searchIcon from '../assets/reels/icons/search.svg'
-import likeIcon from '../assets/reels/icons/like.svg'
 import commentIcon from '../assets/reels/icons/comment.svg'
 import shareIcon from '../assets/reels/icons/share.svg'
 import saveIcon from '../assets/reels/icons/save.svg'
 import emojiIcon from '../assets/reels/icons/emoji.svg'
-import navHomeIcon from '../assets/reels/icons/nav-home.svg'
-import navNewPostIcon from '../assets/reels/icons/nav-new-post.svg'
-import navExploreIcon from '../assets/reels/icons/nav-explore.svg'
-import navActivityIcon from '../assets/reels/icons/nav-activity.svg'
-import meSmallAvatar from '../assets/reels/avatars/me-small.svg'
-import meAvatar from '../assets/reels/avatars/me.png'
 import './Reels.css'
 
 const currentUser = { username: 'mendesvictor', name: 'Victor Grandolfo Mendes' }
-
-// `isHome` identifica o item de navegação da Home sem depender do rótulo,
-// que agora é traduzido.
-const menuItems = [
-  { label: 'Início', icon: navHomeIcon, isHome: true },
-  { label: 'Nova publicação', icon: navNewPostIcon },
-  { label: 'Explorar', icon: navExploreIcon },
-  { label: 'Atividade', icon: navActivityIcon },
-  { label: 'Perfil', icon: meSmallAvatar },
-]
-
-const footerLinks = [
-  'Sobre', 'Imprensa', 'API', 'Carreiras', 'Privacidade', 'Termos', 'Localizações',
-  'Contas em destaque', 'Hashtags', 'Idioma',
-]
 
 // Placeholder: os botões já são clicáveis, as funções entram nos próximos passos.
 function handleNotImplemented() {}
 
 function formatCount(count) {
   return count.toLocaleString('pt-BR')
+}
+
+function ChoosenLikeMark({ liked }) {
+  return (
+    <span className={`reels-like-mark${liked ? ' reels-like-mark--liked' : ''}`} aria-hidden="true">
+      <span />
+    </span>
+  )
 }
 
 function ReelPost({ reel, community, isJoined, onJoinCommunity, onLeaveCommunity }) {
@@ -54,6 +38,7 @@ function ReelPost({ reel, community, isJoined, onJoinCommunity, onLeaveCommunity
   const [commentText, setCommentText] = useState('')
   const [comments, setComments] = useState([])
   const [feedback, setFeedback] = useState({ status: '', message: '' })
+  const [isLiked, setIsLiked] = useState(false)
   const commentListRef = useRef(null)
   const commentsToggleRef = useRef(null)
 
@@ -112,6 +97,7 @@ function ReelPost({ reel, community, isJoined, onJoinCommunity, onLeaveCommunity
 
   const hasError = feedback.status === 'erro'
   const commentCount = reel.commentCount + comments.length
+  const likeCount = reel.likes + (isLiked ? 1 : 0)
 
   return (
     <article
@@ -187,9 +173,16 @@ function ReelPost({ reel, community, isJoined, onJoinCommunity, onLeaveCommunity
       </div>
 
       <div className="reels-actions">
-        <button className="reels-action" type="button" onClick={handleNotImplemented} aria-label="Curtir">
-          <img src={likeIcon} alt="" width="28" height="28" />
-          <span>{formatCount(reel.likes)}</span>
+        <button
+          className={`reels-action reels-like-action${isLiked ? ' reels-like-action--liked' : ''}`}
+          type="button"
+          onClick={() => setIsLiked((liked) => !liked)}
+          aria-label={isLiked ? 'Remover curtida' : 'Curtir'}
+          aria-pressed={isLiked}
+          data-testid="acao-curtir"
+        >
+          <ChoosenLikeMark liked={isLiked} />
+          <span>{formatCount(likeCount)}</span>
         </button>
         <button
           className={`reels-action${isCommentsOpen ? ' reels-action--active' : ''}`}
@@ -400,6 +393,18 @@ function Reels({
         : 'Nenhum vídeo encontrado.'
 
   const joinedIds = new Set(memberships.map((membership) => membership.id))
+  const relatedCommunities = useMemo(() => {
+    const currentIds = new Set(visibleReels.map((reel) => reel.communityId))
+    const primaryCategory = community?.category ?? visibleReels[0]?.category ?? category
+
+    return communities
+      .filter((candidate) => !currentIds.has(candidate.id))
+      .sort((left, right) => {
+        const leftRelated = left.category === primaryCategory ? 1 : 0
+        const rightRelated = right.category === primaryCategory ? 1 : 0
+        return rightRelated - leftRelated || right.memberCount - left.memberCount
+      })
+  }, [category, community?.category, visibleReels])
   const pageRef = useRef(null)
 
   // Identidade estável enquanto o feed não muda, para o observer não ser
@@ -443,14 +448,6 @@ function Reels({
 
   return (
     <div className="reels-page" ref={pageRef}>
-      <header className="reels-topbar">
-        <form className="reels-search" role="search" onSubmit={(event) => event.preventDefault()}>
-          <label className="reels-visually-hidden" htmlFor="reels-busca">Buscar</label>
-          <img src={searchIcon} alt="" width="10" height="10" />
-          <input id="reels-busca" type="search" placeholder="Buscar" />
-        </form>
-      </header>
-
       <a
         className="reels-brand"
         href="/"
@@ -481,75 +478,49 @@ function Reels({
       </main>
 
       <aside className="reels-side">
-        <nav className="reels-menu" aria-label="Menu">
-          {menuItems.map((item) => (
-            <button
-              className="reels-menu-item"
-              key={item.label}
-              type="button"
-              onClick={item.isHome ? handleGoHome : handleNotImplemented}
-              aria-label={item.label}
-            >
-              <img src={item.icon} alt="" width="22" height="22" />
-            </button>
-          ))}
-        </nav>
+        <section className="reels-community-suggestions" aria-labelledby="related-communities-title">
+          <p className="reels-side-eyebrow">EXPLORE TAMBÉM</p>
+          <h2 id="related-communities-title">Comunidades relacionadas</h2>
+          <p className="reels-side-intro">Descubra outras comunidades de vídeos curtos escolhidas para você.</p>
 
-        <section className="reels-profile" aria-label="Sua conta">
-          <button
-            className="reels-profile-link"
-            type="button"
-            onClick={handleNotImplemented}
-            aria-label={`Ver seu perfil, @${currentUser.username}`}
-          >
-            <img className="reels-avatar" src={meAvatar} alt="" width="56" height="56" />
-            <span className="reels-profile-names">
-              <span className="reels-profile-user">{currentUser.username}</span>
-              <span className="reels-profile-name">{currentUser.name}</span>
-            </span>
-          </button>
-          <button className="reels-link-button" type="button" onClick={handleNotImplemented}>
-            Trocar
-          </button>
-        </section>
+          {relatedCommunities.length > 0 ? (
+            <ul>
+              {relatedCommunities.map((candidate) => {
+                const isJoined = joinedIds.has(candidate.id)
 
-        <section className="reels-suggestions" aria-labelledby="reels-suggestions-title">
-          <h2 id="reels-suggestions-title">Sugestões para você</h2>
-          <ul>
-            {suggestions.map((suggestion) => (
-              <li key={suggestion.username}>
-                <button
-                  className="reels-profile-link"
-                  type="button"
-                  onClick={handleNotImplemented}
-                  aria-label={`Ver perfil de @${suggestion.username}`}
-                >
-                  <img className="reels-avatar" src={suggestion.avatar} alt="" width="32" height="32" />
-                  <span className="reels-suggestion-names">
-                    <span className="reels-suggestion-user">{suggestion.username}</span>
-                    <span className="reels-suggestion-desc">Seguido por {suggestion.username} + 2 outros</span>
+                return (
+                <li key={candidate.id}>
+                  <article className={`reels-community-card reels-community-card--${candidate.tone}`}>
+                  <button
+                    className="reels-community-card-main"
+                    type="button"
+                    onClick={() => (isJoined ? onLeaveCommunity(candidate.id) : onJoinCommunity(candidate.id))}
+                    aria-pressed={isJoined}
+                    aria-label={
+                      isJoined
+                        ? `Sair da comunidade ${candidate.name}`
+                        : `Entrar na comunidade ${candidate.name}`
+                    }
+                  >
+                    <span className="reels-community-card-icon" aria-hidden="true">{candidate.icon}</span>
+                    <span className="reels-community-card-copy">
+                      <strong>{candidate.name}</strong>
+                      <small>{candidate.description}</small>
+                      <small>{candidate.memberCount.toLocaleString('pt-BR')} membros</small>
+                    </span>
+                  </button>
+                  <span className={`reels-community-membership${isJoined ? ' reels-community-membership--joined' : ''}`}>
+                    {isJoined ? 'Participando' : 'Entrar'}
                   </span>
-                </button>
-                <button className="reels-link-button" type="button" onClick={handleNotImplemented}>
-                  Seguir
-                </button>
-              </li>
-            ))}
-          </ul>
+                  </article>
+                </li>
+                )
+              })}
+            </ul>
+          ) : (
+            <p className="reels-side-empty">Você já está explorando todas as comunidades disponíveis.</p>
+          )}
         </section>
-
-        <footer className="reels-footer">
-          <ul className="reels-footer-links">
-            {footerLinks.map((link) => (
-              <li key={link}>
-                <button className="reels-text-button" type="button" onClick={handleNotImplemented}>
-                  {link}
-                </button>
-              </li>
-            ))}
-          </ul>
-          <p>© 2026 CHOOSEN</p>
-        </footer>
       </aside>
     </div>
   )
