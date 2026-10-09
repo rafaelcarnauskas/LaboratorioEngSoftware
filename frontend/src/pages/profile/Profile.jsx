@@ -1,6 +1,10 @@
 import { useMemo, useState } from 'react'
 import MyPlan from './MyPlan'
 import GroupSettings from './GroupSettings'
+import EditProfile, { ProfileAvatar } from './EditProfile'
+import ChangePassword from './ChangePassword'
+import Notifications from './Notifications'
+import WhatsappAlerts from './WhatsappAlerts'
 import { limitOptions } from '../../hooks/useMyTime'
 import { dailyAverage, limitState, minutesToday, weeklyUsage, wellnessDays } from '../../lib/usage'
 
@@ -9,7 +13,6 @@ const profileRoutes = {
   '/profile/admin': { title: 'Painel do administrador' },
   '/profile/edit': { title: 'Editar perfil' },
   '/profile/password': { title: 'Alterar senha' },
-  '/profile/history': { title: 'Histórico do perfil' },
   '/profile/plan': { title: 'Meu plano' },
   '/profile/group-settings': { title: 'Configurações do grupo' },
   '/profile/notifications': { title: 'Notificações' },
@@ -28,8 +31,15 @@ const fallbackMyTime = {
   toggleReminder: noop,
 }
 
-function Profile({ path = '/profile', onNavigate, onSignOut, events = [], myTime = fallbackMyTime }) {
+function Profile({ path = '/profile', onNavigate, onSignOut, events = [], clearHistory, myTime = fallbackMyTime }) {
   const route = profileRoutes[path] ?? profileRoutes['/profile']
+  const [profile, setProfile] = useState({
+    name: 'Victor Mendes',
+    username: 'victor',
+    email: 'victor@email.com',
+    description: 'Compartilhando o que escolho assistir.',
+    photo: '',
+  })
 
   if (path === '/profile/my-time') {
     return (
@@ -49,14 +59,36 @@ function Profile({ path = '/profile', onNavigate, onSignOut, events = [], myTime
     return <GroupSettings onBack={() => onNavigate('/profile')} />
   }
 
+  if (path === '/profile/edit') {
+    return (
+      <EditProfile
+        profile={profile}
+        onSave={(nextProfile) => setProfile(nextProfile)}
+        onBack={() => onNavigate('/profile')}
+      />
+    )
+  }
+
+  if (path === '/profile/password') {
+    return <ChangePassword onBack={() => onNavigate('/profile')} />
+  }
+
+  if (path === '/profile/notifications') {
+    return <Notifications onBack={() => onNavigate('/profile')} />
+  }
+
+  if (path === '/profile/whatsapp-alerts') {
+    return <WhatsappAlerts onBack={() => onNavigate('/profile')} />
+  }
+
   if (path !== '/profile') {
     return <ProfilePlaceholder title={route.title} onBack={() => onNavigate('/profile')} />
   }
 
-  return <ProfileOverview onNavigate={onNavigate} onSignOut={onSignOut} />
+  return <ProfileOverview profile={profile} onNavigate={onNavigate} onSignOut={onSignOut} />
 }
 
-function ProfileOverview({ onNavigate, onSignOut }) {
+function ProfileOverview({ profile, onNavigate, onSignOut }) {
   return (
     <div className="profile-main">
       <div className="profile-heading">
@@ -69,10 +101,12 @@ function ProfileOverview({ onNavigate, onSignOut }) {
         <div className="profile-column">
           <section className="profile-card profile-user-card" aria-label="Perfil do usuário">
             <div className="profile-user">
-              <div className="profile-avatar">V</div>
+              <ProfileAvatar profile={profile} />
               <div>
-                <strong>Victor Mendes</strong>
-                <small>victor@email.com</small>
+                <strong>{profile.name}</strong>
+                <small>@{profile.username}</small>
+                <small>{profile.email}</small>
+                {profile.description && <small className="profile-description">{profile.description}</small>}
               </div>
             </div>
             <ProfileLink className="admin-button" label="▣  Painel do administrador ↗" onClick={() => onNavigate('/profile/admin')} />
@@ -91,7 +125,6 @@ function ProfileOverview({ onNavigate, onSignOut }) {
         <div className="profile-column">
           <ProfileSection id="profile-usage" title="USO">
             <ProfileAction icon="◷" label="Meu tempo" onClick={() => onNavigate('/profile/my-time')} />
-            <ProfileAction icon="≡" label="Histórico" onClick={() => onNavigate('/profile/history')} />
           </ProfileSection>
 
           <ProfileSection id="profile-plan" title="PLANO">
