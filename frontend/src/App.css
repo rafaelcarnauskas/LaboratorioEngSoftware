@@ -142,6 +142,481 @@
   font-size: 0.68rem;
 }
 
+.edit-profile-page {
+  max-width: 720px;
+}
+
+.edit-profile-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.edit-profile-heading h1 {
+  margin: 0;
+  color: #f5f7fb;
+  font-size: clamp(1.45rem, 3vw, 1.9rem);
+  line-height: 1.15;
+}
+
+.edit-profile-heading p:last-child {
+  max-width: 480px;
+  margin: 7px 0 0;
+  color: #aeb9c9;
+  font-size: 0.68rem;
+  line-height: 1.5;
+}
+
+.profile-avatar--large {
+  width: 82px;
+  height: 82px;
+  flex: 0 0 auto;
+  font-size: 1.6rem;
+}
+
+.edit-profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.edit-profile-card,
+.edit-profile-fields {
+  padding: 18px;
+  border-radius: 9px;
+  background: #40516c;
+}
+
+.edit-profile-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.edit-profile-card h2 {
+  margin: 0;
+  color: #f5f7fb;
+  font-size: 0.78rem;
+}
+
+.edit-profile-card p {
+  margin: 5px 0 0;
+  color: #aeb9c9;
+  font-size: 0.62rem;
+}
+
+.profile-upload-button,
+.edit-profile-save,
+.edit-profile-cancel {
+  min-height: 34px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.62rem;
+  font-weight: 700;
+}
+
+.profile-upload-button {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(242, 184, 68, 0.14);
+  color: #f2b844;
+}
+
+.profile-upload-button input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.edit-profile-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.edit-profile-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #f5f7fb;
+  font-size: 0.64rem;
+  font-weight: 700;
+}
+
+.edit-profile-fields input,
+.edit-profile-fields textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid rgba(174, 185, 201, 0.28);
+  border-radius: 6px;
+  padding: 10px 11px;
+  outline: 0;
+  background: #2f3d55;
+  color: #f5f7fb;
+  font: inherit;
+  font-size: 0.68rem;
+  resize: vertical;
+}
+
+.edit-profile-fields input:focus,
+.edit-profile-fields textarea:focus {
+  border-color: #f2b844;
+}
+
+.edit-profile-fields small {
+  color: #aeb9c9;
+  font-size: 0.56rem;
+  font-weight: 400;
+}
+
+.edit-profile-message {
+  margin: 0;
+  font-size: 0.64rem;
+}
+
+.edit-profile-message--error {
+  color: #ee7777;
+}
+
+.edit-profile-message--success {
+  color: #8ed6a0;
+}
+
+.edit-profile-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.edit-profile-cancel {
+  background: transparent;
+  color: #aeb9c9;
+}
+
+.edit-profile-save {
+  background: #f2b844;
+  color: #2d374c;
+}
+
+.change-password-page {
+  max-width: 560px;
+}
+
+.change-password-heading {
+  margin-bottom: 24px;
+}
+
+.change-password-heading h1 {
+  margin: 0;
+  color: #f5f7fb;
+  font-size: clamp(1.45rem, 3vw, 1.9rem);
+  line-height: 1.15;
+}
+
+.change-password-heading p:last-child {
+  margin: 7px 0 0;
+  color: #aeb9c9;
+  font-size: 0.68rem;
+  line-height: 1.5;
+}
+
+.change-password-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.change-password-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px;
+  border-radius: 9px;
+  background: #40516c;
+}
+
+.change-password-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #f5f7fb;
+  font-size: 0.64rem;
+  font-weight: 700;
+}
+
+.change-password-fields input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid rgba(174, 185, 201, 0.28);
+  border-radius: 6px;
+  padding: 10px 11px;
+  outline: 0;
+  background: #2f3d55;
+  color: #f5f7fb;
+  font: inherit;
+  font-size: 0.68rem;
+}
+
+.change-password-fields input:focus {
+  border-color: #f2b844;
+}
+
+.change-password-fields small {
+  color: #aeb9c9;
+  font-size: 0.56rem;
+  font-weight: 400;
+}
+
+.notifications-page {
+  max-width: 720px;
+}
+
+.whatsapp-page {
+  max-width: 720px;
+}
+
+.whatsapp-heading {
+  margin-bottom: 24px;
+}
+
+.whatsapp-heading h1 {
+  margin: 0;
+  color: #f5f7fb;
+  font-size: clamp(1.45rem, 3vw, 1.9rem);
+  line-height: 1.15;
+}
+
+.whatsapp-heading p:last-child {
+  margin: 7px 0 0;
+  color: #aeb9c9;
+  font-size: 0.68rem;
+  line-height: 1.5;
+}
+
+.whatsapp-status {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-bottom: 17px;
+  padding: 13px 15px;
+  border: 1px solid rgba(174, 185, 201, 0.18);
+  border-radius: 9px;
+  background: #35445f;
+}
+
+.whatsapp-status--active {
+  border-color: rgba(126, 207, 145, 0.45);
+}
+
+.whatsapp-status-icon {
+  color: #8f9bad;
+  font-size: 1.15rem;
+}
+
+.whatsapp-status--active .whatsapp-status-icon {
+  color: #8ed6a0;
+}
+
+.whatsapp-status strong {
+  display: block;
+  color: #f5f7fb;
+  font-size: 0.68rem;
+}
+
+.whatsapp-status p {
+  margin: 4px 0 0;
+  color: #aeb9c9;
+  font-size: 0.59rem;
+}
+
+.whatsapp-status-label {
+  margin-left: auto;
+  color: #8f9bad;
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.whatsapp-status--active .whatsapp-status-label {
+  color: #8ed6a0;
+}
+
+.whatsapp-form {
+  display: flex;
+  flex-direction: column;
+  gap: 17px;
+}
+
+.whatsapp-panel {
+  margin: 0;
+}
+
+.whatsapp-phone-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 15px;
+  color: #f5f7fb;
+  font-size: 0.64rem;
+  font-weight: 700;
+}
+
+.whatsapp-phone-field input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid rgba(174, 185, 201, 0.28);
+  border-radius: 6px;
+  padding: 10px 11px;
+  outline: 0;
+  background: #2f3d55;
+  color: #f5f7fb;
+  font: inherit;
+  font-size: 0.68rem;
+}
+
+.whatsapp-phone-field input:focus {
+  border-color: #8ed6a0;
+}
+
+.whatsapp-phone-field small {
+  color: #aeb9c9;
+  font-size: 0.56rem;
+  font-weight: 400;
+}
+
+.whatsapp-notice {
+  margin: 0;
+  color: #ee7777;
+  font-size: 0.64rem;
+}
+
+.whatsapp-notice--success {
+  color: #8ed6a0;
+}
+
+.notifications-heading {
+  margin-bottom: 24px;
+}
+
+.notifications-heading h1 {
+  margin: 0;
+  color: #f5f7fb;
+  font-size: clamp(1.45rem, 3vw, 1.9rem);
+  line-height: 1.15;
+}
+
+.notifications-heading p:last-child {
+  margin: 7px 0 0;
+  color: #aeb9c9;
+  font-size: 0.68rem;
+  line-height: 1.5;
+}
+
+.notifications-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 17px;
+}
+
+.notification-panel {
+  padding: 18px;
+  border-radius: 9px;
+  background: #40516c;
+}
+
+.notification-panel-heading {
+  margin-bottom: 6px;
+}
+
+.notification-kicker {
+  color: #8f9bad;
+  font-size: 0.53rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.notification-panel h2 {
+  margin: 4px 0 0;
+  color: #f5f7fb;
+  font-size: 0.78rem;
+}
+
+.notification-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 58px;
+  padding: 11px 0;
+  border-bottom: 1px solid rgba(174, 185, 201, 0.1);
+}
+
+.notification-option--last {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.notification-option strong {
+  display: block;
+  color: #f5f7fb;
+  font-size: 0.65rem;
+}
+
+.notification-option p {
+  max-width: 510px;
+  margin: 5px 0 0;
+  color: #aeb9c9;
+  font-size: 0.59rem;
+  line-height: 1.4;
+}
+
+.notification-switch {
+  position: relative;
+  width: 34px;
+  height: 20px;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: #2f3d55;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.notification-switch span {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #aeb9c9;
+  transition: transform 150ms ease, background 150ms ease;
+}
+
+.notification-switch.is-enabled {
+  background: rgba(242, 184, 68, 0.85);
+}
+
+.notification-switch.is-enabled span {
+  background: #2d374c;
+  transform: translateX(14px);
+}
+
+.history-back-button {
+  display: block;
+  margin-bottom: 28px;
+}
+
 .profile-back-button {
   margin-bottom: 28px;
   padding: 0;
@@ -472,6 +947,12 @@
   margin-top: 3px;
   color: #aeb9c9;
   font-size: 0.55rem;
+}
+
+.profile-user .profile-description {
+  max-width: 230px;
+  color: #d2d9e4;
+  line-height: 1.35;
 }
 
 .admin-button {

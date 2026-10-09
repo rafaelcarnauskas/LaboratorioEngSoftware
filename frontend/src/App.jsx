@@ -290,7 +290,7 @@ function App() {
     switch (activeTab) {
       case 'Home': return renderHome()
       case 'History': return <History events={events} onClearHistory={clearHistory} />
-      case 'Profile': return <Profile path={profilePath} onNavigate={navigateProfile} events={events} myTime={myTime} />
+      case 'Profile': return <Profile path={profilePath} onNavigate={navigateProfile} events={events} clearHistory={clearHistory} myTime={myTime} />
       case 'Search': return <SearchView videos={videoCatalog} lists={lists} onListsChange={updateLists} storageError={storageError} />
       case 'Community': return <CommunityView memberships={memberships} onJoin={joinCommunity} onLeave={leaveCommunity} onOpenCommunity={(communityId) => openCommunity(communityId)} storageError={communityStorageError} />
       case 'Lists': return <ListsView lists={lists} onListsChange={updateLists} availableVideos={videoCatalog} storageError={storageError} />
