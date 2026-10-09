@@ -5,12 +5,13 @@ import EditProfile, { ProfileAvatar } from './EditProfile'
 import ChangePassword from './ChangePassword'
 import Notifications from './Notifications'
 import WhatsappAlerts from './WhatsappAlerts'
+import ManageCommunities from './ManageCommunities'
 import { limitOptions } from '../../hooks/useMyTime'
 import { dailyAverage, limitState, minutesToday, weeklyUsage, wellnessDays } from '../../lib/usage'
 
 const profileRoutes = {
   '/profile': { title: 'Configurações do perfil', description: 'Gerencie suas informações pessoais, seu plano de assinatura e as preferências do seu espaço.' },
-  '/profile/admin': { title: 'Painel do administrador' },
+  '/profile/admin': { title: 'Administrar comunidades' },
   '/profile/edit': { title: 'Editar perfil' },
   '/profile/password': { title: 'Alterar senha' },
   '/profile/plan': { title: 'Meu plano' },
@@ -81,6 +82,10 @@ function Profile({ path = '/profile', onNavigate, events = [], clearHistory, myT
     return <WhatsappAlerts onBack={() => onNavigate('/profile')} />
   }
 
+  if (path === '/profile/admin') {
+    return <ManageCommunities onBack={() => onNavigate('/profile')} />
+  }
+
   if (path !== '/profile') {
     return <ProfilePlaceholder title={route.title} onBack={() => onNavigate('/profile')} />
   }
@@ -109,7 +114,7 @@ function ProfileOverview({ profile, onNavigate }) {
                 {profile.description && <small className="profile-description">{profile.description}</small>}
               </div>
             </div>
-            <ProfileLink className="admin-button" label="▣  Painel do administrador ↗" onClick={() => onNavigate('/profile/admin')} />
+            <ProfileLink className="admin-button" label="▣  Administrar comunidades ↗" onClick={() => onNavigate('/profile/admin')} />
           </section>
 
           <ProfileSection id="profile-account" title="CONTA">
