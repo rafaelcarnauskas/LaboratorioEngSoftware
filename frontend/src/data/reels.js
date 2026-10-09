@@ -1,5 +1,9 @@
 // Dados de exemplo dos reels. Quando houver backend, esta lista
 // passa a vir da API (ex.: fetch('/api/videos?categoria=sports')).
+//
+// `title` é o rótulo curto exibido no histórico e no histórico recente.
+// `nicheId` aponta para um nicho declarado pela comunidade em `communityId`
+// (ver data/communities.js); a relação é um invariante dos dados mock.
 import bmpoliuspAvatar from '../assets/reels/avatars/bmpoliusp.png'
 import sosomarianoAvatar from '../assets/reels/avatars/sosomariano.png'
 import rafaelcarnauskasAvatar from '../assets/reels/avatars/rafaelcarnauskas.png'
@@ -20,7 +24,10 @@ import cute3 from '../assets/reels/posts/cute-3.png'
 export const reels = [
   {
     id: 'sports-1',
+    title: 'Final do basquete masculino — Interusp 2026',
     category: 'sports',
+    communityId: 'poli-usp',
+    nicheId: 'basquete',
     author: 'BmPoliUsp',
     avatar: bmpoliuspAvatar,
     image: sports1,
@@ -31,7 +38,10 @@ export const reels = [
   },
   {
     id: 'sports-2',
+    title: 'Treino intenso de judô',
     category: 'sports',
+    communityId: 'judo-brasil',
+    nicheId: 'treino',
     author: 'SoSoMariano',
     avatar: sosomarianoAvatar,
     image: sports2,
@@ -42,7 +52,10 @@ export const reels = [
   },
   {
     id: 'sports-3',
+    title: 'Final do basquete masculino — Interusp 2025',
     category: 'sports',
+    communityId: 'poli-usp',
+    nicheId: 'basquete',
     author: 'BmPoliUsp',
     avatar: bmpoliuspAvatar,
     image: sports3,
@@ -53,7 +66,10 @@ export const reels = [
   },
   {
     id: 'cute-1',
+    title: 'Aniversário da princesinha',
     category: 'cute',
+    communityId: 'vida-de-pet',
+    nicheId: 'festas',
     author: 'RafaelCarnauskas',
     avatar: rafaelcarnauskasAvatar,
     image: cute1,
@@ -64,7 +80,10 @@ export const reels = [
   },
   {
     id: 'cute-2',
+    title: 'Aurora no descanso da tarde',
     category: 'cute',
+    communityId: 'vida-de-pet',
+    nicheId: 'rotina',
     author: 'mendesvictor',
     avatar: mendesvictorAvatar,
     image: cute2,
@@ -75,7 +94,10 @@ export const reels = [
   },
   {
     id: 'cute-3',
+    title: 'Dia de petshop',
     category: 'cute',
+    communityId: 'vida-de-pet',
+    nicheId: 'cuidados',
     author: 'MarcolinoCarlos',
     avatar: marcolinocarlosAvatar,
     image: cute3,

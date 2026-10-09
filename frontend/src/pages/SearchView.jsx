@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react'
+import { categoryDefinitions, categoryKey, resolveCategory } from '../lib/categories'
 import './SearchView.css'
 
 function SearchIcon({ name, size = 20 }) {
@@ -49,7 +50,7 @@ function SaveVideoDialog({ video, lists, onSave, onClose }) {
   function submit(event) {
     event.preventDefault()
     if (creating && !newName.trim()) {
-      setError('Give your new list a name.')
+      setError('Dê um nome à sua nova lista.')
       nameRef.current?.focus()
       return
     }
@@ -59,53 +60,56 @@ function SaveVideoDialog({ video, lists, onSave, onClose }) {
   return (
     <dialog ref={dialogRef} className="search-save-dialog" aria-labelledby="search-save-title" aria-describedby="search-save-description" onCancel={(event) => { event.preventDefault(); onClose() }}>
       <header className="search-dialog-heading">
-        <h2 id="search-save-title">Save to lists</h2>
-        <button className="search-icon-button" type="button" onClick={onClose} aria-label="Close save dialog"><SearchIcon name="close" /></button>
+        <h2 id="search-save-title">Salvar em listas</h2>
+        <button className="search-icon-button" type="button" onClick={onClose} aria-label="Fechar o diálogo de salvar"><SearchIcon name="close" /></button>
       </header>
-      <p id="search-save-description">Choose where to keep <strong>{video.title}</strong>.</p>
+      <p id="search-save-description">Escolha onde guardar <strong>{video.title}</strong>.</p>
       <form onSubmit={submit}>
         <div className="search-list-options">
           {lists.map((list) => (
             <label className="search-list-option" key={list.id}>
               <input type="checkbox" checked={selectedIds.includes(list.id)} onChange={(event) => setSelectedIds((current) => event.target.checked ? [...current, list.id] : current.filter((id) => id !== list.id))} />
-              <span><strong>{list.name}</strong><small>{list.videoIds.length} {list.videoIds.length === 1 ? 'video' : 'videos'}</small></span>
+              <span><strong>{list.name}</strong><small>{list.videoIds.length} {list.videoIds.length === 1 ? 'vídeo' : 'vídeos'}</small></span>
               <SearchIcon name="bookmark" size={18} />
             </label>
           ))}
         </div>
         {creating ? (
           <label className="search-new-list-field">
-            <span>New list name</span>
-            <input ref={nameRef} value={newName} onChange={(event) => { setNewName(event.target.value); setError('') }} placeholder="e.g. Weekend discoveries" maxLength={60} required aria-invalid={!!error} aria-describedby={error ? 'search-list-error' : undefined} />
+            <span>Nome da nova lista</span>
+            <input ref={nameRef} value={newName} onChange={(event) => { setNewName(event.target.value); setError('') }} placeholder="ex.: Descobertas de fim de semana" maxLength={60} required aria-invalid={!!error} aria-describedby={error ? 'search-list-error' : undefined} />
           </label>
         ) : (
-          <button className="search-new-list-button" type="button" onClick={() => setCreating(true)}><SearchIcon name="plus" size={18} /> Create a new list</button>
+          <button className="search-new-list-button" type="button" onClick={() => setCreating(true)}><SearchIcon name="plus" size={18} /> Criar uma nova lista</button>
         )}
-        {creating && lists.length > 0 && <button className="search-text-button" type="button" onClick={() => { setCreating(false); setError('') }}>Cancel new list</button>}
+        {creating && lists.length > 0 && <button className="search-text-button" type="button" onClick={() => { setCreating(false); setError('') }}>Cancelar nova lista</button>}
         {error && <p className="search-error" id="search-list-error" role="alert">{error}</p>}
         <footer className="search-dialog-actions">
-          <button className="search-secondary-button" type="button" onClick={onClose}>Cancel</button>
-          <button className="search-primary-button" type="submit">Save changes</button>
+          <button className="search-secondary-button" type="button" onClick={onClose}>Cancelar</button>
+          <button className="search-primary-button" type="submit">Salvar alterações</button>
         </footer>
       </form>
     </dialog>
   )
 }
 
-export default function SearchView({ videos, query, onQueryChange, lists, onListsChange, storageError }) {
+// A tela é dona do próprio termo: monta sempre vazia e sem filtros
+const categories = ['All', ...categoryDefinitions.map((item) => item.name)]
+
+export default function SearchView({ videos, lists, onListsChange, storageError }) {
+  const [query, setQuery] = useState('')
   const [category, setCategory] = useState('All')
   const [duration, setDuration] = useState('any')
   const [sort, setSort] = useState('featured')
   const [savingVideo, setSavingVideo] = useState(null)
   const [notice, setNotice] = useState('')
   const inputRef = useRef(null)
-  const categories = ['All', ...new Set(videos.map((video) => video.category))]
   const terms = normalize(query).split(/\s+/).filter(Boolean)
   const hasFilters = terms.length > 0 || category !== 'All' || duration !== 'any'
   const results = videos.filter((video) => {
     const text = normalize(`${video.title} ${video.creator} ${video.category}`)
     return terms.every((term) => text.includes(term)) &&
-      (category === 'All' || video.category === category) &&
+      (category === 'All' || categoryKey(video.category) === categoryKey(category)) &&
       (duration === 'any' || (duration === 'short' ? seconds(video.duration) <= 60 : seconds(video.duration) > 60))
   }).sort((a, b) => {
     if (sort === 'title') return a.title.localeCompare(b.title)
@@ -114,7 +118,7 @@ export default function SearchView({ videos, query, onQueryChange, lists, onList
   })
 
   function resetFilters() {
-    onQueryChange('')
+    setQuery('')
     setCategory('All')
     setDuration('any')
     inputRef.current?.focus()
@@ -135,41 +139,41 @@ export default function SearchView({ videos, query, onQueryChange, lists, onList
     if (newName) nextLists.unshift({ id: crypto.randomUUID(), name: newName, description: '', tone: 'gold', videoIds: [savingVideo.id], updatedAt: now })
     onListsChange(nextLists)
     const count = selectedIds.length + (newName ? 1 : 0)
-    setNotice(count ? `“${savingVideo.title}” saved in ${count} ${count === 1 ? 'list' : 'lists'}.` : `“${savingVideo.title}” removed from your lists.`)
+    setNotice(count ? `“${savingVideo.title}” salvo em ${count} ${count === 1 ? 'lista' : 'listas'}.` : `“${savingVideo.title}” removido das suas listas.`)
     setSavingVideo(null)
   }
 
   return (
     <div className="search-view">
       <header className="search-heading">
-        <p className="search-eyebrow">FOLLOW YOUR CURIOSITY</p>
-        <h1>Search</h1>
-        <p>Find something worth your time. Watch what you choose.</p>
+        <p className="search-eyebrow">SIGA SUA CURIOSIDADE</p>
+        <h1>Buscar</h1>
+        <p>Encontre algo que valha o seu tempo. Assista ao que você escolher.</p>
       </header>
 
-      <form className="search-discovery-form" role="search" aria-label="Explore videos" onSubmit={(event) => event.preventDefault()}>
+      <form className="search-discovery-form" role="search" aria-label="Explorar vídeos" onSubmit={(event) => event.preventDefault()}>
         <SearchIcon name="search" size={24} />
-        <label className="visually-hidden" htmlFor="discover-videos">Search titles, creators or categories</label>
-        <input ref={inputRef} id="discover-videos" type="search" value={query} onChange={(event) => onQueryChange(event.target.value)} placeholder="Titles, creators, or a little curiosity..." />
-        {query && <button className="search-icon-button" type="button" aria-label="Clear search text" onClick={() => { onQueryChange(''); inputRef.current?.focus() }}><SearchIcon name="close" size={18} /></button>}
+        <label className="visually-hidden" htmlFor="discover-videos">Buscar por títulos, criadores ou categorias</label>
+        <input ref={inputRef} id="discover-videos" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Títulos, criadores ou uma curiosidade..." />
+        {query && <button className="search-icon-button" type="button" aria-label="Limpar o texto da busca" onClick={() => { setQuery(''); inputRef.current?.focus() }}><SearchIcon name="close" size={18} /></button>}
       </form>
 
-      <div className="search-categories" role="group" aria-label="Filter by category">
-        {categories.map((item) => <button type="button" key={item} className={`search-category-chip${category === item ? ' is-selected' : ''}`} aria-pressed={category === item} onClick={() => setCategory(item)}>{item === 'All' ? 'All videos' : item}</button>)}
+      <div className="search-categories" role="group" aria-label="Filtrar por categoria">
+        {categories.map((item) => <button type="button" key={item} className={`search-category-chip${category === item ? ' is-selected' : ''}`} aria-pressed={category === item} onClick={() => setCategory(item)}>{item === 'All' ? 'Todos os vídeos' : resolveCategory(item)?.label ?? item}</button>)}
       </div>
 
       <div className="search-results-toolbar">
         <div>
-          <h2>{hasFilters ? 'Search results' : 'Explore videos'}</h2>
-          <p role="status">{results.length} {results.length === 1 ? 'video' : 'videos'}{hasFilters ? ' found' : ' to spark an idea'} <span aria-hidden="true">·</span> Demo collection</p>
+          <h2>{hasFilters ? 'Resultados da busca' : 'Explorar vídeos'}</h2>
+          <p role="status">{results.length} {results.length === 1 ? 'vídeo' : 'vídeos'}{hasFilters ? (results.length === 1 ? ' encontrado' : ' encontrados') : ' para inspirar uma ideia'} <span aria-hidden="true">·</span> Coleção de demonstração</p>
         </div>
         <div className="search-selects">
-          <label>Duration<select value={duration} onChange={(event) => setDuration(event.target.value)}><option value="any">Any length</option><option value="short">1 minute or less</option><option value="long">Over 1 minute</option></select></label>
-          <label>Sort by<select value={sort} onChange={(event) => setSort(event.target.value)}><option value="featured">Featured</option><option value="shortest">Shortest first</option><option value="title">Title (A–Z)</option></select></label>
+          <label>Duração<select value={duration} onChange={(event) => setDuration(event.target.value)}><option value="any">Qualquer duração</option><option value="short">1 minuto ou menos</option><option value="long">Mais de 1 minuto</option></select></label>
+          <label>Ordenar por<select value={sort} onChange={(event) => setSort(event.target.value)}><option value="featured">Destaques</option><option value="shortest">Mais curtos primeiro</option><option value="title">Título (A–Z)</option></select></label>
         </div>
       </div>
 
-      {hasFilters && <div className="search-active-filters"><span>Refine your discovery with the search and filters above.</span><button className="search-text-button" type="button" onClick={resetFilters}>Clear all filters</button></div>}
+      {hasFilters && <div className="search-active-filters"><span>Refine sua descoberta com a busca e os filtros acima.</span><button className="search-text-button" type="button" onClick={resetFilters}>Limpar todos os filtros</button></div>}
       <p className="search-feedback" role="status">{notice}</p>
       {storageError && <p className="search-error" role="alert">{storageError}</p>}
 
@@ -185,10 +189,10 @@ export default function SearchView({ videos, query, onQueryChange, lists, onList
                   <span className="search-video-duration">{video.duration}</span>
                 </div>
                 <div className="search-video-body">
-                  <span className="search-video-category" style={{ '--video-color': video.color }}>{video.category}</span>
+                  <span className="search-video-category" style={{ '--video-color': video.color }}>{resolveCategory(video.category)?.label ?? video.category}</span>
                   <h3>{video.title}</h3>
                   <p>{video.creator}</p>
-                  <button type="button" className={`search-save-button${saved ? ' is-saved' : ''}`} aria-label={`${saved ? 'Manage lists for' : 'Save'} ${video.title}`} onClick={() => setSavingVideo(video)}><SearchIcon name={saved ? 'check' : 'bookmark'} size={17} />{saved ? 'Saved to lists' : 'Save to list'}<SearchIcon name="plus" size={15} /></button>
+                  <button type="button" className={`search-save-button${saved ? ' is-saved' : ''}`} aria-label={`${saved ? 'Gerenciar listas de' : 'Salvar'} ${video.title}`} onClick={() => setSavingVideo(video)}><SearchIcon name={saved ? 'check' : 'bookmark'} size={17} />{saved ? 'Salvo em listas' : 'Salvar na lista'}<SearchIcon name="plus" size={15} /></button>
                 </div>
               </article>
             )
@@ -197,9 +201,9 @@ export default function SearchView({ videos, query, onQueryChange, lists, onList
       ) : (
         <div className="search-empty">
           <div className="search-empty-icon"><SearchIcon name="search" size={32} /></div>
-          <h2>No discoveries just yet</h2>
-          <p>{query.trim() ? `We couldn't find videos matching “${query.trim()}” with these filters.` : 'No videos match these filters.'} Try a different topic or broaden your search.</p>
-          <button className="search-primary-button" type="button" onClick={resetFilters}>Clear all filters</button>
+          <h2>Nenhuma descoberta por aqui ainda</h2>
+          <p>{query.trim() ? `Não encontramos vídeos que correspondam a “${query.trim()}” com estes filtros.` : 'Nenhum vídeo corresponde a estes filtros.'} Tente outro tema ou amplie sua busca.</p>
+          <button className="search-primary-button" type="button" onClick={resetFilters}>Limpar todos os filtros</button>
         </div>
       )}
 

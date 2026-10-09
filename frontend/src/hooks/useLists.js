@@ -5,9 +5,9 @@ const tones = ['gold', 'blue', 'green', 'purple']
 
 function createInitialLists() {
   return [
-    { id: 'watch-later', name: 'Watch later', description: 'Good finds, saved for the right moment.', tone: 'gold', videoIds: [1, 4], updatedAt: 3 },
-    { id: 'learn-something-new', name: 'Learn something new', description: 'Small discoveries. A little more knowledge every day.', tone: 'blue', videoIds: [2, 3], updatedAt: 2 },
-    { id: 'everyday-inspiration', name: 'Everyday inspiration', description: 'Fresh ideas for a more balanced day.', tone: 'green', videoIds: [3, 5], updatedAt: 1 },
+    { id: 'watch-later', name: 'Assistir depois', description: 'Boas descobertas, guardadas para o momento certo.', tone: 'gold', videoIds: [1, 4], updatedAt: 3 },
+    { id: 'learn-something-new', name: 'Aprender algo novo', description: 'Pequenas descobertas. Um pouco mais de conhecimento cada dia.', tone: 'blue', videoIds: [2, 3], updatedAt: 2 },
+    { id: 'everyday-inspiration', name: 'Inspiração do dia a dia', description: 'Ideias novas para um dia mais equilibrado.', tone: 'green', videoIds: [3, 5], updatedAt: 1 },
   ]
 }
 
@@ -32,7 +32,7 @@ function loadLists() {
   } catch {
     return {
       lists: createInitialLists(),
-      storageError: 'Saved lists could not be loaded. Your changes will stay available during this session.',
+      storageError: 'Não foi possível carregar suas listas salvas. Suas alterações continuarão disponíveis nesta sessão.',
     }
   }
 }
@@ -45,7 +45,7 @@ export default function useLists() {
     try {
       localStorage.setItem(storageKey, JSON.stringify(lists))
     } catch {
-      storageError = 'Your browser could not save these changes. They will stay available during this session.'
+      storageError = 'Seu navegador não conseguiu salvar estas alterações. Elas continuarão disponíveis nesta sessão.'
     }
     setState({ lists, storageError })
   }

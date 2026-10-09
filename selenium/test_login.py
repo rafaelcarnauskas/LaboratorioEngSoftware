@@ -45,7 +45,7 @@ class TestLogin(unittest.TestCase):
     def esperar_home(self):
         return self.wait.until(
             EC.visibility_of_element_located(
-                (By.XPATH, "//h1[contains(normalize-space(.), 'Hi, Victor')]")
+                (By.XPATH, "//h1[contains(normalize-space(.), 'Olá, Victor')]")
             )
         )
 
@@ -97,18 +97,18 @@ class TestLogin(unittest.TestCase):
             self.driver.execute_script("return localStorage.getItem('choosen.session')")
         )
 
-    def test_sign_out_volta_para_o_login(self):
+    def test_sair_volta_para_o_login(self):
         self.entrar(EMAIL_TESTE, SENHA_TESTE)
         self.esperar_home()
 
         self.wait.until(
             EC.element_to_be_clickable(
-                (By.XPATH, "//nav//button[.//span[normalize-space()='Profile']]")
+                (By.XPATH, "//nav//button[.//span[normalize-space()='Perfil']]")
             )
         ).click()
         self.wait.until(
             EC.element_to_be_clickable(
-                (By.XPATH, "//button[.//span[normalize-space()='Sign Out']]")
+                (By.XPATH, "//button[.//span[normalize-space()='Sair']]")
             )
         ).click()
 
