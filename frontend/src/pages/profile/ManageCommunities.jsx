@@ -6,7 +6,7 @@ function CommunityIcon({ community }) {
   return <span className={`manage-community-icon manage-community-icon--${community.tone}`} aria-hidden="true">{community.icon}</span>
 }
 
-export default function ManageCommunities({ onBack }) {
+export default function ManageCommunities({ onBack, onOpenSystemAdmin }) {
   const [selectedId, setSelectedId] = useState(communities[0]?.id ?? '')
   const [communityData, setCommunityData] = useState(() => (
     Object.fromEntries(communities.map((community) => [
@@ -42,7 +42,10 @@ export default function ManageCommunities({ onBack }) {
           <h1>Administrar comunidades</h1>
           <p>Gerencie as comunidades que você administra, seus conteúdos e a entrada de novos membros.</p>
         </div>
-        <span className="manage-communities-count">{communities.length} comunidades</span>
+        <div className="manage-communities-heading-actions">
+          <span className="manage-communities-count">{communities.length} comunidades</span>
+          <button className="manage-system-button" type="button" onClick={onOpenSystemAdmin}>Administração do sistema ↗</button>
+        </div>
       </header>
 
       <div className="manage-communities-layout">
