@@ -1,15 +1,19 @@
 import { useMemo, useState } from 'react'
 import MyPlan from './MyPlan'
 import GroupSettings from './GroupSettings'
+import EditProfile, { ProfileAvatar } from './EditProfile'
+import ChangePassword from './ChangePassword'
+import Notifications from './Notifications'
+import WhatsappAlerts from './WhatsappAlerts'
+import ManageCommunities from './ManageCommunities'
 import { limitOptions } from '../../hooks/useMyTime'
 import { dailyAverage, limitState, minutesToday, weeklyUsage, wellnessDays } from '../../lib/usage'
 
 const profileRoutes = {
   '/profile': { title: 'Configurações do perfil', description: 'Gerencie suas informações pessoais, seu plano de assinatura e as preferências do seu espaço.' },
-  '/profile/admin': { title: 'Painel do administrador' },
+  '/profile/admin': { title: 'Administrar comunidades' },
   '/profile/edit': { title: 'Editar perfil' },
   '/profile/password': { title: 'Alterar senha' },
-  '/profile/history': { title: 'Histórico do perfil' },
   '/profile/plan': { title: 'Meu plano' },
   '/profile/group-settings': { title: 'Configurações do grupo' },
   '/profile/notifications': { title: 'Notificações' },
@@ -28,8 +32,15 @@ const fallbackMyTime = {
   toggleReminder: noop,
 }
 
-function Profile({ path = '/profile', onNavigate, events = [], myTime = fallbackMyTime }) {
+function Profile({ path = '/profile', onNavigate, events = [], clearHistory, myTime = fallbackMyTime }) {
   const route = profileRoutes[path] ?? profileRoutes['/profile']
+  const [profile, setProfile] = useState({
+    name: 'Victor Mendes',
+    username: 'victor',
+    email: 'victor@email.com',
+    description: 'Compartilhando o que escolho assistir.',
+    photo: '',
+  })
 
   if (path === '/profile/my-time') {
     return (
@@ -49,14 +60,40 @@ function Profile({ path = '/profile', onNavigate, events = [], myTime = fallback
     return <GroupSettings onBack={() => onNavigate('/profile')} />
   }
 
+  if (path === '/profile/edit') {
+    return (
+      <EditProfile
+        profile={profile}
+        onSave={(nextProfile) => setProfile(nextProfile)}
+        onBack={() => onNavigate('/profile')}
+      />
+    )
+  }
+
+  if (path === '/profile/password') {
+    return <ChangePassword onBack={() => onNavigate('/profile')} />
+  }
+
+  if (path === '/profile/notifications') {
+    return <Notifications onBack={() => onNavigate('/profile')} />
+  }
+
+  if (path === '/profile/whatsapp-alerts') {
+    return <WhatsappAlerts onBack={() => onNavigate('/profile')} />
+  }
+
+  if (path === '/profile/admin') {
+    return <ManageCommunities onBack={() => onNavigate('/profile')} />
+  }
+
   if (path !== '/profile') {
     return <ProfilePlaceholder title={route.title} onBack={() => onNavigate('/profile')} />
   }
 
-  return <ProfileOverview onNavigate={onNavigate} />
+  return <ProfileOverview profile={profile} onNavigate={onNavigate} />
 }
 
-function ProfileOverview({ onNavigate }) {
+function ProfileOverview({ profile, onNavigate }) {
   return (
     <div className="profile-main">
       <div className="profile-heading">
@@ -69,13 +106,15 @@ function ProfileOverview({ onNavigate }) {
         <div className="profile-column">
           <section className="profile-card profile-user-card" aria-label="Perfil do usuário">
             <div className="profile-user">
-              <div className="profile-avatar">V</div>
+              <ProfileAvatar profile={profile} />
               <div>
-                <strong>Victor Mendes</strong>
-                <small>victor@email.com</small>
+                <strong>{profile.name}</strong>
+                <small>@{profile.username}</small>
+                <small>{profile.email}</small>
+                {profile.description && <small className="profile-description">{profile.description}</small>}
               </div>
             </div>
-            <ProfileLink className="admin-button" label="▣  Painel do administrador ↗" onClick={() => onNavigate('/profile/admin')} />
+            <ProfileLink className="admin-button" label="▣  Administrar comunidades ↗" onClick={() => onNavigate('/profile/admin')} />
           </section>
 
           <ProfileSection id="profile-account" title="CONTA">
@@ -91,7 +130,6 @@ function ProfileOverview({ onNavigate }) {
         <div className="profile-column">
           <ProfileSection id="profile-usage" title="USO">
             <ProfileAction icon="◷" label="Meu tempo" onClick={() => onNavigate('/profile/my-time')} />
-            <ProfileAction icon="≡" label="Histórico" onClick={() => onNavigate('/profile/history')} />
           </ProfileSection>
 
           <ProfileSection id="profile-plan" title="PLANO">
