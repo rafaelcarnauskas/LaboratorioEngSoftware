@@ -101,6 +101,11 @@
   line-height: 1.4;
 }
 
+.login-banner--success {
+  background: rgb(46 204 113 / 15%);
+  color: inherit;
+}
+
 .login-field {
   display: flex;
   flex-direction: column;

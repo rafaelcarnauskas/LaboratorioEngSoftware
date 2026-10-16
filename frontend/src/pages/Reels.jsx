@@ -1,6 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { communities, findCommunity } from '../data/communities'
-import { selectReels } from '../lib/reelsIndex'
+import { findCommunity, reelShareUrl, relatedCommunities as relatedTo, selectReels } from '../controllers/contentController'
 import logoMark from '../assets/reels/icons/logo-mark.svg'
 import commentIcon from '../assets/reels/icons/comment.svg'
 import shareIcon from '../assets/reels/icons/share.svg'
@@ -25,7 +24,18 @@ function ChoosenLikeMark({ liked }) {
   )
 }
 
-function ReelPost({ reel, community, isJoined, onJoinCommunity, onLeaveCommunity }) {
+function ReelPost({
+  reel,
+  community,
+  isJoined,
+  onJoinCommunity,
+  onLeaveCommunity,
+  isFollowing,
+  onToggleFollow,
+  isSaved,
+  onToggleSave,
+  onShare,
+}) {
   const commentInputId = `comentario-${reel.id}`
   const feedbackId = `feedback-${reel.id}`
   const commentsPanelId = `comentarios-${reel.id}`
@@ -129,8 +139,15 @@ function ReelPost({ reel, community, isJoined, onJoinCommunity, onLeaveCommunity
               <img className="reels-avatar" src={reel.avatar} alt="" width="32" height="32" />
               <span className="reels-post-author">@{reel.author}</span>
             </button>
-            <button className="reels-follow" type="button" onClick={handleNotImplemented}>
-              Seguir +
+            <button
+              className={`reels-follow${isFollowing ? ' reels-follow--following' : ''}`}
+              type="button"
+              onClick={() => onToggleFollow(reel.author)}
+              aria-pressed={isFollowing}
+              aria-label={isFollowing ? `Deixar de seguir @${reel.author}` : `Seguir @${reel.author}`}
+              data-testid="acao-seguir"
+            >
+              {isFollowing ? 'Seguindo ✓' : 'Seguir +'}
             </button>
             {community && (
               // Sem role="status"/"alert" aqui: os testes do Reels procuram
@@ -197,10 +214,23 @@ function ReelPost({ reel, community, isJoined, onJoinCommunity, onLeaveCommunity
           <img src={commentIcon} alt="" width="28" height="28" />
           <span>{formatCount(commentCount)}</span>
         </button>
-        <button className="reels-action" type="button" onClick={handleNotImplemented} aria-label="Compartilhar">
+        <button
+          className="reels-action"
+          type="button"
+          onClick={() => onShare(reel)}
+          aria-label="Compartilhar"
+          data-testid="acao-compartilhar"
+        >
           <img src={shareIcon} alt="" width="28" height="28" />
         </button>
-        <button className="reels-action" type="button" onClick={handleNotImplemented} aria-label="Salvar">
+        <button
+          className={`reels-action${isSaved ? ' reels-action--saved' : ''}`}
+          type="button"
+          onClick={() => onToggleSave(reel.id)}
+          aria-label={isSaved ? 'Remover dos salvos' : 'Salvar'}
+          aria-pressed={isSaved}
+          data-testid="acao-salvar"
+        >
           <img src={saveIcon} alt="" width="28" height="28" />
         </button>
       </div>
@@ -365,6 +395,10 @@ function Reels({
   memberships = [],
   onJoinCommunity = handleNotImplemented,
   onLeaveCommunity = handleNotImplemented,
+  followedAuthors = [],
+  onToggleFollow = handleNotImplemented,
+  savedReelIds = [],
+  onToggleSave = handleNotImplemented,
 }) {
   // Seletor único: categoria, comunidade e nichos em conjunção.
   // `niches` vazio significa "todos" os nichos da comunidade.
@@ -393,18 +427,33 @@ function Reels({
         : 'Nenhum vídeo encontrado.'
 
   const joinedIds = new Set(memberships.map((membership) => membership.id))
-  const relatedCommunities = useMemo(() => {
-    const currentIds = new Set(visibleReels.map((reel) => reel.communityId))
-    const primaryCategory = community?.category ?? visibleReels[0]?.category ?? category
+  const followed = new Set(followedAuthors)
+  const saved = new Set(savedReelIds)
+  const relatedCommunities = useMemo(
+    () => relatedTo(visibleReels, { community, category }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [category, community?.category, visibleReels],
+  )
 
-    return communities
-      .filter((candidate) => !currentIds.has(candidate.id))
-      .sort((left, right) => {
-        const leftRelated = left.category === primaryCategory ? 1 : 0
-        const rightRelated = right.category === primaryCategory ? 1 : 0
-        return rightRelated - leftRelated || right.memberCount - left.memberCount
-      })
-  }, [category, community?.category, visibleReels])
+  // Aviso de rodapé do feed (ex.: link copiado). Fica fora dos posts: os testes
+  // do Reels procuram as live regions de comentário dentro de cada post.
+  const [notice, setNotice] = useState('')
+  useEffect(() => {
+    if (!notice) return
+    const timer = setTimeout(() => setNotice(''), 3000)
+    return () => clearTimeout(timer)
+  }, [notice])
+
+  async function handleShare(reel) {
+    const url = reelShareUrl(reel)
+    try {
+      await navigator.clipboard.writeText(url)
+      setNotice('Link do vídeo copiado.')
+    } catch {
+      // Sem permissão de área de transferência: mostra o link para copiar à mão.
+      setNotice(`Copie o link do vídeo: ${url}`)
+    }
+  }
   const pageRef = useRef(null)
 
   // Identidade estável enquanto o feed não muda, para o observer não ser
@@ -472,10 +521,17 @@ function Reels({
               isJoined={joinedIds.has(reel.communityId)}
               onJoinCommunity={onJoinCommunity}
               onLeaveCommunity={onLeaveCommunity}
+              isFollowing={followed.has(reel.author)}
+              onToggleFollow={onToggleFollow}
+              isSaved={saved.has(reel.id)}
+              onToggleSave={onToggleSave}
+              onShare={handleShare}
             />
           ))
         )}
       </main>
+
+      <p className="reels-notice" role="status" data-testid="aviso-reels">{notice}</p>
 
       <aside className="reels-side">
         <section className="reels-community-suggestions" aria-labelledby="related-communities-title">

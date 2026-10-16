@@ -1,13 +1,16 @@
 import { useState } from 'react'
-import { communities } from '../../data/communities'
-import { countByCommunity } from '../../lib/reelsIndex'
+import { communityCatalog as communities, countByCommunity } from '../../controllers/contentController'
 
 function CommunityIcon({ community }) {
   return <span className={`manage-community-icon manage-community-icon--${community.tone}`} aria-hidden="true">{community.icon}</span>
 }
 
-export default function ManageCommunities({ onBack, onOpenSystemAdmin }) {
-  const [selectedId, setSelectedId] = useState(communities[0]?.id ?? '')
+export default function ManageCommunities({ onBack, onOpenSystemAdmin, initialCommunityId = null }) {
+  const [selectedId, setSelectedId] = useState(() => (
+    communities.some((community) => community.id === initialCommunityId)
+      ? initialCommunityId
+      : communities[0]?.id ?? ''
+  ))
   const [communityData, setCommunityData] = useState(() => (
     Object.fromEntries(communities.map((community) => [
       community.id,
