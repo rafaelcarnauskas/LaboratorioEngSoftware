@@ -18,6 +18,7 @@ import SignUp from '../1-autenticacao/telas/SignUp'
 import ForgotPassword from '../1-autenticacao/telas/ForgotPassword'
 import { clearSession, getSession } from '../1-autenticacao/modelo/session'
 import { findCommunity, partitionCommunities } from '../2-comunidades/modelo/communities'
+import { participarNaComunidade } from '../2-comunidades/servico'
 import { hydrate } from '../3-videos/modelo/findsIndex'
 import { recentlyWatched } from '../5-historico/modelo/usage'
 import { buildUrl, homeState, parseUrl } from './navigation'
@@ -55,6 +56,7 @@ function App() {
   // Aba de onde a Tela_Comunidade foi aberta: o controle de retorno
   // volta para ela sem tocar no histórico do navegador.
   const [communityOrigin, setCommunityOrigin] = useState('Home')
+  const [communityApiError, setCommunityApiError] = useState('')
   const { lists, updateLists, storageError } = useLists()
   const {
     memberships,
@@ -83,6 +85,20 @@ function App() {
     setter((current) => (current.includes(value) ? current.filter((item) => item !== value) : [...current, value]))
   const toggleFollow = toggleIn(setFollowedAuthors)
   const toggleSave = toggleIn(setSavedFindIds)
+
+  const handleJoinCommunity = async (communityId) => {
+    try {
+      await participarNaComunidade(communityId)
+      setCommunityApiError('')
+      // A resposta do backend confirma a entrada; o hook atualiza a visão local.
+      joinCommunity(communityId)
+    } catch (error) {
+      setCommunityApiError(error.message)
+      // O modo local continua disponível para desenvolvimento quando a API
+      // ainda não foi iniciada; o erro permanece visível na tela.
+      joinCommunity(communityId)
+    }
+  }
 
   // `useWatchTracking` em Finds guarda `onFindWatched` nas dependências dos
   // próprios efeitos: uma identidade nova a cada render contabilizaria a mesma
@@ -222,7 +238,7 @@ function App() {
         onFindWatched={handleFindWatched}
         onGoHome={goHome}
         memberships={memberships}
-        onJoinCommunity={joinCommunity}
+        onJoinCommunity={handleJoinCommunity}
         onLeaveCommunity={leaveCommunity}
         followedAuthors={followedAuthors}
         onToggleFollow={toggleFollow}
@@ -258,9 +274,9 @@ function App() {
           onOpenFind={(findId) => openFinds(activeCommunity.id, findId)}
           onBack={leaveCommunityDetail}
           isJoined={memberships.some((membership) => membership.id === activeCommunity.id)}
-          onJoin={joinCommunity}
+          onJoin={handleJoinCommunity}
           onLeave={leaveCommunity}
-          storageError={nicheStorageError}
+          storageError={communityApiError || nicheStorageError}
         />
       )
     }
@@ -270,7 +286,7 @@ function App() {
       case 'History': return <History events={events} onClearHistory={clearHistory} onOpenFind={openFinds} onOpenCommunity={openCommunity} />
       case 'Profile': return <Profile path={profilePath} onNavigate={navigateProfile} onSignOut={handleSignOut} events={events} clearHistory={clearHistory} myTime={myTime} />
       case 'Search': return <SearchView videos={videoCatalog} lists={lists} onListsChange={updateLists} storageError={storageError} />
-      case 'Community': return <CommunityView memberships={memberships} onJoin={joinCommunity} onLeave={leaveCommunity} onOpenCommunity={(communityId) => openCommunity(communityId)} storageError={communityStorageError} />
+      case 'Community': return <CommunityView memberships={memberships} onJoin={handleJoinCommunity} onLeave={leaveCommunity} onOpenCommunity={(communityId) => openCommunity(communityId)} storageError={communityApiError || communityStorageError} />
       case 'Lists': return <ListsView lists={lists} onListsChange={updateLists} availableVideos={videoCatalog} storageError={storageError} />
       default: return renderHome()
     }
