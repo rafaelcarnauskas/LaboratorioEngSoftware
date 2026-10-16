@@ -2,11 +2,11 @@
 // histórico, histórico recente da Home e roteamento do item recente.
 import { describe, expect, it } from 'vitest'
 import fc from 'fast-check'
-import { attributedSeconds, MAX_ATTRIBUTED_SECONDS, MIN_DWELL_MS } from '../pages/Finds'
-import { groupHistory, recentlyWatched } from '../lib/usage'
-import { hydrate } from '../lib/findsIndex'
-import { buildUrl, parseUrl } from '../lib/navigation'
-import { finds } from '../data/finds'
+import { attributedSeconds, MAX_ATTRIBUTED_SECONDS, MIN_DWELL_MS } from '../3-videos/telas/Finds'
+import { groupHistory, recentlyWatched } from '../5-historico/modelo/usage'
+import { hydrate } from '../3-videos/modelo/findsIndex'
+import { buildUrl, parseUrl } from '../app/navigation'
+import { finds } from '../3-videos/modelo/finds'
 
 const RUNS = 100
 

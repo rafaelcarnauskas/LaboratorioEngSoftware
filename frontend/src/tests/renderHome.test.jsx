@@ -11,12 +11,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, render } from '@testing-library/react'
 import fc from 'fast-check'
-import App from '../App'
-import History from '../pages/History'
-import { finds } from '../data/finds'
-import { communities } from '../data/communities'
-import { countByCommunity } from '../lib/findsIndex'
-import { formatTime, recentlyWatched } from '../lib/usage'
+import App from '../app/App'
+import History from '../5-historico/telas/History'
+import { finds } from '../3-videos/modelo/finds'
+import { communities } from '../2-comunidades/modelo/communities'
+import { countByCommunity } from '../3-videos/modelo/findsIndex'
+import { formatTime, recentlyWatched } from '../5-historico/modelo/usage'
 import { installLocalStorageStub } from './helpers/localStorageStub'
 
 const RUNS = 25
