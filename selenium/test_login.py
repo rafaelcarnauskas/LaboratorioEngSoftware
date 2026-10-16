@@ -10,7 +10,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 # O app precisa estar rodando (npm run dev na pasta frontend).
 URL_APP = os.environ.get("URL_APP", "http://localhost:5173")
 
-# Usuário de teste definido em frontend/src/hooks/session.js.
+# Usuário de teste definido em frontend/src/1-autenticacao/modelo/session.js.
 EMAIL_TESTE = "victor@email.com"
 SENHA_TESTE = "choosen123"
 

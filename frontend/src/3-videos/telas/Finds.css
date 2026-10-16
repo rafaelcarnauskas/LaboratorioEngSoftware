@@ -1,0 +1,712 @@
+@import url('https://fonts.googleapis.com/css2?family=ABeeZee&family=Inter:wght@600&family=Roboto:wght@400;500&display=swap');
+
+.finds-page {
+  --finds-bg: #2a374a;
+  --finds-panel-bg: #223042;
+  --finds-button-bg: #2b3f5a;
+  --finds-button-hover: #36507a;
+  --finds-border: rgb(255 255 255 / 10%);
+  --finds-text: #ffffff;
+  --finds-text-strong: #fafafa;
+  --finds-muted: #8e8e8e;
+  --finds-footer: #c7c7c7;
+  --finds-blue: #0095f6;
+  --finds-focus: #5b8def;
+  --finds-post-padding: 12px;
+  /* Vídeo vertical 9:16 ocupando toda a altura disponível, como no Finds. */
+  --finds-video-height: calc(100svh - 2 * var(--finds-post-padding));
+  --finds-video-width: calc(var(--finds-video-height) * 9 / 16);
+
+  /* A página inteira é o contêiner de rolagem: a roda do mouse funciona em
+     qualquer ponto da tela e cada vídeo "encaixa" no topo. relative mantém
+     elementos absolutos (ex.: rótulos ocultos) contidos aqui. */
+  position: relative;
+  height: 100svh;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+
+  display: grid;
+  grid-template-columns: minmax(220px, 0.72fr) minmax(0, 1fr) minmax(250px, 300px);
+  align-items: start;
+  padding-right: clamp(16px, 5vw, 96px);
+  background: var(--finds-bg);
+  color: var(--finds-text);
+  font-family: 'ABeeZee', 'Segoe UI', sans-serif;
+  font-size: 16px;
+}
+
+.finds-page::-webkit-scrollbar {
+  display: none;
+}
+
+/* :where() mantém especificidade zero, para as classes abaixo sobrescreverem. */
+:where(.finds-page) :where(p, h2, ul) {
+  margin: 0;
+}
+
+:where(.finds-page) ul {
+  padding: 0;
+  list-style: none;
+}
+
+:where(.finds-page) button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.finds-page :focus-visible {
+  outline: 2px solid var(--finds-focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.finds-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.finds-text-button:hover {
+  text-decoration: underline;
+}
+
+.finds-avatar {
+  flex: 0 0 auto;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.finds-profile-link {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.finds-profile-link:hover .finds-post-author {
+  text-decoration: underline;
+}
+
+.finds-profile-link:hover .finds-avatar {
+  filter: brightness(1.15);
+}
+
+/* Colunas fixas (marca e lateral) acompanham a rolagem */
+
+.finds-brand,
+.finds-side {
+  position: sticky;
+  top: 0;
+}
+
+.finds-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-self: center;
+  padding-top: 42px;
+  color: var(--finds-text-strong);
+  text-decoration: none;
+}
+
+.finds-brand:hover {
+  opacity: 0.85;
+}
+
+.finds-brand-name {
+  margin-top: 48px;
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(32px, 3vw, 58px);
+  font-weight: 600;
+  letter-spacing: -1px;
+}
+
+/* Feed: um vídeo por "tela" */
+
+.finds-feed {
+  grid-column: 2;
+}
+
+.finds-empty {
+  padding-top: 22px;
+  color: var(--finds-muted);
+  text-align: center;
+}
+
+.finds-post {
+  height: 100svh;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 16px;
+  padding: var(--finds-post-padding) 0;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+/* Vídeo */
+
+.finds-video {
+  position: relative;
+  flex: 0 0 auto;
+  width: var(--finds-video-width);
+  height: var(--finds-video-height);
+  overflow: hidden;
+  border-radius: 8px;
+  background: #000000;
+}
+
+.finds-video-media {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+.finds-video-backdrop,
+.finds-video-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.finds-video-backdrop {
+  object-fit: cover;
+  filter: blur(28px) brightness(0.55);
+  transform: scale(1.15);
+}
+
+.finds-video-image {
+  object-fit: contain;
+}
+
+.finds-video-overlay {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding: 64px 16px 16px;
+  background: linear-gradient(to top, rgb(0 0 0 / 75%), rgb(0 0 0 / 0%));
+  text-shadow: 0 1px 2px rgb(0 0 0 / 60%);
+  /* O degradê não bloqueia o clique no vídeo; só os botões recebem clique. */
+  pointer-events: none;
+}
+
+.finds-video-overlay button {
+  pointer-events: auto;
+}
+
+.finds-video-author {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.finds-video-author .finds-profile-link {
+  gap: 8px;
+}
+
+.finds-post-author {
+  color: var(--finds-text-strong);
+  font-family: 'Roboto', sans-serif;
+  font-weight: 500;
+}
+
+.finds-follow {
+  height: 26px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: rgb(43 63 90 / 85%);
+  color: var(--finds-text);
+  font-family: 'Roboto', sans-serif;
+  line-height: 18px;
+  white-space: nowrap;
+  text-shadow: none;
+}
+
+.finds-follow:hover {
+  background: var(--finds-button-hover);
+}
+
+/* Pílula de comunidade, ao lado do Follow. Segue a altura e o raio do
+   .finds-follow para as duas ações ficarem alinhadas na mesma linha. */
+.finds-community {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  background: rgb(91 141 239 / 90%);
+  color: #0f1726;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+  white-space: nowrap;
+  text-shadow: none;
+}
+
+.finds-community:hover {
+  background: rgb(111 155 242 / 95%);
+}
+
+.finds-community--joined {
+  background: rgb(91 141 239 / 22%);
+  color: #cfe0ff;
+}
+
+.finds-community--joined:hover {
+  background: rgb(91 141 239 / 32%);
+}
+
+.finds-caption {
+  display: flex;
+  align-items: baseline;
+  margin-top: 10px;
+  line-height: 20px;
+}
+
+.finds-caption-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.finds-caption--expanded .finds-caption-text {
+  max-height: 90px;
+  overflow-y: auto;
+  white-space: normal;
+}
+
+.finds-caption-more {
+  flex: 0 0 auto;
+  margin-left: 4px;
+  color: var(--finds-footer);
+}
+
+.finds-caption-more:hover {
+  color: var(--finds-text);
+}
+
+.finds-time {
+  margin-top: 6px;
+  font-size: 11px;
+  letter-spacing: 0.2px;
+  opacity: 0.8;
+  text-transform: uppercase;
+}
+
+/* Coluna de ações ao lado do vídeo */
+
+.finds-actions {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding-bottom: 8px;
+}
+
+.finds-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  transition: transform 120ms ease;
+}
+
+.finds-like-action {
+  color: #e9eef6;
+}
+
+.finds-like-mark {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.finds-like-mark > span {
+  width: 26px;
+  height: 26px;
+  display: block;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.finds-like-mark--liked {
+  color: #ffffff;
+}
+
+.finds-like-mark--liked > span {
+  background: currentColor;
+}
+
+.finds-like-action--liked > span:last-child {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.finds-action img {
+  transition: opacity 120ms ease;
+}
+
+.finds-action:hover img,
+.finds-icon-button:hover {
+  opacity: 0.7;
+}
+
+.finds-action:active,
+.finds-icon-button:active {
+  transform: scale(0.9);
+}
+
+.finds-action--active span {
+  color: var(--finds-focus);
+}
+
+/* Painel de comentários (abre ao lado do vídeo) */
+
+.finds-comments-panel {
+  flex: 0 0 auto;
+  width: min(360px, 32vw);
+  height: var(--finds-video-height);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--finds-border);
+  border-radius: 8px;
+  background: var(--finds-panel-bg);
+}
+
+.finds-comments-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--finds-border);
+}
+
+.finds-comments-header h2 {
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.finds-comments-close {
+  padding: 2px 6px;
+  color: var(--finds-footer);
+  font-size: 18px;
+}
+
+.finds-comments-close:hover {
+  color: var(--finds-text);
+}
+
+/* Só a lista rola; cabeçalho e rodapé do painel ficam fixos. */
+.finds-comments-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px 16px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--finds-button-hover) transparent;
+}
+
+.finds-view-comments {
+  color: var(--finds-muted);
+}
+
+.finds-comments {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+
+.finds-comment-author {
+  font-weight: 600;
+}
+
+.finds-comments-footer {
+  padding: 8px 16px 4px;
+  border-top: 1px solid var(--finds-border);
+}
+
+.finds-feedback {
+  margin-top: 4px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 15px;
+}
+
+.finds-feedback--erro {
+  background: rgb(255 107 107 / 15%);
+  color: #ffb4b4;
+}
+
+.finds-feedback--sucesso {
+  background: rgb(91 141 239 / 18%);
+  color: #cfe0ff;
+}
+
+.finds-comment-form {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.finds-icon-button {
+  display: flex;
+  margin-left: -4px;
+  padding: 4px;
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.finds-comment-form input {
+  flex: 1;
+  /* Sem isto o input mantém a largura mínima nativa e empurra o "Post" para fora. */
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--finds-text);
+  font: inherit;
+  outline: none;
+}
+
+.finds-comment-form input::placeholder {
+  color: var(--finds-footer);
+}
+
+.finds-comment-form input[aria-invalid='true']::placeholder {
+  color: #ffb4b4;
+}
+
+.finds-comment-submit {
+  flex: 0 0 auto;
+  color: var(--finds-blue);
+  font-family: 'Segoe UI', sans-serif;
+  font-weight: 600;
+}
+
+/* Como no Figma: "Post" fica apagado com o campo vazio, mas continua
+   clicável para mostrar a mensagem de validação. */
+.finds-comment-submit--idle {
+  opacity: 0.4;
+}
+
+.finds-comment-submit:hover,
+.finds-link-button:hover {
+  color: #5cbcff;
+}
+
+/* Coluna direita: outras comunidades no lugar de recomendações de perfis. */
+
+.finds-side {
+  grid-column: 3;
+  align-self: start;
+  padding-top: 42px;
+}
+
+.finds-community-suggestions {
+  padding: 20px;
+  border: 1px solid var(--finds-border);
+  border-radius: 14px;
+  background: rgb(25 37 53 / 48%);
+}
+
+.finds-side-eyebrow {
+  color: #8cb9f0;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.finds-community-suggestions h2 {
+  margin-top: 7px;
+  color: var(--finds-text-strong);
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.finds-side-intro,
+.finds-side-empty {
+  margin-top: 8px;
+  color: #b7c2d2;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.finds-community-suggestions ul {
+  display: grid;
+  gap: 9px;
+  margin-top: 17px;
+}
+
+.finds-community-card {
+  width: 100%;
+  border: 1px solid #52617a !important;
+  border-radius: 10px;
+  background: #33435b !important;
+  transition: transform 150ms ease, border-color 150ms ease, background-color 150ms ease;
+}
+
+.finds-community-card:hover {
+  transform: translateY(-1px);
+  border-color: #8cb9f0 !important;
+  background: #3b4b64 !important;
+}
+
+.finds-community-card-main {
+  width: 100%;
+  min-height: 68px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 11px 5px !important;
+}
+
+.finds-community-card-icon {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: rgb(255 255 255 / 8%);
+  font-size: 19px;
+}
+
+.finds-community-card-copy {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  gap: 3px;
+}
+
+.finds-community-card-copy strong {
+  color: var(--finds-text-strong);
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 14px;
+}
+
+.finds-community-card-copy small {
+  overflow: hidden;
+  color: #b3c0d1;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 11px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.finds-community-card-copy small:last-child {
+  color: #8cb9f0;
+  font-weight: 600;
+}
+
+.finds-community-membership {
+  display: block;
+  width: fit-content;
+  margin: 0 11px 10px auto;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: #5b8def;
+  color: #ffffff;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.finds-community-membership--joined {
+  background: rgb(91 141 239 / 22%);
+  color: #cfe0ff;
+}
+
+/* O painel de comentários sempre toma o espaço da lateral para não ficar por
+   trás dos cards de comunidades. */
+.finds-page:has(.finds-comments-panel) {
+  grid-template-columns: minmax(0, 444px) minmax(0, 1fr);
+}
+
+.finds-page:has(.finds-comments-panel) .finds-side {
+  display: none;
+}
+
+/* Telas estreitas: primeiro sai a coluna da direita, depois a marca. */
+
+@media (max-width: 1200px) {
+  .finds-page {
+    grid-template-columns: minmax(180px, 0.58fr) minmax(0, 1fr);
+  }
+
+  .finds-side {
+    display: none;
+  }
+}
+
+@media (max-width: 800px) {
+  .finds-page {
+    grid-template-columns: minmax(0, 1fr);
+    padding-right: 0;
+  }
+
+  .finds-brand {
+    display: none;
+  }
+
+  .finds-feed {
+    grid-column: 1;
+  }
+}
+
+.finds-follow--following {
+  background: rgb(255 255 255 / 18%);
+}
+
+/* Aviso do feed (ex.: link copiado). Fixo no rodapé e fora da grade da página. */
+.finds-notice {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  z-index: 20;
+  max-width: min(560px, calc(100vw - 32px));
+  margin: 0;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: rgb(20 28 40 / 92%);
+  color: var(--finds-text);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+  transform: translateX(-50%);
+}
+
+.finds-notice:empty {
+  display: none;
+}
+
+/* Salvo: o ícone ganha um fundo com a cor de foco, como um marcador aceso. */
+.finds-action--saved img {
+  border-radius: 50%;
+  background: var(--finds-focus);
+  box-shadow: 0 0 0 4px var(--finds-focus);
+}

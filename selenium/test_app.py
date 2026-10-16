@@ -250,15 +250,15 @@ class TestChoosen(unittest.TestCase):
         self.screenshot("07_lista_nome_invalido.png")
 
 
-    # Regressões da integração entre as branches victor e murilo/reels.
-    def test_home_reels_lists_search_integrados(self):
-        for category, first_reel in (("Sports", "sports-1"), ("Cute", "cute-1")):
+    # Regressões da integração entre as branches victor e murilo/finds.
+    def test_home_finds_lists_search_integrados(self):
+        for category, first_find in (("Sports", "sports-1"), ("Cute", "cute-1")):
             with self.subTest(category=category):
                 self.clicar(
                     f"//button[contains(@class, 'category-card')][.//strong[text()='{category}']]"
                 )
                 self.wait.until(EC.visibility_of_element_located(
-                    (By.CSS_SELECTOR, f'[data-reel-id="{first_reel}"]')
+                    (By.CSS_SELECTOR, f'[data-find-id="{first_find}"]')
                 ))
                 self.clicar("//button[@aria-label='Home']")
                 self.wait.until(EC.visibility_of_element_located(

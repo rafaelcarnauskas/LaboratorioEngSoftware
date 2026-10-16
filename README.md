@@ -5,19 +5,23 @@ Projeto de PCS3642 - Laboratório de Engenharia de Software I (2026).
 ## Estrutura
 
 ```
-frontend/          Aplicação React + Vite
+frontend/                  Aplicação React + Vite
   src/
-    App.jsx        Shell da aplicação (Home, Profile, My Time, History)
-    pages/         Telas: Reels, ListsView, SearchView (cada uma com seu CSS)
-    hooks/         Hooks reutilizáveis (useLists)
-    data/          Dados de demonstração (reels, videoCatalog)
-    assets/        Imagens e ícones
-selenium/          Testes end-to-end em Python
-  run_all.py       Executa as duas suítes
-  test_app.py      Suíte de Victor
-  test_reels.py    Suíte de Murilo
-  evidencias/      Capturas anteriores, preservadas
+    app/                   Shell (App.jsx, App.css) e contrato de URL (navigation.js)
+    1-autenticacao/        Login, cadastro, perfil e plano
+    2-comunidades/         Home, comunidades e gestão de comunidades
+    3-videos/              Finds (feed de vídeos)
+    4-busca-listas/        Busca e listas
+    5-historico/           Histórico, Meu tempo, notificações e alertas
+    tests/                 Testes de integração entre contextos
+    assets/                Imagens e ícones
+selenium/                  Testes end-to-end em Python
+  run_all.py               Executa as suítes
+  evidencias/              Capturas anteriores, preservadas
 ```
+
+Cada contexto segue o mesmo formato: `telas/` (View), `orquestrador.js`
+(Controller) e `modelo/` (Model).
 
 ## Aplicação integrada
 
@@ -38,7 +42,7 @@ Abra http://localhost:5173/. O Vite usa porta fixa e informa um erro caso esteja
 ocupada.
 
 Na primeira vez o app pede login. Enquanto não há backend, use o usuário de teste
-**victor@email.com** / **choosen123** (definido em `frontend/src/hooks/session.js`).
+**victor@email.com** / **choosen123** (definido em `frontend/src/1-autenticacao/modelo/session.js`).
 O login fica salvo no navegador; o botão Sair, no Perfil, encerra a sessão e volta ao login.
 
 Também é possível criar uma conta pelo link **Create account** da tela de login

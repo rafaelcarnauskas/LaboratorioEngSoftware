@@ -11,12 +11,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, render } from '@testing-library/react'
 import fc from 'fast-check'
-import App from '../App'
-import History from '../pages/History'
-import { reels } from '../data/reels'
-import { communities } from '../data/communities'
-import { countByCommunity } from '../lib/reelsIndex'
-import { formatTime, recentlyWatched } from '../lib/usage'
+import App from '../app/App'
+import History from '../5-historico/telas/History'
+import { finds } from '../3-videos/modelo/finds'
+import { communities } from '../2-comunidades/modelo/communities'
+import { countByCommunity } from '../3-videos/modelo/findsIndex'
+import { formatTime, recentlyWatched } from '../5-historico/modelo/usage'
 import { installLocalStorageStub } from './helpers/localStorageStub'
 
 const RUNS = 25
@@ -47,15 +47,15 @@ afterEach(() => {
 
 // --- geradores -----------------------------------------------------------
 
-// Evento_Visualizacao válido para o Servico_Historico: um por reel, `seconds`
+// Evento_Visualizacao válido para o Servico_Historico: um por find, `seconds`
 // inteiro positivo e `watchedAt` dentro dos últimos sete dias.
 const eventPlansArbitrary = fc
-  .uniqueArray(fc.constantFrom(...reels.map((reel) => reel.id)), { minLength: 1, maxLength: reels.length })
-  .chain((reelIds) =>
+  .uniqueArray(fc.constantFrom(...finds.map((find) => find.id)), { minLength: 1, maxLength: finds.length })
+  .chain((findIds) =>
     fc.tuple(
-      ...reelIds.map((reelId) =>
+      ...findIds.map((findId) =>
         fc.record({
-          reelId: fc.constant(reelId),
+          findId: fc.constant(findId),
           minutesAgo: fc.integer({ min: 0, max: 7 * 24 * 60 - 1 }),
           seconds: fc.integer({ min: 1, max: 90 }),
         }),
@@ -65,13 +65,13 @@ const eventPlansArbitrary = fc
 
 function buildEvents(plans, now) {
   return plans.map((plan) => ({
-    reelId: plan.reelId,
+    findId: plan.findId,
     watchedAt: now - plan.minutesAgo * 60_000,
     seconds: plan.seconds,
   }))
 }
 
-const reelsById = new Map(reels.map((reel) => [reel.id, reel]))
+const findsById = new Map(finds.map((find) => [find.id, find]))
 
 // App exibe uma tela de carregamento por 1,5s antes do conteúdo.
 // Começa com sessão salva para pular a tela de login (testada no Selenium).
@@ -102,12 +102,12 @@ describe('Cards de histórico', () => {
         expect(cards).toHaveLength(events.length)
 
         for (const event of events) {
-          const reel = reelsById.get(event.reelId)
-          const card = cards.find((item) => item.textContent.includes(reel.title))
+          const find = findsById.get(event.findId)
+          const card = cards.find((item) => item.textContent.includes(find.title))
 
           expect(card).toBeDefined()
-          expect(card.querySelector('h3').textContent).toBe(reel.title)
-          expect(card.textContent).toContain(reel.author)
+          expect(card.querySelector('h3').textContent).toBe(find.title)
+          expect(card.textContent).toContain(find.author)
 
           const clock = card.querySelector('.history-card-meta span').textContent
           expect(clock).toBe(formatTime(event.watchedAt))
@@ -139,10 +139,10 @@ describe('Cards de histórico', () => {
 
         cards.forEach((card, index) => {
           const event = expected[index]
-          const reel = reelsById.get(event.reelId)
+          const find = findsById.get(event.findId)
 
-          expect(card.querySelector('strong').textContent).toBe(reel.title)
-          expect(card.textContent).toContain(`@${reel.author}`)
+          expect(card.querySelector('strong').textContent).toBe(find.title)
+          expect(card.textContent).toContain(`@${find.author}`)
 
           const clock = card.querySelector('.home-recent-time').textContent
           expect(clock).toBe(formatTime(event.watchedAt))
@@ -168,9 +168,9 @@ const membershipsArbitrary = fc
 
 describe('Card de comunidade da Home', () => {
   // **Card de comunidade expõe nome, ícone, descrição, membros e
-  // contagem de reels**
+  // contagem de finds**
 
-  it('expõe nome, ícone, descrição, membros e a contagem de reels de cada comunidade do catálogo', () => {
+  it('expõe nome, ícone, descrição, membros e a contagem de finds de cada comunidade do catálogo', () => {
     fc.assert(
       fc.property(membershipsArbitrary, (memberships) => {
         cleanup()
@@ -196,10 +196,10 @@ describe('Card de comunidade da Home', () => {
           const meta = tile.querySelector('.community-tile-meta').textContent
           expect(meta).toContain(`${community.memberCount.toLocaleString('pt-BR')} membros`)
 
-          // A contagem exibida é a dos reels cujo communityId é esta comunidade.
-          const reelCount = reels.filter((reel) => reel.communityId === community.id).length
-          expect(countByCommunity(community.id)).toBe(reelCount)
-          expect(meta).toContain(`${reelCount} ${reelCount === 1 ? 'vídeo' : 'vídeos'}`)
+          // A contagem exibida é a dos finds cujo communityId é esta comunidade.
+          const findCount = finds.filter((find) => find.communityId === community.id).length
+          expect(countByCommunity(community.id)).toBe(findCount)
+          expect(meta).toContain(`${findCount} ${findCount === 1 ? 'vídeo' : 'vídeos'}`)
         }
       }),
       { numRuns: RUNS },
