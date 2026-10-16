@@ -1,5 +1,4 @@
-import { partitionCommunities } from '../data/communities'
-import { countByCommunity } from '../lib/reelsIndex'
+import { countByCommunity, partitionCommunities } from '../controllers/contentController'
 import './CommunityView.css'
 
 function formatMembers(count) {

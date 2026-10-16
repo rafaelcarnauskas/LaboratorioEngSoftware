@@ -41,6 +41,10 @@ Na primeira vez o app pede login. Enquanto não há backend, use o usuário de t
 **victor@email.com** / **choosen123** (definido em `frontend/src/hooks/session.js`).
 O login fica salvo no navegador; o botão Sair, no Perfil, encerra a sessão e volta ao login.
 
+Também é possível criar uma conta pelo link **Create account** da tela de login
+(nome, e-mail, senha com no mínimo 8 caracteres e confirmação). Sem backend, as
+contas ficam salvas só no navegador em que foram criadas.
+
 Os cards Sports e Cute abrem os Reels. As demais categorias abrem Search.
 Também é possível abrir http://localhost:5173/?tela=reels&categoria=sports.
 O botão Home dos Reels retorna à aplicação principal.
@@ -80,12 +84,15 @@ Para executar separadamente:
 
 ```powershell
 ./.venv/Scripts/python.exe selenium/test_login.py
+./.venv/Scripts/python.exe selenium/test_cadastro.py
 ./.venv/Scripts/python.exe selenium/test_app.py
 ./.venv/Scripts/python.exe selenium/test_reels.py
 ```
 
 - Murilo (login): login válido e lembrado, campos vazios, e-mail inválido, senha
   incorreta e Sair.
+- Murilo (cadastro): conta válida com novo login, campos vazios, e-mail já
+  cadastrado, senha curta, senhas diferentes e retorno ao login.
 - Victor: Home, Profile, My Time, History e criação/validação de Lists.
 - Murilo (Reels): comentários válidos/inválidos e navegação por teclado.
 - Integração (em `test_app.py`): Home → Reels → Home → Lists → Search e salvar

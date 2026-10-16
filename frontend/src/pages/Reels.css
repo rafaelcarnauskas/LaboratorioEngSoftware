@@ -678,3 +678,35 @@
     grid-column: 1;
   }
 }
+
+.reels-follow--following {
+  background: rgb(255 255 255 / 18%);
+}
+
+/* Aviso do feed (ex.: link copiado). Fixo no rodapé e fora da grade da página. */
+.reels-notice {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  z-index: 20;
+  max-width: min(560px, calc(100vw - 32px));
+  margin: 0;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: rgb(20 28 40 / 92%);
+  color: var(--reels-text);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+  transform: translateX(-50%);
+}
+
+.reels-notice:empty {
+  display: none;
+}
+
+/* Salvo: o ícone ganha um fundo com a cor de foco, como um marcador aceso. */
+.reels-action--saved img {
+  border-radius: 50%;
+  background: var(--reels-focus);
+  box-shadow: 0 0 0 4px var(--reels-focus);
+}

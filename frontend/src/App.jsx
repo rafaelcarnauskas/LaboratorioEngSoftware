@@ -13,6 +13,8 @@ import { videoCatalog } from './data/videoCatalog'
 import Profile from './pages/profile/Profile'
 import History from './pages/History'
 import Login from './pages/Login'
+import SignUp from './pages/SignUp'
+import ForgotPassword from './pages/ForgotPassword'
 import { clearSession, getSession } from './hooks/session'
 import { findCommunity, partitionCommunities } from './data/communities'
 import { countByCommunity, hydrate } from './lib/reelsIndex'
@@ -69,6 +71,9 @@ function CommunityTile({ community, onOpen }) {
 function App() {
   const [isLoading, setIsLoading] = useState(true)
   const [session, setSession] = useState(getSession)
+  // Sem sessão, qual tela de acesso mostrar: 'login', 'signup' (cadastro) ou
+  // 'forgot' (esqueci a senha).
+  const [authScreen, setAuthScreen] = useState('login')
   const [nav, setNav] = useState(() => parseUrl(window.location.search))
   const [profilePath, setProfilePath] = useState(() => getProfilePathFromUrl() ?? '/profile')
   const [activeTab, setActiveTab] = useState(() => getProfilePathFromUrl() ? 'Profile' : 'Home')
@@ -95,6 +100,14 @@ function App() {
     storageError: historyStorageError,
   } = useHistory()
   const myTime = useMyTime()
+  // Perfis seguidos e reels salvos no Reels. Por enquanto só em memória: a
+  // persistência entra quando o Model tiver um serviço para isso.
+  const [followedAuthors, setFollowedAuthors] = useState([])
+  const [savedReelIds, setSavedReelIds] = useState([])
+  const toggleIn = (setter) => (value) =>
+    setter((current) => (current.includes(value) ? current.filter((item) => item !== value) : [...current, value]))
+  const toggleFollow = toggleIn(setFollowedAuthors)
+  const toggleSave = toggleIn(setSavedReelIds)
 
   // `useWatchTracking` em Reels guarda `onReelWatched` nas dependências dos
   // próprios efeitos: uma identidade nova a cada render contabilizaria a mesma
@@ -181,6 +194,7 @@ function App() {
     setNav(homeState)
     setProfilePath('/profile')
     setActiveTab('Home')
+    setAuthScreen('login')
     setSession(null)
   }
 
@@ -207,7 +221,21 @@ function App() {
   }
 
   // Login só na primeira vez: com sessão salva, o app abre direto (inclusive pelos links de Reels).
-  if (!session) return <Login onLogin={setSession} />
+  if (!session) {
+    const goToLogin = () => setAuthScreen('login')
+    if (authScreen === 'signup') return <SignUp onSignUp={setSession} onGoToLogin={goToLogin} />
+    if (authScreen === 'forgot') return <ForgotPassword onGoToLogin={goToLogin} />
+    return (
+      <Login
+        onLogin={setSession}
+        onCreateAccount={() => setAuthScreen('signup')}
+        onForgotPassword={() => setAuthScreen('forgot')}
+      />
+    )
+  }
+
+  // Primeiro nome de quem entrou, para a saudação da Home.
+  const firstName = session.name?.trim().split(/\s+/)[0] || 'você'
 
   if (nav.screen === 'reels') {
     return (
@@ -221,6 +249,10 @@ function App() {
         memberships={memberships}
         onJoinCommunity={joinCommunity}
         onLeaveCommunity={leaveCommunity}
+        followedAuthors={followedAuthors}
+        onToggleFollow={toggleFollow}
+        savedReelIds={savedReelIds}
+        onToggleSave={toggleSave}
       />
     )
   }
@@ -228,7 +260,7 @@ function App() {
   const renderHome = () => (
     <div className="home-main">
       <p className="home-eyebrow">HOME</p>
-      <h1>Olá, Victor <span aria-hidden="true">👋</span></h1>
+      <h1>Olá, {firstName} <span aria-hidden="true">👋</span></h1>
       <p className="home-subtitle">O que você quer assistir hoje?</p>
 
       <section className="home-section" aria-labelledby="home-communities-title">
@@ -308,7 +340,7 @@ function App() {
 
     switch (activeTab) {
       case 'Home': return renderHome()
-      case 'History': return <History events={events} onClearHistory={clearHistory} />
+      case 'History': return <History events={events} onClearHistory={clearHistory} onOpenReel={openReels} onOpenCommunity={openCommunity} />
       case 'Profile': return <Profile path={profilePath} onNavigate={navigateProfile} onSignOut={handleSignOut} events={events} clearHistory={clearHistory} myTime={myTime} />
       case 'Search': return <SearchView videos={videoCatalog} lists={lists} onListsChange={updateLists} storageError={storageError} />
       case 'Community': return <CommunityView memberships={memberships} onJoin={joinCommunity} onLeave={leaveCommunity} onOpenCommunity={(communityId) => openCommunity(communityId)} storageError={communityStorageError} />

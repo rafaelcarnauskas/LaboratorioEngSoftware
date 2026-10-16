@@ -1,4 +1,4 @@
-"""Executa juntas as suítes Selenium (login, telas principais e Reels), de qualquer diretório."""
+"""Executa juntas as suítes Selenium (login, cadastro, telas principais e Reels), de qualquer diretório."""
 import importlib.util
 from pathlib import Path
 import unittest
@@ -8,6 +8,7 @@ def main():
     pasta = Path(__file__).resolve().parent
     test_files = (
         ("tests_login", pasta / "test_login.py"),
+        ("tests_cadastro", pasta / "test_cadastro.py"),
         ("tests_app", pasta / "test_app.py"),
         ("tests_reels", pasta / "test_reels.py"),
     )

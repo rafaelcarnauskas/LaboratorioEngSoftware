@@ -1,25 +1,20 @@
 import { useState } from 'react'
-import { authenticate, saveSession } from '../hooks/session'
+import { isValidEmail, logIn } from '../controllers/authController'
 import logoMark from '../assets/reels/icons/logo-mark.svg'
 import './Login.css'
-
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
-// Placeholder: "Forgot password?" e "Create account" já são clicáveis; as telas entram depois.
-function handleNotImplemented() {}
 
 function validate(email, password) {
   const errors = {}
 
   if (!email.trim()) errors.email = 'Email is required.'
-  else if (!EMAIL_PATTERN.test(email.trim())) errors.email = 'Enter a valid email address.'
+  else if (!isValidEmail(email)) errors.email = 'Enter a valid email address.'
 
   if (!password) errors.password = 'Password is required.'
 
   return errors
 }
 
-function Login({ onLogin }) {
+function Login({ onLogin, onCreateAccount, onForgotPassword }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -48,13 +43,12 @@ function Login({ onLogin }) {
       return
     }
 
-    const user = authenticate(email, password)
+    const user = logIn(email, password)
     if (!user) {
       setFormError('Incorrect email or password. Please try again.')
       return
     }
 
-    saveSession(user)
     onLogin(user)
   }
 
@@ -131,7 +125,12 @@ function Login({ onLogin }) {
           </div>
 
           <div className="login-forgot-row">
-            <button className="login-link" type="button" onClick={handleNotImplemented}>
+            <button
+              className="login-link"
+              type="button"
+              onClick={onForgotPassword}
+              data-testid="ir-para-recuperar-senha"
+            >
               Forgot password?
             </button>
           </div>
@@ -143,7 +142,12 @@ function Login({ onLogin }) {
 
         <p className="login-signup">
           Don&apos;t have an account?{' '}
-          <button className="login-link login-link--strong" type="button" onClick={handleNotImplemented}>
+          <button
+            className="login-link login-link--strong"
+            type="button"
+            onClick={onCreateAccount}
+            data-testid="ir-para-cadastro"
+          >
             Create account
           </button>
         </p>
