@@ -1,18 +1,22 @@
 # Rotas do Serviço de Histórico e do Serviço de Tempo de Uso.
 # Os campos JSON seguem os nomes do front (findId, seconds, watchedAt...).
 import time
+from functools import lru_cache
 from typing import Literal
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field
+
+from app.db.base import criar_engine
 
 from . import modelo, servico
 
 router = APIRouter(prefix="/api/v1", tags=["historico"])
 
 
+@lru_cache
 def get_repositorio():
-    return modelo.repositorio
+    return modelo.RepositorioSQL(criar_engine())
 
 
 def get_agora():

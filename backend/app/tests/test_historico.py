@@ -5,7 +5,8 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from app.historico import api, servico
-from app.historico.modelo import RepositorioHistorico, Visualizacao
+from app.db.base import criar_engine
+from app.historico.modelo import RepositorioMemoria, RepositorioSQL, Visualizacao
 
 
 def ms(ano, mes, dia, hora=12, minuto=0):
@@ -16,9 +17,11 @@ AGORA = ms(2026, 10, 16, 15, 0)  # sexta-feira
 USUARIO = {"X-Usuario": "victor@email.com"}
 
 
-@pytest.fixture
-def repo():
-    return RepositorioHistorico()
+@pytest.fixture(params=["memoria", "sqlite"])
+def repo(request):
+    if request.param == "memoria":
+        return RepositorioMemoria()
+    return RepositorioSQL(criar_engine("sqlite://"))
 
 
 @pytest.fixture
@@ -186,3 +189,13 @@ def test_resumo_de_tempo(cliente):
     assert r["balancedDays"] == 6
     assert r["isOverLimit"] and r["rawPercentage"] == 150 and r["clampedPercentage"] == 100
     assert len(r["weekUsage"]) == 7 and r["weekUsage"][-1]["current"]
+
+
+def test_sqlite_persiste_entre_instancias(tmp_path):
+    url = f"sqlite:///{tmp_path / 'choosen.db'}"
+    servico.registrar_visualizacao(RepositorioSQL(criar_engine(url)), "u", "f1", 30, AGORA)
+    servico.atualizar_preferencias(RepositorioSQL(criar_engine(url)), "u", 90,
+                                   {"bedtime": False, "screenTime": True, "weekly": True})
+    novo = RepositorioSQL(criar_engine(url))
+    assert novo.visualizacoes("u") == [Visualizacao("f1", 30, AGORA)]
+    assert novo.preferencia("u").limite_diario == 90
