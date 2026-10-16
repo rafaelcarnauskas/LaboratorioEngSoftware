@@ -3,7 +3,7 @@ import { useState } from 'react'
 const storageKey = 'choosen.history.v1'
 const maxEvents = 100
 
-// Teto de sanidade do total acumulado por reel: 24 horas em segundos.
+// Teto de sanidade do total acumulado por find: 24 horas em segundos.
 // Não é limite de produto, é filtro de payload corrompido — nenhuma sequência
 // plausível de visualizações de 90s chega perto disso.
 export const MAX_EVENT_SECONDS = 86400
@@ -11,7 +11,7 @@ export const MAX_EVENT_SECONDS = 86400
 function isValidEvent(event) {
   return (
     event !== null && typeof event === 'object' &&
-    typeof event.reelId === 'string' && event.reelId.length > 0 &&
+    typeof event.findId === 'string' && event.findId.length > 0 &&
     Number.isFinite(event.watchedAt) && event.watchedAt > 0 &&
     Number.isInteger(event.seconds) && event.seconds > 0 && event.seconds <= MAX_EVENT_SECONDS
   )
@@ -27,7 +27,7 @@ function loadHistory() {
       !Array.isArray(events) ||
       events.length > maxEvents ||
       !events.every(isValidEvent) ||
-      new Set(events.map((event) => event.reelId)).size !== events.length
+      new Set(events.map((event) => event.findId)).size !== events.length
     ) {
       throw new Error('Invalid saved history')
     }
@@ -41,17 +41,17 @@ function loadHistory() {
   }
 }
 
-// Uma entrada por reel, mais recentes primeiro, teto de 100 entradas.
-// O tempo ACUMULA: revisitar um reel soma os segundos à entrada existente e
+// Uma entrada por find, mais recentes primeiro, teto de 100 entradas.
+// O tempo ACUMULA: revisitar um find soma os segundos à entrada existente e
 // avança watchedAt para o instante mais recente.
 export function mergeEvent(events, event) {
-  const existing = events.find((item) => item.reelId === event.reelId) ?? null
-  const others = events.filter((item) => item.reelId !== event.reelId)
+  const existing = events.find((item) => item.findId === event.findId) ?? null
+  const others = events.filter((item) => item.findId !== event.findId)
 
   const merged = existing === null
     ? event
     : {
-        reelId: event.reelId,
+        findId: event.findId,
         watchedAt: Math.max(existing.watchedAt, event.watchedAt),
         seconds: Math.min(existing.seconds + event.seconds, MAX_EVENT_SECONDS),
       }
@@ -64,9 +64,9 @@ export function mergeEvent(events, event) {
 export default function useHistory() {
   const [state, setState] = useState(loadHistory)
 
-  function recordView(reelId, seconds, watchedAt = Date.now()) {
+  function recordView(findId, seconds, watchedAt = Date.now()) {
     setState((current) => {
-      const events = mergeEvent(current.events, { reelId, watchedAt, seconds })
+      const events = mergeEvent(current.events, { findId, watchedAt, seconds })
       let storageError = ''
       try {
         localStorage.setItem(storageKey, JSON.stringify(events))

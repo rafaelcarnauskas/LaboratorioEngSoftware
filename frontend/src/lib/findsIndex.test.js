@@ -1,9 +1,9 @@
-//`selectReels` é a interseção exata dos filtros
+//`selectFinds` é a interseção exata dos filtros
 // informados, com conjunto de nichos vazio significando "todos".
 import { describe, expect, it } from 'vitest'
 import fc from 'fast-check'
 import { categoryDefinitions, categoryKey } from './categories'
-import { selectReels } from './reelsIndex'
+import { selectFinds } from './findsIndex'
 
 const RUNS = 100
 
@@ -21,7 +21,7 @@ const rawCategory = fc
     fc.constantFrom(name, name.toLowerCase(), name.toUpperCase(), ` ${name} `),
   )
 
-const reelArb = fc.record({
+const findArb = fc.record({
   category: rawCategory,
   communityId: fc.constantFrom(...COMMUNITY_IDS),
   nicheId: fc.constantFrom(...NICHE_IDS),
@@ -29,8 +29,8 @@ const reelArb = fc.record({
 
 // Ids únicos e estáveis permitem comparar listas por identidade de item.
 const catalogArb = fc
-  .array(reelArb, { maxLength: 20 })
-  .map((items) => items.map((reel, index) => ({ id: `reel-${index}`, ...reel })))
+  .array(findArb, { maxLength: 20 })
+  .map((items) => items.map((find, index) => ({ id: `find-${index}`, ...find })))
 
 const filtersArb = fc.record({
   category: fc.option(fc.constantFrom(...CANONICAL_NAMES), { nil: null }),
@@ -42,24 +42,24 @@ const filtersArb = fc.record({
 function expected(catalog, { category, communityId, niches }) {
   const wanted = new Set(niches)
 
-  return catalog.filter((reel) => {
-    if (communityId !== null && reel.communityId !== communityId) return false
-    if (category !== null && categoryKey(reel.category) !== categoryKey(category)) return false
-    if (wanted.size > 0 && !wanted.has(reel.nicheId)) return false
+  return catalog.filter((find) => {
+    if (communityId !== null && find.communityId !== communityId) return false
+    if (category !== null && categoryKey(find.category) !== categoryKey(category)) return false
+    if (wanted.size > 0 && !wanted.has(find.nicheId)) return false
     return true
   })
 }
 
-describe('Property 2: seleção de reels é a interseção exata dos filtros', () => {
-  it('devolve exatamente os reels que satisfazem todos os filtros, na ordem do catálogo', () => {
+describe('Property 2: seleção de finds é a interseção exata dos filtros', () => {
+  it('devolve exatamente os finds que satisfazem todos os filtros, na ordem do catálogo', () => {
     fc.assert(
       fc.property(catalogArb, filtersArb, (catalog, filters) => {
-        const selected = selectReels(filters, catalog)
+        const selected = selectFinds(filters, catalog)
 
         expect(selected).toEqual(expected(catalog, filters))
 
         // Ordem do catálogo preservada: a seleção é uma subsequência.
-        const positions = selected.map((reel) => catalog.indexOf(reel))
+        const positions = selected.map((find) => catalog.indexOf(find))
         expect(positions).toEqual([...positions].sort((a, b) => a - b))
         expect(positions.every((position) => position >= 0)).toBe(true)
       }),
@@ -67,15 +67,15 @@ describe('Property 2: seleção de reels é a interseção exata dos filtros', (
     )
   })
 
-  it('não exclui nenhum reel por nicho quando o conjunto de nichos é vazio', () => {
+  it('não exclui nenhum find por nicho quando o conjunto de nichos é vazio', () => {
     fc.assert(
       fc.property(
         catalogArb,
         fc.option(fc.constantFrom(...CANONICAL_NAMES), { nil: null }),
         fc.option(fc.constantFrom(...COMMUNITY_IDS), { nil: null }),
         (catalog, category, communityId) => {
-          const withEmpty = selectReels({ category, communityId, niches: [] }, catalog)
-          const withAll = selectReels({ category, communityId, niches: NICHE_IDS }, catalog)
+          const withEmpty = selectFinds({ category, communityId, niches: [] }, catalog)
+          const withAll = selectFinds({ category, communityId, niches: NICHE_IDS }, catalog)
 
           expect(withEmpty).toEqual(withAll)
 
@@ -89,13 +89,13 @@ describe('Property 2: seleção de reels é a interseção exata dos filtros', (
     )
   })
 
-  it('nunca inclui reel de outra comunidade quando a comunidade é informada', () => {
+  it('nunca inclui find de outra comunidade quando a comunidade é informada', () => {
     fc.assert(
       fc.property(catalogArb, filtersArb, (catalog, filters) => {
         if (filters.communityId === null) return
 
-        const selected = selectReels(filters, catalog)
-        expect(selected.every((reel) => reel.communityId === filters.communityId)).toBe(true)
+        const selected = selectFinds(filters, catalog)
+        expect(selected.every((find) => find.communityId === filters.communityId)).toBe(true)
       }),
       { numRuns: RUNS },
     )
@@ -104,10 +104,10 @@ describe('Property 2: seleção de reels é a interseção exata dos filtros', (
   it('a seleção por categoria ignora a caixa e os espaços do nome informado', () => {
     fc.assert(
       fc.property(catalogArb, fc.constantFrom(...CANONICAL_NAMES), (catalog, name) => {
-        const base = selectReels({ category: name }, catalog)
+        const base = selectFinds({ category: name }, catalog)
 
-        expect(selectReels({ category: name.toUpperCase() }, catalog)).toEqual(base)
-        expect(selectReels({ category: ` ${name.toLowerCase()} ` }, catalog)).toEqual(base)
+        expect(selectFinds({ category: name.toUpperCase() }, catalog)).toEqual(base)
+        expect(selectFinds({ category: ` ${name.toLowerCase()} ` }, catalog)).toEqual(base)
       }),
       { numRuns: RUNS },
     )

@@ -67,7 +67,7 @@ const nowArb = fc.integer({
 function eventsArb(now, maxLength = 15) {
   return fc.array(
     fc.record({
-      reelId: fc.string({ minLength: 1, maxLength: 6 }),
+      findId: fc.string({ minLength: 1, maxLength: 6 }),
       watchedAt: fc.integer({ min: now - 20 * DAY_MS, max: now }),
       seconds: fc.integer({ min: 1, max: 5400 }),
     }),
@@ -80,7 +80,7 @@ function eventsArb(now, maxLength = 15) {
 const historyArb = nowArb.chain((now) =>
   eventsArb(now).map((events) => ({
     now,
-    events: events.map((event, index) => ({ ...event, reelId: `${event.reelId}-${index}` })),
+    events: events.map((event, index) => ({ ...event, findId: `${event.findId}-${index}` })),
   })),
 )
 
@@ -118,7 +118,7 @@ describe('Property 18: Cada evento pertence a exatamente um grupo, com o rótulo
 
         const flattened = groups.flatMap((group) => group.items)
         expect(flattened).toHaveLength(events.length)
-        expect(new Set(flattened.map((event) => event.reelId)).size).toBe(events.length)
+        expect(new Set(flattened.map((event) => event.findId)).size).toBe(events.length)
 
         // Rótulos distintos entre grupos: nenhum evento tem dois grupos candidatos.
         const labels = groups.map((group) => group.label)

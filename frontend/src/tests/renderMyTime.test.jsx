@@ -9,7 +9,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { cleanup, render } from '@testing-library/react'
 import fc from 'fast-check'
 import Profile from '../pages/profile/Profile'
-import { reels } from '../data/reels'
+import { finds } from '../data/finds'
 import { weeklyUsage } from '../lib/usage'
 
 const RUNS = 25
@@ -17,18 +17,18 @@ const PROPERTY_TIMEOUT_MS = 120_000
 
 afterEach(cleanup)
 
-// Eventos espalhados pelos últimos sete dias, com um reel por entrada: é o que
+// Eventos espalhados pelos últimos sete dias, com um find por entrada: é o que
 // alimenta os sete buckets do gráfico. `maxLength` segue o catálogo porque o
-// histórico guarda uma entrada por reel.
+// histórico guarda uma entrada por find.
 const eventsArbitrary = fc
-  .uniqueArray(fc.constantFrom(...reels.map((reel) => reel.id)), { minLength: 0, maxLength: reels.length })
-  .chain((reelIds) =>
+  .uniqueArray(fc.constantFrom(...finds.map((find) => find.id)), { minLength: 0, maxLength: finds.length })
+  .chain((findIds) =>
     fc.tuple(
-      ...reelIds.map((reelId) =>
+      ...findIds.map((findId) =>
         fc.record({
-          reelId: fc.constant(reelId),
+          findId: fc.constant(findId),
           minutesAgo: fc.integer({ min: 0, max: 7 * 24 * 60 - 1 }),
-          // Até 3 horas por reel: o gráfico precisa ver colunas com volume
+          // Até 3 horas por find: o gráfico precisa ver colunas com volume
           // diferente, não só barras de um minuto.
           seconds: fc.integer({ min: 1, max: 10_800 }),
         }),
@@ -47,7 +47,7 @@ describe('Gráfico semanal da Tela_MyTime', () => {
 
         const now = Date.now()
         const events = plans.map((plan) => ({
-          reelId: plan.reelId,
+          findId: plan.findId,
           watchedAt: now - plan.minutesAgo * 60_000,
           seconds: plan.seconds,
         }))

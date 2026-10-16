@@ -1,8 +1,8 @@
-//a navegação entre reels respeita os limites da lista
+//a navegação entre finds respeita os limites da lista
 // filtrada e é reversível.
 //
-// A Tela_Reels navega por rolagem: o handler de teclado de `Reels` desloca o
-// feed em exatamente uma altura de post por acionamento, e o reel em foco é o
+// A Tela_Finds navega por rolagem: o handler de teclado de `Finds` desloca o
+// feed em exatamente uma altura de post por acionamento, e o find em foco é o
 // que está alinhado a essa posição. `jsdom` não faz layout — `offsetHeight` é
 // 0 e `scrollTop` nunca sai de 0 — então o harness abaixo fornece só a parte
 // que é do navegador (altura do post e o clamp do `scrollTop` entre 0 e o
@@ -12,8 +12,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { createElement } from 'react'
 import { cleanup, fireEvent, render } from '@testing-library/react'
 import fc from 'fast-check'
-import Reels from '../pages/Reels'
-import { selectReels } from '../lib/reelsIndex'
+import Finds from '../pages/Finds'
+import { selectFinds } from '../lib/findsIndex'
 
 const RUNS = 100
 const POST_HEIGHT = 800
@@ -66,17 +66,17 @@ function press(key) {
   fireEvent.keyDown(document.body, { key })
 }
 
-describe('Property 4: navegação entre reels respeita os limites e é reversível', () => {
-  const reels = selectReels({})
-  const total = reels.length
+describe('Property 4: navegação entre finds respeita os limites e é reversível', () => {
+  const finds = selectFinds({})
+  const total = finds.length
 
   it('o catálogo de referência não é vazio', () => {
     expect(total).toBeGreaterThan(1)
   })
 
   it('avançar e retornar sempre deixam o foco dentro dos limites da lista', () => {
-    const { container } = render(createElement(Reels))
-    const page = container.querySelector('.reels-page')
+    const { container } = render(createElement(Finds))
+    const page = container.querySelector('.finds-page')
     installScroll(page, total)
 
     fc.assert(
@@ -98,8 +98,8 @@ describe('Property 4: navegação entre reels respeita os limites e é reversív
   })
 
   it('para qualquer índice que não seja o último, retornar depois de avançar devolve o índice original', () => {
-    const { container } = render(createElement(Reels))
-    const page = container.querySelector('.reels-page')
+    const { container } = render(createElement(Finds))
+    const page = container.querySelector('.finds-page')
     installScroll(page, total)
 
     fc.assert(
@@ -133,9 +133,9 @@ describe('Property 4: navegação entre reels respeita os limites e é reversív
     )
   })
 
-  it('retornar no primeiro reel e avançar no último mantêm o foco', () => {
-    const { container } = render(createElement(Reels))
-    const page = container.querySelector('.reels-page')
+  it('retornar no primeiro find e avançar no último mantêm o foco', () => {
+    const { container } = render(createElement(Finds))
+    const page = container.querySelector('.finds-page')
     installScroll(page, total)
 
     page.scrollTop = 0

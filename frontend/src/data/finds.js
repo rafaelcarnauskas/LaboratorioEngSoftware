@@ -1,27 +1,27 @@
-// Dados de exemplo dos reels. Quando houver backend, esta lista
+// Dados de exemplo dos finds. Quando houver backend, esta lista
 // passa a vir da API (ex.: fetch('/api/videos?categoria=sports')).
 //
 // `title` é o rótulo curto exibido no histórico e no histórico recente.
 // `nicheId` aponta para um nicho declarado pela comunidade em `communityId`
 // (ver data/communities.js); a relação é um invariante dos dados mock.
-import bmpoliuspAvatar from '../assets/reels/avatars/bmpoliusp.png'
-import sosomarianoAvatar from '../assets/reels/avatars/sosomariano.png'
-import rafaelcarnauskasAvatar from '../assets/reels/avatars/rafaelcarnauskas.png'
-import mendesvictorAvatar from '../assets/reels/avatars/mendesvictor.png'
-import marcolinocarlosAvatar from '../assets/reels/avatars/marcolinocarlos.png'
-import terylucasAvatar from '../assets/reels/avatars/terylucas.png'
-import lauramatthewsAvatar from '../assets/reels/avatars/lauramatthews.png'
-import harryprescottAvatar from '../assets/reels/avatars/harryprescott.png'
-import ednamanzAvatar from '../assets/reels/avatars/ednamanz.png'
-import christinasterlingAvatar from '../assets/reels/avatars/christinasterling.png'
-import sports1 from '../assets/reels/posts/sports-1.png'
-import sports2 from '../assets/reels/posts/sports-2.png'
-import sports3 from '../assets/reels/posts/sports-3.png'
-import cute1 from '../assets/reels/posts/cute-1.png'
-import cute2 from '../assets/reels/posts/cute-2.png'
-import cute3 from '../assets/reels/posts/cute-3.png'
+import bmpoliuspAvatar from '../assets/finds/avatars/bmpoliusp.png'
+import sosomarianoAvatar from '../assets/finds/avatars/sosomariano.png'
+import rafaelcarnauskasAvatar from '../assets/finds/avatars/rafaelcarnauskas.png'
+import mendesvictorAvatar from '../assets/finds/avatars/mendesvictor.png'
+import marcolinocarlosAvatar from '../assets/finds/avatars/marcolinocarlos.png'
+import terylucasAvatar from '../assets/finds/avatars/terylucas.png'
+import lauramatthewsAvatar from '../assets/finds/avatars/lauramatthews.png'
+import harryprescottAvatar from '../assets/finds/avatars/harryprescott.png'
+import ednamanzAvatar from '../assets/finds/avatars/ednamanz.png'
+import christinasterlingAvatar from '../assets/finds/avatars/christinasterling.png'
+import sports1 from '../assets/finds/posts/sports-1.png'
+import sports2 from '../assets/finds/posts/sports-2.png'
+import sports3 from '../assets/finds/posts/sports-3.png'
+import cute1 from '../assets/finds/posts/cute-1.png'
+import cute2 from '../assets/finds/posts/cute-2.png'
+import cute3 from '../assets/finds/posts/cute-3.png'
 
-export const reels = [
+export const finds = [
   {
     id: 'sports-1',
     title: 'Final do basquete masculino — Interusp 2026',

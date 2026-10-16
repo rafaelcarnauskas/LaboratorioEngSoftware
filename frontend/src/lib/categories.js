@@ -1,9 +1,9 @@
-// Identidade de categoria entre data/videoCatalog.js ('Sports') e data/reels.js ('sports').
-// Consumido por pages/SearchView.jsx (chips) e por reelsIndex.selectReels (filtro).
+// Identidade de categoria entre data/videoCatalog.js ('Sports') e data/finds.js ('sports').
+// Consumido por pages/SearchView.jsx (chips) e por findsIndex.selectFinds (filtro).
 //
 // `name` é IDENTIFICADOR, não rótulo: é comparado com `videoCatalog[].category`,
-// com `reels[].category` (via `categoryKey`) e com o parâmetro de URL legado
-// `?tela=reels&categoria=sports`, que é contrato congelado da Suite_Selenium.
+// com `finds[].category` (via `categoryKey`) e com o parâmetro de URL legado
+// `?tela=finds&categoria=sports`, que é contrato congelado da Suite_Selenium.
 // Por isso `name` permanece em inglês. `label` é o texto em português que a UI
 // exibe — use sempre `label` ao renderizar, nunca `name`.
 const definitions = [

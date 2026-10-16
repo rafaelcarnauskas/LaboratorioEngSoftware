@@ -19,7 +19,7 @@ import useHistory, { MAX_EVENT_SECONDS } from './useHistory'
 import useMyTime, { limitOptions } from './useMyTime'
 import useCommunityNiches from './useCommunityNiches'
 import { communities } from '../data/communities'
-import { reels } from '../data/reels'
+import { finds } from '../data/finds'
 import { installLocalStorageStub } from '../tests/helpers/localStorageStub'
 
 const RUNS = 100
@@ -55,16 +55,16 @@ const listArb = fc.record({
 const validListsArb = fc.uniqueArray(listArb, { maxLength: 4, selector: (list) => list.id })
 
 const knownCommunityIds = communities.map((community) => community.id)
-const knownReelIds = reels.map((reel) => reel.id)
+const knownFindIds = finds.map((find) => find.id)
 
 const validEventArb = fc.record({
-  reelId: fc.constantFrom(...knownReelIds),
+  findId: fc.constantFrom(...knownFindIds),
   watchedAt: fc.integer({ min: 1, max: 2_000_000_000_000 }),
   seconds: fc.integer({ min: 1, max: 90 }),
 })
 
 const validEventsArb = fc
-  .uniqueArray(validEventArb, { maxLength: 6, selector: (event) => event.reelId })
+  .uniqueArray(validEventArb, { maxLength: 6, selector: (event) => event.findId })
   .map((events) => [...events].sort((a, b) => b.watchedAt - a.watchedAt))
 
 // --- tabela de hooks -----------------------------------------------------
@@ -100,7 +100,7 @@ function json(value) {
 }
 
 const tooManyEvents = Array.from({ length: 101 }, (_, index) => ({
-  reelId: `reel-${index}`,
+  findId: `find-${index}`,
   watchedAt: index + 1,
   seconds: 10,
 }))
@@ -168,22 +168,22 @@ const hookSpecs = [
     write: (result, events) => {
       // Do mais antigo para o mais recente: mergeEvent reordena por watchedAt.
       for (const event of [...events].reverse()) {
-        act(() => result.current.recordView(event.reelId, event.seconds, event.watchedAt))
+        act(() => result.current.recordView(event.findId, event.seconds, event.watchedAt))
       }
     },
     stateArb: validEventsArb,
     mutate: (result) => {
-      act(() => result.current.recordView(knownReelIds[0], 12, 1_700_000_000_000))
-      return [{ reelId: knownReelIds[0], watchedAt: 1_700_000_000_000, seconds: 12 }]
+      act(() => result.current.recordView(knownFindIds[0], 12, 1_700_000_000_000))
+      return [{ findId: knownFindIds[0], watchedAt: 1_700_000_000_000, seconds: 12 }]
     },
     edgeInvalid: [
-      json([{ reelId: '', watchedAt: 1, seconds: 1 }]),
-      json([{ reelId: 'sports-1', watchedAt: 0, seconds: 1 }]),
-      json([{ reelId: 'sports-1', watchedAt: -5, seconds: 1 }]),
-      json([{ reelId: 'sports-1', watchedAt: 1, seconds: 0 }]),
-      json([{ reelId: 'sports-1', watchedAt: 1, seconds: 1.5 }]),
-      json([{ reelId: 'sports-1', watchedAt: 1, seconds: MAX_EVENT_SECONDS + 1 }]),
-      json([{ reelId: 'sports-1', watchedAt: 1, seconds: 10 }, { reelId: 'sports-1', watchedAt: 2, seconds: 10 }]),
+      json([{ findId: '', watchedAt: 1, seconds: 1 }]),
+      json([{ findId: 'sports-1', watchedAt: 0, seconds: 1 }]),
+      json([{ findId: 'sports-1', watchedAt: -5, seconds: 1 }]),
+      json([{ findId: 'sports-1', watchedAt: 1, seconds: 0 }]),
+      json([{ findId: 'sports-1', watchedAt: 1, seconds: 1.5 }]),
+      json([{ findId: 'sports-1', watchedAt: 1, seconds: MAX_EVENT_SECONDS + 1 }]),
+      json([{ findId: 'sports-1', watchedAt: 1, seconds: 10 }, { findId: 'sports-1', watchedAt: 2, seconds: 10 }]),
       json(tooManyEvents),
     ],
   },
@@ -373,7 +373,7 @@ describe('useHistory.clearHistory', () => {
 
   it('esvazia a memória e reporta erro quando removeItem lança', () => {
     stub.reset()
-    stub.seed({ 'choosen.history.v1': JSON.stringify([{ reelId: 'sports-1', watchedAt: 10, seconds: 5 }]) })
+    stub.seed({ 'choosen.history.v1': JSON.stringify([{ findId: 'sports-1', watchedAt: 10, seconds: 5 }]) })
 
     const { result, unmount } = renderHook(() => useHistory())
     stub.breakRemoves()

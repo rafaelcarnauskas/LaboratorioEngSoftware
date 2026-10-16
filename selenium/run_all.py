@@ -1,4 +1,4 @@
-"""Executa juntas as suítes Selenium (login, cadastro, telas principais e Reels), de qualquer diretório."""
+"""Executa juntas as suítes Selenium (login, cadastro, telas principais e Finds), de qualquer diretório."""
 import importlib.util
 from pathlib import Path
 import unittest
@@ -10,7 +10,7 @@ def main():
         ("tests_login", pasta / "test_login.py"),
         ("tests_cadastro", pasta / "test_cadastro.py"),
         ("tests_app", pasta / "test_app.py"),
-        ("tests_reels", pasta / "test_reels.py"),
+        ("tests_finds", pasta / "test_finds.py"),
     )
     suite = unittest.TestSuite()
     for name, path in test_files:

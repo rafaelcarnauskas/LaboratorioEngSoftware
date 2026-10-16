@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { isValidEmail, logIn } from '../controllers/authController'
-import logoMark from '../assets/reels/icons/logo-mark.svg'
+import logoMark from '../assets/finds/icons/logo-mark.svg'
 import './Login.css'
 
 function validate(email, password) {

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { isEmailTaken, isValidEmail, signUp } from '../controllers/authController'
-import logoMark from '../assets/reels/icons/logo-mark.svg'
+import logoMark from '../assets/finds/icons/logo-mark.svg'
 import './Login.css'
 
 const MIN_PASSWORD_LENGTH = 8

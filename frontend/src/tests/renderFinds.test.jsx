@@ -1,12 +1,12 @@
-//renderização e comentários da Tela_Reels.
+//renderização e comentários da Tela_Finds.
 //
-// Os quatro rodam contra `pages/Reels.jsx` montado de verdade, contra o
-// catálogo real de reels — o componente é o dono dos contratos de seletor
-// (`data-reel-id`, `data-testid="abrir-comentarios"`, `acao-principal`,
+// Os quatro rodam contra `pages/Finds.jsx` montado de verdade, contra o
+// catálogo real de finds — o componente é o dono dos contratos de seletor
+// (`data-find-id`, `data-testid="abrir-comentarios"`, `acao-principal`,
 // `lista-comentarios`) e das mensagens de feedback, então não há função pura
 // equivalente a testar.
 //
-// jsdom não tem IntersectionObserver: `useFocusedReel` desliga o rastreio em
+// jsdom não tem IntersectionObserver: `useFocusedFind` desliga o rastreio em
 // silêncio, o que é exatamente o comportamento documentado. Nenhum stub é
 // necessário porque nenhuma destas propriedades fala de foco.
 // `React` entra explicitamente porque o transform de JSX destes testes é o
@@ -15,10 +15,10 @@ import { describe, expect, it, afterEach } from 'vitest'
 import { cleanup, render, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import fc from 'fast-check'
-import Reels from '../pages/Reels'
-import { reels } from '../data/reels'
+import Finds from '../pages/Finds'
+import { finds } from '../data/finds'
 import { communities } from '../data/communities'
-import { selectReels } from '../lib/reelsIndex'
+import { selectFinds } from '../lib/findsIndex'
 
 // Testes de renderização são caros; 25 iterações por propriedade.
 const RUNS = 25
@@ -57,44 +57,44 @@ const validComment = fc
   .string({ unit: safeChar, minLength: 1, maxLength: 24 })
   .filter((text) => text.trim().length > 0)
 
-// Um reel concreto e o filtro que garante a presença dele no feed.
-const reelScenario = fc.constantFrom(...reels).map((reel) => ({
-  reel,
-  communityId: reel.communityId,
-  niches: [reel.nicheId],
+// Um find concreto e o filtro que garante a presença dele no feed.
+const findScenario = fc.constantFrom(...finds).map((find) => ({
+  find,
+  communityId: find.communityId,
+  niches: [find.nicheId],
 }))
 
 function formatCount(count) {
   return count.toLocaleString('pt-BR')
 }
 
-describe('Reels — renderização do feed', () => {
-  // **Cada reel renderizado expõe autor, avatar, legenda e
-  // `data-reel-id`**
+describe('Finds — renderização do feed', () => {
+  // **Cada find renderizado expõe autor, avatar, legenda e
+  // `data-find-id`**
 
-  it('renderiza cada reel do filtro com autor, avatar, legenda e data-reel-id, sem a barra superior do template', () => {
+  it('renderiza cada find do filtro com autor, avatar, legenda e data-find-id, sem a barra superior do template', () => {
     fc.assert(
       fc.property(feedScenario, ({ category, communityId, niches }) => {
         cleanup()
 
-        const expected = selectReels({ category, communityId, niches })
+        const expected = selectFinds({ category, communityId, niches })
         const { container } = render(
-          <Reels category={category} communityId={communityId} niches={niches} />,
+          <Finds category={category} communityId={communityId} niches={niches} />,
         )
 
         // A tela deixou de usar a barra e os ícones do template do Instagram.
-        expect(container.querySelector('.reels-topbar')).toBeNull()
+        expect(container.querySelector('.finds-topbar')).toBeNull()
 
-        const posts = [...container.querySelectorAll('.reels-post')]
-        expect(posts.map((post) => post.dataset.reelId)).toEqual(expected.map((reel) => reel.id))
+        const posts = [...container.querySelectorAll('.finds-post')]
+        expect(posts.map((post) => post.dataset.findId)).toEqual(expected.map((find) => find.id))
 
         posts.forEach((post, index) => {
-          const reel = expected[index]
+          const find = expected[index]
 
-          expect(post.getAttribute('data-reel-id')).toBe(reel.id)
-          expect(within(post).getByText(`@${reel.author}`)).toBeTruthy()
-          expect(post.querySelector('.reels-avatar').getAttribute('src')).toBe(reel.avatar)
-          expect(post.querySelector('.reels-caption-text').textContent).toBe(reel.caption)
+          expect(post.getAttribute('data-find-id')).toBe(find.id)
+          expect(within(post).getByText(`@${find.author}`)).toBeTruthy()
+          expect(post.querySelector('.finds-avatar').getAttribute('src')).toBe(find.avatar)
+          expect(post.querySelector('.finds-caption-text').textContent).toBe(find.caption)
         })
       }),
       { numRuns: RUNS },
@@ -102,37 +102,37 @@ describe('Reels — renderização do feed', () => {
   }, PROPERTY_TIMEOUT_MS)
 })
 
-describe('Reels — ações e comunidades', () => {
+describe('Finds — ações e comunidades', () => {
   it('alterna a curtida com a marca Choosen e atualiza o contador', async () => {
-    const reel = reels[0]
+    const find = finds[0]
     const user = userEvent.setup()
-    const { container } = render(<Reels communityId={reel.communityId} niches={[reel.nicheId]} />)
-    const post = within(container.querySelector(`[data-reel-id="${reel.id}"]`))
+    const { container } = render(<Finds communityId={find.communityId} niches={[find.nicheId]} />)
+    const post = within(container.querySelector(`[data-find-id="${find.id}"]`))
     const like = post.getByTestId('acao-curtir')
 
     expect(like.getAttribute('aria-pressed')).toBe('false')
     expect(like.getAttribute('aria-label')).toBe('Curtir')
-    expect(like.textContent).toBe(formatCount(reel.likes))
+    expect(like.textContent).toBe(formatCount(find.likes))
 
     await user.click(like)
 
     expect(like.getAttribute('aria-pressed')).toBe('true')
     expect(like.getAttribute('aria-label')).toBe('Remover curtida')
-    expect(like.textContent).toBe(formatCount(reel.likes + 1))
-    expect(like.querySelector('.reels-like-mark--liked')).toBeTruthy()
-    expect(like.querySelectorAll('.reels-like-mark > span')).toHaveLength(1)
+    expect(like.textContent).toBe(formatCount(find.likes + 1))
+    expect(like.querySelector('.finds-like-mark--liked')).toBeTruthy()
+    expect(like.querySelectorAll('.finds-like-mark > span')).toHaveLength(1)
 
     await user.click(like)
 
     expect(like.getAttribute('aria-pressed')).toBe('false')
-    expect(like.textContent).toBe(formatCount(reel.likes))
+    expect(like.textContent).toBe(formatCount(find.likes))
   })
 
   it('substitui recomendações de perfis por comunidades e permite entrar sem sair do vídeo', async () => {
     const user = userEvent.setup()
     const joined = []
     const { container, getByRole, queryByText } = render(
-      <Reels
+      <Finds
         communityId="vida-de-pet"
         onJoinCommunity={(communityId) => joined.push(communityId)}
       />,
@@ -140,9 +140,9 @@ describe('Reels — ações e comunidades', () => {
 
     expect(getByRole('heading', { name: 'Comunidades relacionadas' })).toBeTruthy()
     expect(queryByText('Sugestões para você')).toBeNull()
-    expect(container.querySelector('.reels-menu')).toBeNull()
+    expect(container.querySelector('.finds-menu')).toBeNull()
     expect(
-      within(container.querySelector('.reels-side')).queryByRole('button', {
+      within(container.querySelector('.finds-side')).queryByRole('button', {
         name: 'Entrar na comunidade Vida de Pet',
       }),
     ).toBeNull()
@@ -153,22 +153,22 @@ describe('Reels — ações e comunidades', () => {
   })
 })
 
-describe('Reels — comentário válido', () => {
+describe('Finds — comentário válido', () => {
   // **Submissão de comentário válido insere no topo e incrementa o
   // contador**
 
   it('insere cada comentário no topo da lista, preserva os anteriores e soma ao contador inicial', async () => {
     await fc.assert(
       fc.asyncProperty(
-        reelScenario,
+        findScenario,
         fc.array(validComment, { minLength: 1, maxLength: 3 }),
-        async ({ reel, communityId, niches }, texts) => {
+        async ({ find, communityId, niches }, texts) => {
           cleanup()
 
           const user = userEvent.setup()
-          const { container } = render(<Reels communityId={communityId} niches={niches} />)
+          const { container } = render(<Finds communityId={communityId} niches={niches} />)
 
-          const post = container.querySelector(`[data-reel-id="${reel.id}"]`)
+          const post = container.querySelector(`[data-find-id="${find.id}"]`)
           const panel = within(post)
 
           await user.click(panel.getByTestId('abrir-comentarios'))
@@ -190,7 +190,7 @@ describe('Reels — comentário válido', () => {
 
             // Contador = commentCount inicial + quantidade submetida.
             expect(panel.getByTestId('abrir-comentarios').textContent).toBe(
-              formatCount(reel.commentCount + submitted.length),
+              formatCount(find.commentCount + submitted.length),
             )
           }
         },
@@ -203,13 +203,13 @@ describe('Reels — comentário válido', () => {
 
   it('anuncia "Comentário publicado." em role="status" após a submissão', async () => {
     await fc.assert(
-      fc.asyncProperty(reelScenario, validComment, async ({ reel, communityId, niches }, text) => {
+      fc.asyncProperty(findScenario, validComment, async ({ find, communityId, niches }, text) => {
         cleanup()
 
         const user = userEvent.setup()
-        const { container } = render(<Reels communityId={communityId} niches={niches} />)
+        const { container } = render(<Finds communityId={communityId} niches={niches} />)
 
-        const panel = within(container.querySelector(`[data-reel-id="${reel.id}"]`))
+        const panel = within(container.querySelector(`[data-find-id="${find.id}"]`))
 
         await user.click(panel.getByTestId('abrir-comentarios'))
         await user.type(panel.getByLabelText('Comentário'), text)
@@ -222,25 +222,25 @@ describe('Reels — comentário válido', () => {
   }, PROPERTY_TIMEOUT_MS)
 })
 
-describe('Reels — comentário em branco', () => {
+describe('Finds — comentário em branco', () => {
   // **Comentário em branco é rejeitado sem alterar estado**
 
   it('rejeita string vazia ou só com espaços, mantendo lista e contador e anunciando em role="alert"', async () => {
     await fc.assert(
       fc.asyncProperty(
-        reelScenario,
+        findScenario,
         // Zero a quatro espaços: a string vazia está incluída.
         fc.integer({ min: 0, max: 4 }),
         // Um comentário válido antes do branco em metade dos casos: o estado
         // "inalterado" precisa ser testado também quando já existe conteúdo.
         fc.option(validComment, { nil: null }),
-        async ({ reel, communityId, niches }, spaces, seed) => {
+        async ({ find, communityId, niches }, spaces, seed) => {
           cleanup()
 
           const user = userEvent.setup()
-          const { container } = render(<Reels communityId={communityId} niches={niches} />)
+          const { container } = render(<Finds communityId={communityId} niches={niches} />)
 
-          const panel = within(container.querySelector(`[data-reel-id="${reel.id}"]`))
+          const panel = within(container.querySelector(`[data-find-id="${find.id}"]`))
           const input = () => panel.getByLabelText('Comentário')
 
           await user.click(panel.getByTestId('abrir-comentarios'))
@@ -250,7 +250,7 @@ describe('Reels — comentário em branco', () => {
             await user.click(panel.getByTestId('acao-principal'))
           }
 
-          const expectedCount = formatCount(reel.commentCount + (seed === null ? 0 : 1))
+          const expectedCount = formatCount(find.commentCount + (seed === null ? 0 : 1))
           const before = panel.queryByTestId('lista-comentarios')?.innerHTML ?? null
 
           if (spaces > 0) await user.type(input(), ' '.repeat(spaces))

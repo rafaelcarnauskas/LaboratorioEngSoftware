@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import ListsView from './pages/ListsView'
 import SearchView from './pages/SearchView'
-import Reels from './pages/Reels'
+import Finds from './pages/Finds'
 import CommunityView from './pages/CommunityView'
 import CommunityDetail from './pages/CommunityDetail'
 import useLists from './hooks/useLists'
@@ -17,7 +17,7 @@ import SignUp from './pages/SignUp'
 import ForgotPassword from './pages/ForgotPassword'
 import { clearSession, getSession } from './hooks/session'
 import { findCommunity, partitionCommunities } from './data/communities'
-import { countByCommunity, hydrate } from './lib/reelsIndex'
+import { countByCommunity, hydrate } from './lib/findsIndex'
 import { formatTime, recentlyWatched } from './lib/usage'
 import { buildUrl, homeState, parseUrl } from './lib/navigation'
 import './App.css'
@@ -43,7 +43,7 @@ function tabLabel(tabId) {
 }
 
 // Card de comunidade da Home: nome, ícone, descrição,
-// membros e a contagem de reels da comunidade.
+// membros e a contagem de finds da comunidade.
 function CommunityTile({ community, onOpen }) {
   const videoCount = countByCommunity(community.id)
 
@@ -100,30 +100,30 @@ function App() {
     storageError: historyStorageError,
   } = useHistory()
   const myTime = useMyTime()
-  // Perfis seguidos e reels salvos no Reels. Por enquanto só em memória: a
+  // Perfis seguidos e finds salvos no Finds. Por enquanto só em memória: a
   // persistência entra quando o Model tiver um serviço para isso.
   const [followedAuthors, setFollowedAuthors] = useState([])
-  const [savedReelIds, setSavedReelIds] = useState([])
+  const [savedFindIds, setSavedFindIds] = useState([])
   const toggleIn = (setter) => (value) =>
     setter((current) => (current.includes(value) ? current.filter((item) => item !== value) : [...current, value]))
   const toggleFollow = toggleIn(setFollowedAuthors)
-  const toggleSave = toggleIn(setSavedReelIds)
+  const toggleSave = toggleIn(setSavedFindIds)
 
-  // `useWatchTracking` em Reels guarda `onReelWatched` nas dependências dos
+  // `useWatchTracking` em Finds guarda `onFindWatched` nas dependências dos
   // próprios efeitos: uma identidade nova a cada render contabilizaria a mesma
   // visualização mais de uma vez. O ref mantém a identidade estável.
   const recordViewRef = useRef(recordView)
   useEffect(() => {
     recordViewRef.current = recordView
   })
-  const handleReelWatched = useCallback((reelId, seconds) => {
-    recordViewRef.current(reelId, seconds)
+  const handleFindWatched = useCallback((findId, seconds) => {
+    recordViewRef.current(findId, seconds)
   }, [])
 
   // Aderidas (mais recentes primeiro) e sugeridas (ordem do catálogo).
   const { joined, suggested } = useMemo(() => partitionCommunities(memberships), [memberships])
 
-  // Requisito 7.1: os quatro eventos mais recentes, já com o reel anexado.
+  // Requisito 7.1: os quatro eventos mais recentes, já com o find anexado.
   const recent = useMemo(() => hydrate(recentlyWatched(events, 4)), [events])
 
   useEffect(() => {
@@ -163,7 +163,7 @@ function App() {
 
   const openCommunity = (communityId) => {
     setCommunityOrigin(activeTab)
-    navigate({ screen: 'comunidade', communityId, reelId: null })
+    navigate({ screen: 'comunidade', communityId, findId: null })
   }
 
   // retorno próprio da Tela_Comunidade, sem history.back().
@@ -172,8 +172,8 @@ function App() {
     setActiveTab(communityOrigin)
   }
 
-  const openReels = (communityId, reelId = null) => {
-    navigate({ screen: 'reels', communityId, reelId })
+  const openFinds = (communityId, findId = null) => {
+    navigate({ screen: 'finds', communityId, findId })
   }
 
   const goHome = () => {
@@ -220,7 +220,7 @@ function App() {
     )
   }
 
-  // Login só na primeira vez: com sessão salva, o app abre direto (inclusive pelos links de Reels).
+  // Login só na primeira vez: com sessão salva, o app abre direto (inclusive pelos links de Finds).
   if (!session) {
     const goToLogin = () => setAuthScreen('login')
     if (authScreen === 'signup') return <SignUp onSignUp={setSession} onGoToLogin={goToLogin} />
@@ -237,21 +237,21 @@ function App() {
   // Primeiro nome de quem entrou, para a saudação da Home.
   const firstName = session.name?.trim().split(/\s+/)[0] || 'você'
 
-  if (nav.screen === 'reels') {
+  if (nav.screen === 'finds') {
     return (
-      <Reels
+      <Finds
         category={nav.category ?? null}
         communityId={nav.communityId}
         niches={nav.communityId ? nichesFor(nav.communityId) : []}
-        initialReelId={nav.reelId}
-        onReelWatched={handleReelWatched}
+        initialFindId={nav.findId}
+        onFindWatched={handleFindWatched}
         onGoHome={goHome}
         memberships={memberships}
         onJoinCommunity={joinCommunity}
         onLeaveCommunity={leaveCommunity}
         followedAuthors={followedAuthors}
         onToggleFollow={toggleFollow}
-        savedReelIds={savedReelIds}
+        savedFindIds={savedFindIds}
         onToggleSave={toggleSave}
       />
     )
@@ -295,17 +295,17 @@ function App() {
           <p className="empty-state">Os vídeos que você assistiu recentemente aparecerão aqui.</p>
         ) : (
           <div className="home-recent-grid">
-            {recent.map(({ reel, watchedAt }) => (
+            {recent.map(({ find, watchedAt }) => (
               <button
                 className="home-recent-card"
-                key={reel.id}
+                key={find.id}
                 type="button"
-                onClick={() => openReels(reel.communityId, reel.id)}
+                onClick={() => openFinds(find.communityId, find.id)}
               >
-                <img className="home-recent-thumb" src={reel.image} alt="" />
+                <img className="home-recent-thumb" src={find.image} alt="" />
                 <span className="home-recent-copy">
-                  <strong>{reel.title}</strong>
-                  <small>@{reel.author}</small>
+                  <strong>{find.title}</strong>
+                  <small>@{find.author}</small>
                   <small className="home-recent-time">{formatTime(watchedAt)}</small>
                 </span>
               </button>
@@ -328,7 +328,7 @@ function App() {
           selectedNiches={nichesFor(activeCommunity.id)}
           onToggleNiche={(nicheId) => toggleNiche(activeCommunity.id, nicheId)}
           onClearNiches={() => clearNiches(activeCommunity.id)}
-          onOpenReel={(reelId) => openReels(activeCommunity.id, reelId)}
+          onOpenFind={(findId) => openFinds(activeCommunity.id, findId)}
           onBack={leaveCommunityDetail}
           isJoined={memberships.some((membership) => membership.id === activeCommunity.id)}
           onJoin={joinCommunity}
@@ -340,7 +340,7 @@ function App() {
 
     switch (activeTab) {
       case 'Home': return renderHome()
-      case 'History': return <History events={events} onClearHistory={clearHistory} onOpenReel={openReels} onOpenCommunity={openCommunity} />
+      case 'History': return <History events={events} onClearHistory={clearHistory} onOpenFind={openFinds} onOpenCommunity={openCommunity} />
       case 'Profile': return <Profile path={profilePath} onNavigate={navigateProfile} onSignOut={handleSignOut} events={events} clearHistory={clearHistory} myTime={myTime} />
       case 'Search': return <SearchView videos={videoCatalog} lists={lists} onListsChange={updateLists} storageError={storageError} />
       case 'Community': return <CommunityView memberships={memberships} onJoin={joinCommunity} onLeave={leaveCommunity} onOpenCommunity={(communityId) => openCommunity(communityId)} storageError={communityStorageError} />

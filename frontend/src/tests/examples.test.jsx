@@ -12,8 +12,8 @@
 //   - `App` mostra a tela de carregamento por 1500ms; `mountApp` adianta o
 //     relógio com timers falsos e volta aos reais antes de qualquer interação;
 //   - o jsdom não implementa `scrollIntoView` nem `IntersectionObserver`.
-//     `Reels` já tolera a ausência do observer em silêncio; o `scrollIntoView`
-//     recebe um stub porque `Reels` o chama ao abrir um reel específico.
+//     `Finds` já tolera a ausência do observer em silêncio; o `scrollIntoView`
+//     recebe um stub porque `Finds` o chama ao abrir um find específico.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createElement } from 'react'
 import { act, cleanup, render, screen, within } from '@testing-library/react'
@@ -145,7 +145,7 @@ describe('Tela_Home', () => {
   it('volta ao estado vazio do histórico recente depois de limpar o histórico', async () => {
     stub.seed({
       'choosen.history.v1': JSON.stringify([
-        { reelId: 'sports-1', watchedAt: Date.now() - 60_000, seconds: 30 },
+        { findId: 'sports-1', watchedAt: Date.now() - 60_000, seconds: 30 },
       ]),
     })
 
@@ -265,7 +265,7 @@ describe('Tela_Comunidade', () => {
     expect(screen.getByRole('button', { name: 'Limpar filtros' })).toBeTruthy()
   })
 
-  // selecionar um vídeo abre a Tela_Reels nesse vídeo.
+  // selecionar um vídeo abre a Tela_Finds nesse vídeo.
   it('abre o player quando um vídeo da comunidade é selecionado', async () => {
     window.history.pushState(null, '', '/?tela=comunidade&comunidade=poli-usp')
     const user = await mountApp()
@@ -276,9 +276,9 @@ describe('Tela_Comunidade', () => {
 
     expect(screen.getByLabelText('Vídeos da comunidade Poli USP')).toBeTruthy()
     expect(
-      screen.getAllByTestId('reel').map((post) => post.getAttribute('data-reel-id')),
+      screen.getAllByTestId('find').map((post) => post.getAttribute('data-find-id')),
     ).toContain('sports-1')
-    expect(window.location.search).toBe('?tela=reels&comunidade=poli-usp&reel=sports-1')
+    expect(window.location.search).toBe('?tela=finds&comunidade=poli-usp&find=sports-1')
   })
 
   //o retorno é controle próprio da tela, sem history.back().

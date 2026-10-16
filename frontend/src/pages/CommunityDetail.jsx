@@ -2,7 +2,7 @@
 // vídeos dela. Não confundir com CommunityView, que é a Tela_Communities
 // (descoberta e adesão). Componente sem estado persistido próprio: tudo
 // chega por props de App.jsx.
-import { countByCommunity, selectReels } from '../controllers/contentController'
+import { countByCommunity, selectFinds } from '../controllers/contentController'
 import './CommunityDetail.css'
 
 export default function CommunityDetail({
@@ -10,14 +10,14 @@ export default function CommunityDetail({
   selectedNiches,     // string[] — Filtro_Nicho vigente desta comunidade
   onToggleNiche,      // (nicheId) => void
   onClearNiches,      // () => void
-  onOpenReel,         // (reelId) => void
+  onOpenFind,         // (findId) => void
   onBack,             // () => void — Requisito 11.8, sem history.back()
   isJoined,           // boolean — adesão persistida da comunidade
   onJoin,             // (communityId) => void
   onLeave,            // (communityId) => void
   storageError,       // string — Erro_Armazenamento do Servico_Nichos
 }) {
-  const videos = selectReels({ communityId: community.id, niches: selectedNiches })
+  const videos = selectFinds({ communityId: community.id, niches: selectedNiches })
   const selected = new Set(selectedNiches)
 
   return (
@@ -96,20 +96,20 @@ export default function CommunityDetail({
         </p>
       ) : (
         <ul className="community-video-list">
-          {videos.map((reel) => (
-            <li key={reel.id}>
+          {videos.map((find) => (
+            <li key={find.id}>
               <button
                 className="community-video-card"
                 type="button"
-                onClick={() => onOpenReel(reel.id)}
-                data-reel-id={reel.id}
+                onClick={() => onOpenFind(find.id)}
+                data-find-id={find.id}
               >
-                <img className="community-video-thumb" src={reel.image} alt="" />
+                <img className="community-video-thumb" src={find.image} alt="" />
                 <span className="community-video-copy">
-                  <strong>{reel.title}</strong>
-                  <small>@{reel.author}</small>
+                  <strong>{find.title}</strong>
+                  <small>@{find.author}</small>
                   <small className="community-video-niche">
-                    {community.niches.find((niche) => niche.id === reel.nicheId)?.label}
+                    {community.niches.find((niche) => niche.id === find.nicheId)?.label}
                   </small>
                 </span>
               </button>

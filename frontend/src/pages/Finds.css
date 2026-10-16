@@ -1,21 +1,21 @@
 @import url('https://fonts.googleapis.com/css2?family=ABeeZee&family=Inter:wght@600&family=Roboto:wght@400;500&display=swap');
 
-.reels-page {
-  --reels-bg: #2a374a;
-  --reels-panel-bg: #223042;
-  --reels-button-bg: #2b3f5a;
-  --reels-button-hover: #36507a;
-  --reels-border: rgb(255 255 255 / 10%);
-  --reels-text: #ffffff;
-  --reels-text-strong: #fafafa;
-  --reels-muted: #8e8e8e;
-  --reels-footer: #c7c7c7;
-  --reels-blue: #0095f6;
-  --reels-focus: #5b8def;
-  --reels-post-padding: 12px;
-  /* Vídeo vertical 9:16 ocupando toda a altura disponível, como no Reels. */
-  --reels-video-height: calc(100svh - 2 * var(--reels-post-padding));
-  --reels-video-width: calc(var(--reels-video-height) * 9 / 16);
+.finds-page {
+  --finds-bg: #2a374a;
+  --finds-panel-bg: #223042;
+  --finds-button-bg: #2b3f5a;
+  --finds-button-hover: #36507a;
+  --finds-border: rgb(255 255 255 / 10%);
+  --finds-text: #ffffff;
+  --finds-text-strong: #fafafa;
+  --finds-muted: #8e8e8e;
+  --finds-footer: #c7c7c7;
+  --finds-blue: #0095f6;
+  --finds-focus: #5b8def;
+  --finds-post-padding: 12px;
+  /* Vídeo vertical 9:16 ocupando toda a altura disponível, como no Finds. */
+  --finds-video-height: calc(100svh - 2 * var(--finds-post-padding));
+  --finds-video-width: calc(var(--finds-video-height) * 9 / 16);
 
   /* A página inteira é o contêiner de rolagem: a roda do mouse funciona em
      qualquer ponto da tela e cada vídeo "encaixa" no topo. relative mantém
@@ -30,27 +30,27 @@
   grid-template-columns: minmax(220px, 0.72fr) minmax(0, 1fr) minmax(250px, 300px);
   align-items: start;
   padding-right: clamp(16px, 5vw, 96px);
-  background: var(--reels-bg);
-  color: var(--reels-text);
+  background: var(--finds-bg);
+  color: var(--finds-text);
   font-family: 'ABeeZee', 'Segoe UI', sans-serif;
   font-size: 16px;
 }
 
-.reels-page::-webkit-scrollbar {
+.finds-page::-webkit-scrollbar {
   display: none;
 }
 
 /* :where() mantém especificidade zero, para as classes abaixo sobrescreverem. */
-:where(.reels-page) :where(p, h2, ul) {
+:where(.finds-page) :where(p, h2, ul) {
   margin: 0;
 }
 
-:where(.reels-page) ul {
+:where(.finds-page) ul {
   padding: 0;
   list-style: none;
 }
 
-:where(.reels-page) button {
+:where(.finds-page) button {
   padding: 0;
   border: 0;
   background: transparent;
@@ -60,13 +60,13 @@
   cursor: pointer;
 }
 
-.reels-page :focus-visible {
-  outline: 2px solid var(--reels-focus);
+.finds-page :focus-visible {
+  outline: 2px solid var(--finds-focus);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
-.reels-visually-hidden {
+.finds-visually-hidden {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -75,53 +75,53 @@
   white-space: nowrap;
 }
 
-.reels-text-button:hover {
+.finds-text-button:hover {
   text-decoration: underline;
 }
 
-.reels-avatar {
+.finds-avatar {
   flex: 0 0 auto;
   border-radius: 50%;
   object-fit: cover;
 }
 
-.reels-profile-link {
+.finds-profile-link {
   display: flex;
   align-items: center;
   min-width: 0;
 }
 
-.reels-profile-link:hover .reels-post-author {
+.finds-profile-link:hover .finds-post-author {
   text-decoration: underline;
 }
 
-.reels-profile-link:hover .reels-avatar {
+.finds-profile-link:hover .finds-avatar {
   filter: brightness(1.15);
 }
 
 /* Colunas fixas (marca e lateral) acompanham a rolagem */
 
-.reels-brand,
-.reels-side {
+.finds-brand,
+.finds-side {
   position: sticky;
   top: 0;
 }
 
-.reels-brand {
+.finds-brand {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-self: center;
   padding-top: 42px;
-  color: var(--reels-text-strong);
+  color: var(--finds-text-strong);
   text-decoration: none;
 }
 
-.reels-brand:hover {
+.finds-brand:hover {
   opacity: 0.85;
 }
 
-.reels-brand-name {
+.finds-brand-name {
   margin-top: 48px;
   font-family: 'Inter', sans-serif;
   font-size: clamp(32px, 3vw, 58px);
@@ -131,64 +131,64 @@
 
 /* Feed: um vídeo por "tela" */
 
-.reels-feed {
+.finds-feed {
   grid-column: 2;
 }
 
-.reels-empty {
+.finds-empty {
   padding-top: 22px;
-  color: var(--reels-muted);
+  color: var(--finds-muted);
   text-align: center;
 }
 
-.reels-post {
+.finds-post {
   height: 100svh;
   display: flex;
   align-items: flex-end;
   justify-content: center;
   gap: 16px;
-  padding: var(--reels-post-padding) 0;
+  padding: var(--finds-post-padding) 0;
   scroll-snap-align: start;
   scroll-snap-stop: always;
 }
 
 /* Vídeo */
 
-.reels-video {
+.finds-video {
   position: relative;
   flex: 0 0 auto;
-  width: var(--reels-video-width);
-  height: var(--reels-video-height);
+  width: var(--finds-video-width);
+  height: var(--finds-video-height);
   overflow: hidden;
   border-radius: 8px;
   background: #000000;
 }
 
-.reels-video-media {
+.finds-video-media {
   position: absolute;
   inset: 0;
   display: block;
 }
 
-.reels-video-backdrop,
-.reels-video-image {
+.finds-video-backdrop,
+.finds-video-image {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
 }
 
-.reels-video-backdrop {
+.finds-video-backdrop {
   object-fit: cover;
   filter: blur(28px) brightness(0.55);
   transform: scale(1.15);
 }
 
-.reels-video-image {
+.finds-video-image {
   object-fit: contain;
 }
 
-.reels-video-overlay {
+.finds-video-overlay {
   position: absolute;
   right: 0;
   bottom: 0;
@@ -200,45 +200,45 @@
   pointer-events: none;
 }
 
-.reels-video-overlay button {
+.finds-video-overlay button {
   pointer-events: auto;
 }
 
-.reels-video-author {
+.finds-video-author {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.reels-video-author .reels-profile-link {
+.finds-video-author .finds-profile-link {
   gap: 8px;
 }
 
-.reels-post-author {
-  color: var(--reels-text-strong);
+.finds-post-author {
+  color: var(--finds-text-strong);
   font-family: 'Roboto', sans-serif;
   font-weight: 500;
 }
 
-.reels-follow {
+.finds-follow {
   height: 26px;
   padding: 4px 8px;
   border-radius: 4px;
   background: rgb(43 63 90 / 85%);
-  color: var(--reels-text);
+  color: var(--finds-text);
   font-family: 'Roboto', sans-serif;
   line-height: 18px;
   white-space: nowrap;
   text-shadow: none;
 }
 
-.reels-follow:hover {
-  background: var(--reels-button-hover);
+.finds-follow:hover {
+  background: var(--finds-button-hover);
 }
 
 /* Pílula de comunidade, ao lado do Follow. Segue a altura e o raio do
-   .reels-follow para as duas ações ficarem alinhadas na mesma linha. */
-.reels-community {
+   .finds-follow para as duas ações ficarem alinhadas na mesma linha. */
+.finds-community {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -255,27 +255,27 @@
   text-shadow: none;
 }
 
-.reels-community:hover {
+.finds-community:hover {
   background: rgb(111 155 242 / 95%);
 }
 
-.reels-community--joined {
+.finds-community--joined {
   background: rgb(91 141 239 / 22%);
   color: #cfe0ff;
 }
 
-.reels-community--joined:hover {
+.finds-community--joined:hover {
   background: rgb(91 141 239 / 32%);
 }
 
-.reels-caption {
+.finds-caption {
   display: flex;
   align-items: baseline;
   margin-top: 10px;
   line-height: 20px;
 }
 
-.reels-caption-text {
+.finds-caption-text {
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -283,23 +283,23 @@
   white-space: nowrap;
 }
 
-.reels-caption--expanded .reels-caption-text {
+.finds-caption--expanded .finds-caption-text {
   max-height: 90px;
   overflow-y: auto;
   white-space: normal;
 }
 
-.reels-caption-more {
+.finds-caption-more {
   flex: 0 0 auto;
   margin-left: 4px;
-  color: var(--reels-footer);
+  color: var(--finds-footer);
 }
 
-.reels-caption-more:hover {
-  color: var(--reels-text);
+.finds-caption-more:hover {
+  color: var(--finds-text);
 }
 
-.reels-time {
+.finds-time {
   margin-top: 6px;
   font-size: 11px;
   letter-spacing: 0.2px;
@@ -309,7 +309,7 @@
 
 /* Coluna de ações ao lado do vídeo */
 
-.reels-actions {
+.finds-actions {
   flex: 0 0 auto;
   display: flex;
   flex-direction: column;
@@ -318,7 +318,7 @@
   padding-bottom: 8px;
 }
 
-.reels-action {
+.finds-action {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -327,11 +327,11 @@
   transition: transform 120ms ease;
 }
 
-.reels-like-action {
+.finds-like-action {
   color: #e9eef6;
 }
 
-.reels-like-mark {
+.finds-like-mark {
   width: 34px;
   height: 34px;
   display: inline-flex;
@@ -339,7 +339,7 @@
   justify-content: center;
 }
 
-.reels-like-mark > span {
+.finds-like-mark > span {
   width: 26px;
   height: 26px;
   display: block;
@@ -348,89 +348,89 @@
   transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
 }
 
-.reels-like-mark--liked {
+.finds-like-mark--liked {
   color: #ffffff;
 }
 
-.reels-like-mark--liked > span {
+.finds-like-mark--liked > span {
   background: currentColor;
 }
 
-.reels-like-action--liked > span:last-child {
+.finds-like-action--liked > span:last-child {
   color: #ffffff;
   font-weight: 700;
 }
 
-.reels-action img {
+.finds-action img {
   transition: opacity 120ms ease;
 }
 
-.reels-action:hover img,
-.reels-icon-button:hover {
+.finds-action:hover img,
+.finds-icon-button:hover {
   opacity: 0.7;
 }
 
-.reels-action:active,
-.reels-icon-button:active {
+.finds-action:active,
+.finds-icon-button:active {
   transform: scale(0.9);
 }
 
-.reels-action--active span {
-  color: var(--reels-focus);
+.finds-action--active span {
+  color: var(--finds-focus);
 }
 
 /* Painel de comentários (abre ao lado do vídeo) */
 
-.reels-comments-panel {
+.finds-comments-panel {
   flex: 0 0 auto;
   width: min(360px, 32vw);
-  height: var(--reels-video-height);
+  height: var(--finds-video-height);
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--reels-border);
+  border: 1px solid var(--finds-border);
   border-radius: 8px;
-  background: var(--reels-panel-bg);
+  background: var(--finds-panel-bg);
 }
 
-.reels-comments-header {
+.finds-comments-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 14px 16px;
-  border-bottom: 1px solid var(--reels-border);
+  border-bottom: 1px solid var(--finds-border);
 }
 
-.reels-comments-header h2 {
+.finds-comments-header h2 {
   font-family: 'Segoe UI', sans-serif;
   font-size: 17px;
   font-weight: 600;
 }
 
-.reels-comments-close {
+.finds-comments-close {
   padding: 2px 6px;
-  color: var(--reels-footer);
+  color: var(--finds-footer);
   font-size: 18px;
 }
 
-.reels-comments-close:hover {
-  color: var(--reels-text);
+.finds-comments-close:hover {
+  color: var(--finds-text);
 }
 
 /* Só a lista rola; cabeçalho e rodapé do painel ficam fixos. */
-.reels-comments-body {
+.finds-comments-body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   padding: 12px 16px;
   scrollbar-width: thin;
-  scrollbar-color: var(--reels-button-hover) transparent;
+  scrollbar-color: var(--finds-button-hover) transparent;
 }
 
-.reels-view-comments {
-  color: var(--reels-muted);
+.finds-view-comments {
+  color: var(--finds-muted);
 }
 
-.reels-comments {
+.finds-comments {
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -439,99 +439,99 @@
   overflow-wrap: anywhere;
 }
 
-.reels-comment-author {
+.finds-comment-author {
   font-weight: 600;
 }
 
-.reels-comments-footer {
+.finds-comments-footer {
   padding: 8px 16px 4px;
-  border-top: 1px solid var(--reels-border);
+  border-top: 1px solid var(--finds-border);
 }
 
-.reels-feedback {
+.finds-feedback {
   margin-top: 4px;
   padding: 8px 12px;
   border-radius: 6px;
   font-size: 15px;
 }
 
-.reels-feedback--erro {
+.finds-feedback--erro {
   background: rgb(255 107 107 / 15%);
   color: #ffb4b4;
 }
 
-.reels-feedback--sucesso {
+.finds-feedback--sucesso {
   background: rgb(91 141 239 / 18%);
   color: #cfe0ff;
 }
 
-.reels-comment-form {
+.finds-comment-form {
   height: 48px;
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.reels-icon-button {
+.finds-icon-button {
   display: flex;
   margin-left: -4px;
   padding: 4px;
   transition: opacity 120ms ease, transform 120ms ease;
 }
 
-.reels-comment-form input {
+.finds-comment-form input {
   flex: 1;
   /* Sem isto o input mantém a largura mínima nativa e empurra o "Post" para fora. */
   min-width: 0;
   border: 0;
   background: transparent;
-  color: var(--reels-text);
+  color: var(--finds-text);
   font: inherit;
   outline: none;
 }
 
-.reels-comment-form input::placeholder {
-  color: var(--reels-footer);
+.finds-comment-form input::placeholder {
+  color: var(--finds-footer);
 }
 
-.reels-comment-form input[aria-invalid='true']::placeholder {
+.finds-comment-form input[aria-invalid='true']::placeholder {
   color: #ffb4b4;
 }
 
-.reels-comment-submit {
+.finds-comment-submit {
   flex: 0 0 auto;
-  color: var(--reels-blue);
+  color: var(--finds-blue);
   font-family: 'Segoe UI', sans-serif;
   font-weight: 600;
 }
 
 /* Como no Figma: "Post" fica apagado com o campo vazio, mas continua
    clicável para mostrar a mensagem de validação. */
-.reels-comment-submit--idle {
+.finds-comment-submit--idle {
   opacity: 0.4;
 }
 
-.reels-comment-submit:hover,
-.reels-link-button:hover {
+.finds-comment-submit:hover,
+.finds-link-button:hover {
   color: #5cbcff;
 }
 
 /* Coluna direita: outras comunidades no lugar de recomendações de perfis. */
 
-.reels-side {
+.finds-side {
   grid-column: 3;
   align-self: start;
   padding-top: 42px;
 }
 
-.reels-community-suggestions {
+.finds-community-suggestions {
   padding: 20px;
-  border: 1px solid var(--reels-border);
+  border: 1px solid var(--finds-border);
   border-radius: 14px;
   background: rgb(25 37 53 / 48%);
 }
 
-.reels-side-eyebrow {
+.finds-side-eyebrow {
   color: #8cb9f0;
   font-family: 'Segoe UI', sans-serif;
   font-size: 10px;
@@ -539,16 +539,16 @@
   letter-spacing: 0.14em;
 }
 
-.reels-community-suggestions h2 {
+.finds-community-suggestions h2 {
   margin-top: 7px;
-  color: var(--reels-text-strong);
+  color: var(--finds-text-strong);
   font-family: 'Segoe UI', sans-serif;
   font-size: 18px;
   line-height: 1.25;
 }
 
-.reels-side-intro,
-.reels-side-empty {
+.finds-side-intro,
+.finds-side-empty {
   margin-top: 8px;
   color: #b7c2d2;
   font-family: 'Segoe UI', sans-serif;
@@ -556,13 +556,13 @@
   line-height: 1.45;
 }
 
-.reels-community-suggestions ul {
+.finds-community-suggestions ul {
   display: grid;
   gap: 9px;
   margin-top: 17px;
 }
 
-.reels-community-card {
+.finds-community-card {
   width: 100%;
   border: 1px solid #52617a !important;
   border-radius: 10px;
@@ -570,13 +570,13 @@
   transition: transform 150ms ease, border-color 150ms ease, background-color 150ms ease;
 }
 
-.reels-community-card:hover {
+.finds-community-card:hover {
   transform: translateY(-1px);
   border-color: #8cb9f0 !important;
   background: #3b4b64 !important;
 }
 
-.reels-community-card-main {
+.finds-community-card-main {
   width: 100%;
   min-height: 68px;
   display: flex;
@@ -585,7 +585,7 @@
   padding: 11px 11px 5px !important;
 }
 
-.reels-community-card-icon {
+.finds-community-card-icon {
   width: 38px;
   height: 38px;
   flex: 0 0 38px;
@@ -596,20 +596,20 @@
   font-size: 19px;
 }
 
-.reels-community-card-copy {
+.finds-community-card-copy {
   min-width: 0;
   flex: 1;
   display: grid;
   gap: 3px;
 }
 
-.reels-community-card-copy strong {
-  color: var(--reels-text-strong);
+.finds-community-card-copy strong {
+  color: var(--finds-text-strong);
   font-family: 'Segoe UI', sans-serif;
   font-size: 14px;
 }
 
-.reels-community-card-copy small {
+.finds-community-card-copy small {
   overflow: hidden;
   color: #b3c0d1;
   font-family: 'Segoe UI', sans-serif;
@@ -619,12 +619,12 @@
   white-space: nowrap;
 }
 
-.reels-community-card-copy small:last-child {
+.finds-community-card-copy small:last-child {
   color: #8cb9f0;
   font-weight: 600;
 }
 
-.reels-community-membership {
+.finds-community-membership {
   display: block;
   width: fit-content;
   margin: 0 11px 10px auto;
@@ -637,54 +637,54 @@
   font-weight: 700;
 }
 
-.reels-community-membership--joined {
+.finds-community-membership--joined {
   background: rgb(91 141 239 / 22%);
   color: #cfe0ff;
 }
 
 /* O painel de comentários sempre toma o espaço da lateral para não ficar por
    trás dos cards de comunidades. */
-.reels-page:has(.reels-comments-panel) {
+.finds-page:has(.finds-comments-panel) {
   grid-template-columns: minmax(0, 444px) minmax(0, 1fr);
 }
 
-.reels-page:has(.reels-comments-panel) .reels-side {
+.finds-page:has(.finds-comments-panel) .finds-side {
   display: none;
 }
 
 /* Telas estreitas: primeiro sai a coluna da direita, depois a marca. */
 
 @media (max-width: 1200px) {
-  .reels-page {
+  .finds-page {
     grid-template-columns: minmax(180px, 0.58fr) minmax(0, 1fr);
   }
 
-  .reels-side {
+  .finds-side {
     display: none;
   }
 }
 
 @media (max-width: 800px) {
-  .reels-page {
+  .finds-page {
     grid-template-columns: minmax(0, 1fr);
     padding-right: 0;
   }
 
-  .reels-brand {
+  .finds-brand {
     display: none;
   }
 
-  .reels-feed {
+  .finds-feed {
     grid-column: 1;
   }
 }
 
-.reels-follow--following {
+.finds-follow--following {
   background: rgb(255 255 255 / 18%);
 }
 
 /* Aviso do feed (ex.: link copiado). Fixo no rodapé e fora da grade da página. */
-.reels-notice {
+.finds-notice {
   position: fixed;
   bottom: 24px;
   left: 50%;
@@ -694,19 +694,19 @@
   padding: 10px 16px;
   border-radius: 8px;
   background: rgb(20 28 40 / 92%);
-  color: var(--reels-text);
+  color: var(--finds-text);
   font-size: 14px;
   overflow-wrap: anywhere;
   transform: translateX(-50%);
 }
 
-.reels-notice:empty {
+.finds-notice:empty {
   display: none;
 }
 
 /* Salvo: o ícone ganha um fundo com a cor de foco, como um marcador aceso. */
-.reels-action--saved img {
+.finds-action--saved img {
   border-radius: 50%;
-  background: var(--reels-focus);
-  box-shadow: 0 0 0 4px var(--reels-focus);
+  background: var(--finds-focus);
+  box-shadow: 0 0 0 4px var(--finds-focus);
 }

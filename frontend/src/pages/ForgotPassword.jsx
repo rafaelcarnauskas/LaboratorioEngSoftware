@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { requestPasswordReset } from '../controllers/authController'
-import logoMark from '../assets/reels/icons/logo-mark.svg'
+import logoMark from '../assets/finds/icons/logo-mark.svg'
 import './Login.css'
 
 // "Esqueci a senha": pede o e-mail e confirma o envio das instruções. Sem backend

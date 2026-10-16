@@ -10,13 +10,13 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 # O app precisa estar rodando (npm run dev na pasta frontend).
 URL_APP = os.environ.get("URL_APP", "http://localhost:5173")
-URL_REELS = f"{URL_APP}/?tela=reels&categoria=sports"
+URL_FINDS = f"{URL_APP}/?tela=finds&categoria=sports"
 
-PRIMEIRO_REEL = '[data-reel-id="sports-1"]'
-SEGUNDO_REEL = '[data-reel-id="sports-2"]'
+PRIMEIRO_FIND = '[data-find-id="sports-1"]'
+SEGUNDO_FIND = '[data-find-id="sports-2"]'
 
 
-class TestReels(unittest.TestCase):
+class TestFinds(unittest.TestCase):
     def setUp(self):
         options = webdriver.ChromeOptions()
         options.add_argument("--window-size=1920,1080")
@@ -29,60 +29,60 @@ class TestReels(unittest.TestCase):
         self.wait = WebDriverWait(self.driver, 10)
 
         # Começa já logado: grava a sessão do usuário de teste antes de abrir os
-        # Reels, para pular a tela de login (testada em test_login.py).
+        # Finds, para pular a tela de login (testada em test_login.py).
         self.driver.get(URL_APP)
         self.driver.execute_script(
             "localStorage.setItem('choosen.session', JSON.stringify("
             "{email: 'victor@email.com', name: 'Victor Mendes'}))"
         )
-        self.driver.get(URL_REELS)
+        self.driver.get(URL_FINDS)
 
         # Aguarda a tela de loading sumir e o primeiro vídeo aparecer.
         self.wait.until(
-            EC.visibility_of_element_located((By.CSS_SELECTOR, PRIMEIRO_REEL))
+            EC.visibility_of_element_located((By.CSS_SELECTOR, PRIMEIRO_FIND))
         )
 
-    def abrir_comentarios(self, reel):
-        botao = reel.find_element(By.CSS_SELECTOR, '[data-testid="abrir-comentarios"]')
+    def abrir_comentarios(self, find):
+        botao = find.find_element(By.CSS_SELECTOR, '[data-testid="abrir-comentarios"]')
         botao.click()
         return self.wait.until(
             EC.visibility_of_element_located((By.ID, "comentario-sports-1"))
         )
 
     def test_publica_comentario_e_exibe_confirmacao(self):
-        reel = self.driver.find_element(By.CSS_SELECTOR, PRIMEIRO_REEL)
-        campo_comentario = self.abrir_comentarios(reel)
+        find = self.driver.find_element(By.CSS_SELECTOR, PRIMEIRO_FIND)
+        campo_comentario = self.abrir_comentarios(find)
 
         campo_comentario.send_keys("Que jogo!")
-        reel.find_element(By.CSS_SELECTOR, '[data-testid="acao-principal"]').click()
+        find.find_element(By.CSS_SELECTOR, '[data-testid="acao-principal"]').click()
 
         mensagem = self.wait.until(
             EC.visibility_of_element_located(
-                (By.CSS_SELECTOR, f'{PRIMEIRO_REEL} [role="status"]')
+                (By.CSS_SELECTOR, f'{PRIMEIRO_FIND} [role="status"]')
             )
         )
         self.assertEqual(mensagem.text, "Comentário publicado.")
 
-        comentarios = reel.find_elements(
+        comentarios = find.find_elements(
             By.CSS_SELECTOR, '[data-testid="lista-comentarios"] li'
         )
         self.assertEqual(len(comentarios), 1)
         self.assertEqual(comentarios[0].text, "mendesvictor Que jogo!")
 
-        contador = reel.find_element(By.CSS_SELECTOR, '[data-testid="abrir-comentarios"] span')
+        contador = find.find_element(By.CSS_SELECTOR, '[data-testid="abrir-comentarios"] span')
         self.assertEqual(contador.text, "101")
 
         self.assertEqual(campo_comentario.get_attribute("value"), "")
 
     def test_comentario_vazio_exibe_mensagem_de_erro(self):
-        reel = self.driver.find_element(By.CSS_SELECTOR, PRIMEIRO_REEL)
-        campo_comentario = self.abrir_comentarios(reel)
+        find = self.driver.find_element(By.CSS_SELECTOR, PRIMEIRO_FIND)
+        campo_comentario = self.abrir_comentarios(find)
 
-        reel.find_element(By.CSS_SELECTOR, '[data-testid="acao-principal"]').click()
+        find.find_element(By.CSS_SELECTOR, '[data-testid="acao-principal"]').click()
 
         mensagem = self.wait.until(
             EC.visibility_of_element_located(
-                (By.CSS_SELECTOR, f'{PRIMEIRO_REEL} [role="alert"]')
+                (By.CSS_SELECTOR, f'{PRIMEIRO_FIND} [role="alert"]')
             )
         )
         self.assertEqual(mensagem.text, "Escreva um comentário antes de publicar.")
@@ -90,7 +90,7 @@ class TestReels(unittest.TestCase):
 
         # Nenhum comentário foi adicionado.
         self.assertEqual(
-            len(reel.find_elements(By.CSS_SELECTOR, '[data-testid="lista-comentarios"] li')),
+            len(find.find_elements(By.CSS_SELECTOR, '[data-testid="lista-comentarios"] li')),
             0,
         )
 
@@ -98,11 +98,11 @@ class TestReels(unittest.TestCase):
         self.driver.find_element(By.TAG_NAME, "body").send_keys(Keys.ARROW_DOWN)
 
         # O segundo vídeo precisa encaixar no topo do feed, sem a barra do template.
-        segundo_reel = self.driver.find_element(By.CSS_SELECTOR, SEGUNDO_REEL)
+        segundo_find = self.driver.find_element(By.CSS_SELECTOR, SEGUNDO_FIND)
         self.wait.until(
-            lambda driver: abs(segundo_reel.rect["y"]) <= 2
+            lambda driver: abs(segundo_find.rect["y"]) <= 2
         )
-        self.assertTrue(segundo_reel.is_displayed())
+        self.assertTrue(segundo_find.is_displayed())
 
 
 if __name__ == "__main__":

@@ -4,11 +4,11 @@
 // o que é mais forte que amostragem aleatória.
 import { describe, expect, it } from 'vitest'
 import { communities } from './communities'
-import { reels } from './reels'
+import { finds } from './finds'
 
-describe('Property 32: Todo reel declara um nicho da própria comunidade', () => {
+describe('Property 32: Todo find declara um nicho da própria comunidade', () => {
   // **Validates: Requirements 10.1, 10.2**
-  it('cada reel aponta para uma comunidade do catálogo e para um nicho que ela declara', () => {
+  it('cada find aponta para uma comunidade do catálogo e para um nicho que ela declara', () => {
     const nichesByCommunity = new Map(
       communities.map((community) => [
         community.id,
@@ -16,15 +16,15 @@ describe('Property 32: Todo reel declara um nicho da própria comunidade', () =>
       ]),
     )
 
-    expect(reels.length).toBeGreaterThan(0)
+    expect(finds.length).toBeGreaterThan(0)
 
-    reels.forEach((reel) => {
-      const declared = nichesByCommunity.get(reel.communityId)
+    finds.forEach((find) => {
+      const declared = nichesByCommunity.get(find.communityId)
 
-      expect(declared, `reel ${reel.id} aponta para comunidade inexistente`).toBeDefined()
+      expect(declared, `find ${find.id} aponta para comunidade inexistente`).toBeDefined()
       expect(
-        declared.has(reel.nicheId),
-        `reel ${reel.id} declara o nicho "${reel.nicheId}", ausente de ${reel.communityId}`,
+        declared.has(find.nicheId),
+        `find ${find.id} declara o nicho "${find.nicheId}", ausente de ${find.communityId}`,
       ).toBe(true)
     })
   })

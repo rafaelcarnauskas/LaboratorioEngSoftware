@@ -1,11 +1,11 @@
-// Comunidades de nicho. Cada vídeo em data/reels.js aponta para uma delas
+// Comunidades de nicho. Cada vídeo em data/finds.js aponta para uma delas
 // pelo campo `communityId`. Quando houver backend, esta lista passa a vir da
 // API (ex.: fetch('/api/communities')).
 //
 // `category` indica em qual categoria da Home a comunidade aparece, e usa a
-// mesma grafia minúscula dos reels ('sports', 'cute').
+// mesma grafia minúscula dos finds ('sports', 'cute').
 //
-// `niches` declara os nichos filtráveis da comunidade. Nichos sem reel
+// `niches` declara os nichos filtráveis da comunidade. Nichos sem find
 // correspondente são intencionais: exercitam o estado vazio por nicho.
 export const communities = [
   {

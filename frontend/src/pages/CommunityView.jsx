@@ -61,7 +61,7 @@ function CommunityView({ memberships, onJoin, onLeave, onOpenCommunity, onOpenCa
   const { joined, suggested } = partitionCommunities(memberships)
 
   // O card abre a Tela_Comunidade. `onOpenCategory` é o contrato antigo
-  // (abertura de reels por categoria) e fica como fallback enquanto App.jsx
+  // (abertura de finds por categoria) e fica como fallback enquanto App.jsx
   // não é religado.
   const openCommunity = (community) => {
     if (onOpenCommunity) {
