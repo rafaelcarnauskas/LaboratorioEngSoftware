@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { communities } from '../../data/communities'
+import { communityCatalog as communities } from '../../controllers/contentController'
 
 const initialQueue = [
   { id: 1, type: 'Denúncia', title: 'Vídeo aguardando revisão', detail: 'Comunidade Poli USP · há 12 min', tone: 'warning' },
@@ -14,10 +14,39 @@ const systemServices = [
   { name: 'Armazenamento', detail: 'Uso atual: 68%', status: 'Atenção' },
 ]
 
-export default function SystemAdmin({ onBack }) {
+// Preferências globais da plataforma. Sem backend, valem só para esta sessão.
+const settingOptions = [
+  { id: 'openSignUp', label: 'Cadastro aberto', description: 'Novas pessoas podem criar conta no Choosen.' },
+  { id: 'communityRequests', label: 'Pedidos de novas comunidades', description: 'Usuários podem sugerir comunidades para aprovação.' },
+  { id: 'autoModeration', label: 'Moderação automática', description: 'Comentários denunciados três vezes saem do ar até a revisão.' },
+  { id: 'whatsappAlerts', label: 'Alertas no WhatsApp', description: 'Permite que usuários recebam avisos por WhatsApp.' },
+  { id: 'maintenanceMode', label: 'Modo manutenção', description: 'Mostra um aviso e bloqueia novas publicações.' },
+]
+
+const initialSettings = {
+  openSignUp: true,
+  communityRequests: true,
+  autoModeration: false,
+  whatsappAlerts: true,
+  maintenanceMode: false,
+}
+
+export default function SystemAdmin({ onBack, onManageCommunity }) {
   const [queue, setQueue] = useState(initialQueue)
   const [activeSection, setActiveSection] = useState('visao-geral')
   const [notice, setNotice] = useState('')
+  const [settings, setSettings] = useState(initialSettings)
+  const [settingsNotice, setSettingsNotice] = useState('')
+
+  function toggleSetting(id) {
+    setSettings((current) => ({ ...current, [id]: !current[id] }))
+    setSettingsNotice('')
+  }
+
+  function manageCommunity(community) {
+    if (onManageCommunity) onManageCommunity(community.id)
+    else setNotice(`A gestão de ${community.name} ficará disponível nesta área.`)
+  }
 
   function resolveItem(id) {
     setQueue((current) => current.filter((item) => item.id !== id))
@@ -87,16 +116,35 @@ export default function SystemAdmin({ onBack }) {
           {activeSection === 'comunidades' && (
             <section>
               <div className="system-admin-title-row"><div><span className="system-admin-kicker">ESTRUTURA DA PLATAFORMA</span><h2>Comunidades</h2></div></div>
-              <div className="system-admin-community-grid">{communities.map((community) => <div className="system-admin-community-card" key={community.id}><span>{community.icon}</span><div><strong>{community.name}</strong><small>{community.memberCount.toLocaleString('pt-BR')} membros · ativa</small></div><button type="button" onClick={() => setNotice(`A gestão de ${community.name} ficará disponível nesta área.`)}>Gerenciar</button></div>)}</div>
+              <div className="system-admin-community-grid">{communities.map((community) => <div className="system-admin-community-card" key={community.id}><span>{community.icon}</span><div><strong>{community.name}</strong><small>{community.memberCount.toLocaleString('pt-BR')} membros · ativa</small></div><button type="button" onClick={() => manageCommunity(community)} aria-label={`Gerenciar ${community.name}`}>Gerenciar</button></div>)}</div>
               {notice && <p className="system-admin-notice" role="status">{notice}</p>}
             </section>
           )}
 
           {activeSection === 'configuracoes' && (
-            <section className="system-admin-placeholder">
-              <span className="system-admin-placeholder-icon">⚙</span>
-              <h2>Configurações do sistema</h2>
-              <p>Preferências globais, permissões e integrações serão organizadas nesta área.</p>
+            <section>
+              <div className="system-admin-title-row">
+                <div><span className="system-admin-kicker">PREFERÊNCIAS GLOBAIS</span><h2>Configurações do sistema</h2></div>
+                <button className="manage-save-button" type="button" onClick={() => setSettingsNotice('Configurações salvas para esta sessão.')}>Salvar configurações</button>
+              </div>
+              <div className="system-settings-list">
+                {settingOptions.map((option) => (
+                  <div className="system-setting" key={option.id}>
+                    <span><strong>{option.label}</strong><small>{option.description}</small></span>
+                    <button
+                      className={`manage-toggle${settings[option.id] ? ' is-enabled' : ''}`}
+                      type="button"
+                      role="switch"
+                      aria-checked={settings[option.id]}
+                      aria-label={option.label}
+                      onClick={() => toggleSetting(option.id)}
+                    >
+                      <span />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              {settingsNotice && <p className="system-admin-notice" role="status">{settingsNotice}</p>}
             </section>
           )}
         </main>

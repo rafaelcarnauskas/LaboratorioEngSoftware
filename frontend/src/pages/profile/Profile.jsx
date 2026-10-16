@@ -7,8 +7,7 @@ import Notifications from './Notifications'
 import WhatsappAlerts from './WhatsappAlerts'
 import ManageCommunities from './ManageCommunities'
 import SystemAdmin from './SystemAdmin'
-import { limitOptions } from '../../hooks/useMyTime'
-import { dailyAverage, limitState, minutesToday, weeklyUsage, wellnessDays } from '../../lib/usage'
+import { limitOptions, myTimeSummary } from '../../controllers/usageController'
 
 const profileRoutes = {
   '/profile': { title: 'Configurações do perfil', description: 'Gerencie suas informações pessoais, seu plano de assinatura e as preferências do seu espaço.' },
@@ -45,6 +44,9 @@ function Profile({ path = '/profile', onNavigate, onSignOut, events = [], clearH
     isCommunityAdmin: true,
     isSystemAdmin: true,
   })
+  // Comunidade escolhida em "Gerenciar" no Administrador do sistema: abre
+  // Administrar comunidades já com ela selecionada.
+  const [managedCommunityId, setManagedCommunityId] = useState(null)
 
   if (path === '/profile/my-time') {
     return (
@@ -87,11 +89,26 @@ function Profile({ path = '/profile', onNavigate, onSignOut, events = [], clearH
   }
 
   if (path === '/profile/admin') {
-    return <ManageCommunities onBack={() => onNavigate('/profile')} onOpenSystemAdmin={() => onNavigate('/profile/system-admin')} />
+    return (
+      <ManageCommunities
+        key={managedCommunityId ?? 'default'}
+        initialCommunityId={managedCommunityId}
+        onBack={() => onNavigate('/profile')}
+        onOpenSystemAdmin={() => onNavigate('/profile/system-admin')}
+      />
+    )
   }
 
   if (path === '/profile/system-admin') {
-    return <SystemAdmin onBack={() => onNavigate('/profile')} />
+    return (
+      <SystemAdmin
+        onBack={() => onNavigate('/profile')}
+        onManageCommunity={(communityId) => {
+          setManagedCommunityId(communityId)
+          onNavigate('/profile/admin')
+        }}
+      />
+    )
   }
 
   if (path !== '/profile') {
@@ -212,21 +229,14 @@ function MyTimeView({ events = [], myTime = fallbackMyTime, onBack }) {
   const onUsageLimitChange = myTime?.setDailyLimit ?? noop
   const onToggleReminder = myTime?.toggleReminder ?? noop
 
-  // O relógio é lido uma única vez, na montagem: as derivações de `usage.js`
-  // recebem `now` como argumento e o gráfico fica estável entre re-renderizações.
+  // O relógio é lido uma única vez, na montagem: o resumo recebe `now` como
+  // argumento e o gráfico fica estável entre re-renderizações.
   const [now] = useState(() => Date.now())
 
-  const { todayMinutes, weekUsage, averageMinutes } = useMemo(() => {
-    const week = weeklyUsage(events, now)
-    return {
-      todayMinutes: minutesToday(events, now),
-      weekUsage: week,
-      averageMinutes: dailyAverage(week),
-    }
-  }, [events, now])
-
-  const { rawPercentage, clampedPercentage, remainingMinutes, isOverLimit, status } = limitState(todayMinutes, usageLimit)
-  const balancedDays = wellnessDays(weekUsage, usageLimit)
+  const {
+    todayMinutes, weekUsage, averageMinutes, balancedDays,
+    rawPercentage, clampedPercentage, remainingMinutes, isOverLimit, status,
+  } = useMemo(() => myTimeSummary(events, now, usageLimit), [events, now, usageLimit])
   const chartMax = Math.max(...weekUsage.map((day) => day.minutes), 60)
 
   return (

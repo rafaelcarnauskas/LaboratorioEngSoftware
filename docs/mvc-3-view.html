@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>MVC View</title>
+<style>
+  :root { --blue:#2563c9; --blue-soft:#e8f0fc; --green:#1f8a5b; --orange:#c96a12; --ink:#1d2433; --muted:#5b6474; --line:#e3e7ee; --bg:#f5f6f8; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family:"DejaVu Sans","Segoe UI",Arial,sans-serif; }
+  .page { width:1600px; padding:36px 40px 28px; }
+  .title { display:flex; align-items:center; gap:16px; }
+  .badge { background:var(--blue); color:#fff; font-weight:700; font-size:15px; letter-spacing:.06em; padding:6px 14px; border-radius:6px; }
+  h1 { margin:0; font-size:34px; }
+  .subtitle { margin:6px 0 14px; color:var(--muted); font-size:15px; }
+  .legend { display:flex; gap:18px; align-items:center; font-size:12.5px; color:var(--muted); margin-bottom:16px; }
+  .tag { display:inline-block; color:#fff; font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:9px; margin-left:6px; vertical-align:1px; }
+  .tag.novo { background:var(--green); } .tag.upd { background:var(--orange); }
+  .card { background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px 20px 12px; }
+  .card h2 { margin:0 0 10px; color:var(--blue); font-size:18px; padding-bottom:10px; border-bottom:1px solid var(--line); }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th { text-align:left; background:var(--blue-soft); color:var(--blue); font-size:11.5px; letter-spacing:.06em; padding:8px 8px; }
+  td { padding:6px 8px; border-bottom:1px solid var(--line); vertical-align:top; line-height:1.35; }
+  tr:last-child td { border-bottom:0; }
+  td:first-child { font-weight:700; width:40px; }
+  code { font-family:"DejaVu Sans Mono",Consolas,monospace; font-size:11.5px; background:#f1f3f6; padding:1px 4px; border-radius:3px; }
+  .grid { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:16px; margin-top:16px; }
+  .box { background:#fff; border:1px solid var(--line); border-radius:12px; padding:14px 18px; font-size:13px; line-height:1.45; }
+  .box h3 { margin:0 0 8px; font-size:16px; color:var(--blue); }
+  .box.warn { background:#fff7f0; border-color:#f2d3b5; } .box.warn h3 { color:var(--orange); }
+  .box.rule { background:#eef7f2; border-color:#cfe8da; } .box.rule h3 { color:var(--green); }
+  .box ul { margin:0; padding-left:18px; } .box li { margin:3px 0; }
+  .footer { display:flex; justify-content:space-between; margin-top:14px; font-size:12px; color:var(--muted); }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="title"><span class="badge">VIEW</span><h1>Telas e componentes</h1></div>
+  <p class="subtitle">Camada de apresentação: o que cada tela dispara e o que recebe do Controller. Nenhuma tela acessa o Model diretamente.</p>
+  <div class="legend">
+    <span><span class="tag novo" style="margin:0 6px 0 0">NOVO</span>tela adicionada nesta entrega</span>
+    <span><span class="tag upd" style="margin:0 6px 0 0">ATUALIZADO</span>comportamento alterado</span>
+    <span>· Todas as leituras passam por <code>src/controllers/</code></span>
+  </div>
+
+  <div class="card">
+    <h2>22 telas e visões (camada de apresentação)</h2>
+    <table>
+      <thead><tr><th>#</th><th>VIEW</th><th>ARQUIVO</th><th>EVENTOS QUE DISPARA</th><th>DADOS QUE RECEBE (VIA CONTROLLER)</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Splash</td><td><code>App.jsx</code></td><td>—</td><td>—</td></tr>
+        <tr><td>1b</td><td>Login<span class="tag upd">ATUALIZADO</span></td><td><code>pages/Login.jsx</code></td><td>logIn, onLogin, onCreateAccount, onForgotPassword</td><td>authController: isValidEmail</td></tr>
+        <tr><td>1c</td><td>Criar conta<span class="tag novo">NOVO</span></td><td><code>pages/SignUp.jsx</code></td><td>signUp, onSignUp, onGoToLogin</td><td>authController: isEmailTaken, isValidEmail</td></tr>
+        <tr><td>1d</td><td>Esqueci a senha<span class="tag novo">NOVO</span></td><td><code>pages/ForgotPassword.jsx</code></td><td>requestPasswordReset, onGoToLogin</td><td>authController</td></tr>
+        <tr><td>2</td><td>Home</td><td><code>App.jsx (renderHome)</code></td><td>openCommunity, openReels</td><td>partitionCommunities, countByCommunity, recentlyWatched</td></tr>
+        <tr><td>3</td><td>Comunidades<span class="tag upd">ATUALIZADO</span></td><td><code>pages/CommunityView.jsx</code></td><td>onJoin, onLeave, onOpenCommunity</td><td>contentController: partitionCommunities, countByCommunity</td></tr>
+        <tr><td>4</td><td>Tela da comunidade<span class="tag upd">ATUALIZADO</span></td><td><code>pages/CommunityDetail.jsx</code></td><td>onJoin/onLeave, onToggleNiche, onClearNiches, onOpenReel, onBack</td><td>contentController: selectReels, countByCommunity</td></tr>
+        <tr><td>5</td><td>Reels<span class="tag upd">ATUALIZADO</span></td><td><code>pages/Reels.jsx</code></td><td>curtir e comentar, participar/sair, <b>seguir</b>, <b>salvar</b>, <b>compartilhar</b> (copia o link), onGoHome, onReelWatched</td><td>contentController: selectReels, findCommunity, relatedCommunities, reelShareUrl; followedAuthors e savedReelIds por props</td></tr>
+        <tr><td>6</td><td>Buscar<span class="tag upd">ATUALIZADO</span></td><td><code>pages/SearchView.jsx</code></td><td>onListsChange</td><td>contentController: categoryDefinitions, resolveCategory; vídeos e listas por props</td></tr>
+        <tr><td>7</td><td>Listas</td><td><code>pages/ListsView.jsx</code></td><td>onListsChange</td><td>lists, availableVideos (props)</td></tr>
+        <tr><td>8</td><td>Histórico<span class="tag upd">ATUALIZADO</span></td><td><code>pages/History.jsx</code></td><td>onClearHistory; <b>Mais opções</b>: assistir novamente (onOpenReel), ver comunidade (onOpenCommunity)</td><td>contentController: historyGroups, formatTime</td></tr>
+        <tr><td>9</td><td>Perfil, visão geral</td><td><code>pages/profile/Profile.jsx</code></td><td>navigateProfile, onSignOut</td><td>estado profile local</td></tr>
+        <tr><td>9b</td><td>Placeholder</td><td><code>Profile.jsx (ProfilePlaceholder)</code></td><td>navigateProfile('/profile')</td><td>— (só por URL /profile/* inexistente)</td></tr>
+        <tr><td>9c</td><td>Editar perfil</td><td><code>profile/EditProfile.jsx</code></td><td>onSave(form), onBack</td><td>profile (prop)</td></tr>
+        <tr><td>9d</td><td>Alterar senha</td><td><code>profile/ChangePassword.jsx</code></td><td>só valida os campos</td><td>—</td></tr>
+        <tr><td>9e</td><td>Notificações</td><td><code>profile/Notifications.jsx</code></td><td>estado local</td><td>initialPreferences fixo</td></tr>
+        <tr><td>9f</td><td>Alertas no WhatsApp</td><td><code>profile/WhatsappAlerts.jsx</code></td><td>estado local</td><td>notificationTypes</td></tr>
+        <tr><td>9g</td><td>Administrar comunidades<span class="tag upd">ATUALIZADO</span></td><td><code>profile/ManageCommunities.jsx</code></td><td>estado local, onOpenSystemAdmin; abre já na comunidade escolhida</td><td>contentController: communityCatalog, countByCommunity</td></tr>
+        <tr><td>9h</td><td>Administrador do sistema<span class="tag upd">ATUALIZADO</span></td><td><code>profile/SystemAdmin.jsx</code></td><td>resolveItem, <b>Configurações</b> (5 chaves + salvar), <b>Gerenciar</b> → onManageCommunity</td><td>contentController: communityCatalog; métricas fixas</td></tr>
+        <tr><td>10</td><td>Meu tempo<span class="tag upd">ATUALIZADO</span></td><td><code>Profile.jsx (MyTimeView)</code></td><td>setDailyLimit, toggleReminder</td><td>usageController: myTimeSummary, limitOptions</td></tr>
+        <tr><td>11</td><td>Meu plano</td><td><code>profile/MyPlan.jsx</code></td><td>estado local</td><td>subscriptionPlans fixo</td></tr>
+        <tr><td>12</td><td>Configurações do grupo<span class="tag upd">ATUALIZADO</span></td><td><code>profile/GroupSettings.jsx</code></td><td>estado local; <b>Gerenciar integrante</b>: mudar função, remover do grupo</td><td>contentController: videoCatalog</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="grid">
+    <div class="box rule">
+      <h3>Regra da camada View</h3>
+      <ul>
+        <li>Nenhuma tela importa <code>data/</code>, <code>lib/</code> ou <code>hooks/</code> (Model).</li>
+        <li>Leituras e ações passam por <code>authController</code>, <code>contentController</code> e <code>usageController</code>, ou chegam por props do <code>App.jsx</code>.</li>
+        <li>Segue o modelo de referência: Telas → Controlador → Comunicação. Quando houver back end, só o Controller e o Model mudam.</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3>O que mudou nas Views</h3>
+      <ul>
+        <li>Login e Cadastro não chamam mais <code>authenticate</code> e <code>saveSession</code> direto.</li>
+        <li>Implementados: Criar conta, Esqueci a senha, Seguir +, compartilhar e salvar (Reels), Mais opções (Histórico), Configurações e Gerenciar (SystemAdmin), Gerenciar integrante (Grupo).</li>
+        <li>Tela da comunidade, Reels e Histórico deixaram de ler o Model direto (eram a "leitura direta" da Arquitetura geral).</li>
+      </ul>
+    </div>
+    <div class="box warn">
+      <h3>Depende de outras camadas</h3>
+      <ul>
+        <li><b>Model:</b> persistir seguidos, salvos e as telas de Perfil e administração (hoje só em memória).</li>
+        <li><b>Model:</b> ação para remover um único item do histórico.</li>
+        <li><b>Controller:</b> tirar a validação de formulários das Views.</li>
+        <li><b>Back end:</b> envio real do e-mail de recuperação de senha.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="footer"><span>Choosen · Documentação MVC</span><span>Entrega 3 de 4 · View (Murilo Gueler)</span></div>
+</div>
+</body>
+</html>

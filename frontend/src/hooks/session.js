@@ -35,7 +35,49 @@ export function clearSession() {
   }
 }
 
+// Contas criadas na tela de cadastro. Sem backend, ficam no navegador — e a senha
+// fica em texto puro, o que só é aceitável em demonstração. Quando a API existir,
+// `createAccount` e `authenticate` passam a chamar o backend e esta lista some.
+const ACCOUNTS_KEY = 'choosen.accounts'
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+export function isValidEmail(email) {
+  return EMAIL_PATTERN.test(email.trim())
+}
+
+function normalizeEmail(email) {
+  return email.trim().toLowerCase()
+}
+
+function getAccounts() {
+  try {
+    const saved = localStorage.getItem(ACCOUNTS_KEY)
+    const accounts = saved ? JSON.parse(saved) : []
+    return Array.isArray(accounts) ? accounts : []
+  } catch {
+    return []
+  }
+}
+
+export function emailExists(email) {
+  const normalized = normalizeEmail(email)
+  return normalized === demoUser.email || getAccounts().some((account) => account.email === normalized)
+}
+
+// Devolve o usuário criado, ou `null` se não foi possível salvar a conta.
+export function createAccount({ name, email, password }) {
+  const account = { name: name.trim(), email: normalizeEmail(email), password }
+  try {
+    localStorage.setItem(ACCOUNTS_KEY, JSON.stringify([...getAccounts(), account]))
+  } catch {
+    return null
+  }
+  return { email: account.email, name: account.name }
+}
+
 export function authenticate(email, password) {
-  const isValid = email.trim().toLowerCase() === demoUser.email && password === demoUser.password
-  return isValid ? { email: demoUser.email, name: demoUser.name } : null
+  const normalized = normalizeEmail(email)
+  const account = [demoUser, ...getAccounts()].find((candidate) => candidate.email === normalized)
+  return account && account.password === password ? { email: account.email, name: account.name } : null
 }

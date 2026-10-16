@@ -2,7 +2,7 @@
 // vídeos dela. Não confundir com CommunityView, que é a Tela_Communities
 // (descoberta e adesão). Componente sem estado persistido próprio: tudo
 // chega por props de App.jsx.
-import { countByCommunity, selectReels } from '../lib/reelsIndex'
+import { countByCommunity, selectReels } from '../controllers/contentController'
 import './CommunityDetail.css'
 
 export default function CommunityDetail({

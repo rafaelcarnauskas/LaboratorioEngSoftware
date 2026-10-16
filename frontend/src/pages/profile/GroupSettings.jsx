@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { videoCatalog } from '../../data/videoCatalog'
+import { videoCatalog } from '../../controllers/contentController'
 
 const contentCategories = [...new Set(videoCatalog.map((video) => video.category))]
 
@@ -36,6 +36,8 @@ const initialGroups = [
 
 const limitOptions = [30, 60, 90, 120, 180]
 
+const memberRoles = ['Responsável', 'Integrante', 'Criança']
+
 // Vírgula decimal e plural só a partir de duas horas: `90` vira `1,5 h`.
 function groupLimitLabel(minutes) {
   if (minutes < 60) return `${minutes} min`
@@ -47,7 +49,22 @@ export default function GroupSettings({ onBack }) {
   const [groups, setGroups] = useState(initialGroups)
   const [selectedGroupId, setSelectedGroupId] = useState(initialGroups[0].id)
   const [notice, setNotice] = useState('')
+  // Integrante com o painel "Gerenciar" aberto (um por vez).
+  const [managedMember, setManagedMember] = useState(null)
   const selectedGroup = groups.find((group) => group.id === selectedGroupId)
+  const guardianCount = selectedGroup.members.filter((member) => member.role === 'Responsável').length
+
+  function updateMember(name, changes) {
+    updateSelectedGroup({
+      members: selectedGroup.members.map((member) => (member.name === name ? { ...member, ...changes } : member)),
+    })
+  }
+
+  function removeMember(name) {
+    updateSelectedGroup({ members: selectedGroup.members.filter((member) => member.name !== name) })
+    setManagedMember(null)
+    setNotice(`${name} saiu de ${selectedGroup.name}.`)
+  }
 
   function updateSelectedGroup(changes) {
     setGroups((current) => current.map((group) => (
@@ -95,7 +112,7 @@ export default function GroupSettings({ onBack }) {
             type="button"
             role="tab"
             aria-selected={selectedGroupId === group.id}
-            onClick={() => { setSelectedGroupId(group.id); setNotice('') }}
+            onClick={() => { setSelectedGroupId(group.id); setManagedMember(null); setNotice('') }}
           >
             <span className="group-picker-icon" aria-hidden="true">{group.type === 'Família' ? '⌂' : '♧'}</span>
             <span><strong>{group.name}</strong><small>{group.type} · {group.members.length} integrantes</small></span>
@@ -157,7 +174,51 @@ export default function GroupSettings({ onBack }) {
           <section className="group-panel group-members-panel">
             <div className="group-panel-heading"><div><span className="group-panel-kicker">PESSOAS</span><h2>Integrantes</h2></div><span className="group-count">{selectedGroup.members.length}</span></div>
             <div className="group-members-list">
-              {selectedGroup.members.map((member) => <div className="group-member" key={member.name}><span className="group-member-avatar">{member.initials}</span><span><strong>{member.name}</strong><small>{member.role}</small></span><button type="button" aria-label={`Gerenciar ${member.name}`} onClick={() => setNotice(`Os controles de ${member.name} ficarão disponíveis aqui.`)}>›</button></div>)}
+              {selectedGroup.members.map((member) => {
+                const isManaged = managedMember === member.name
+                // O grupo nunca fica sem responsável: o último não pode sair nem mudar de função.
+                const isLastGuardian = member.role === 'Responsável' && guardianCount === 1
+
+                return (
+                  <div className="group-member-entry" key={member.name}>
+                    <div className="group-member">
+                      <span className="group-member-avatar">{member.initials}</span>
+                      <span><strong>{member.name}</strong><small>{member.role}</small></span>
+                      <button
+                        type="button"
+                        aria-label={`Gerenciar ${member.name}`}
+                        aria-expanded={isManaged}
+                        onClick={() => setManagedMember(isManaged ? null : member.name)}
+                      >
+                        {isManaged ? '⌄' : '›'}
+                      </button>
+                    </div>
+                    {isManaged && (
+                      <div className="group-member-manage">
+                        <label>
+                          <span>Função no grupo</span>
+                          <select
+                            value={member.role}
+                            disabled={isLastGuardian}
+                            onChange={(event) => updateMember(member.name, { role: event.target.value })}
+                          >
+                            {memberRoles.map((role) => <option key={role} value={role}>{role}</option>)}
+                          </select>
+                        </label>
+                        <button
+                          className="group-member-remove"
+                          type="button"
+                          disabled={isLastGuardian}
+                          onClick={() => removeMember(member.name)}
+                        >
+                          Remover do grupo
+                        </button>
+                        {isLastGuardian && <small>O grupo precisa de pelo menos um responsável.</small>}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
             </div>
             <button className="group-invite-button" type="button" onClick={() => setNotice('O fluxo de convite ficará disponível aqui.')}>+ Convidar integrante</button>
           </section>
