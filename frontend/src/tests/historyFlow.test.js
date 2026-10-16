@@ -2,11 +2,11 @@
 // histórico, histórico recente da Home e roteamento do item recente.
 import { describe, expect, it } from 'vitest'
 import fc from 'fast-check'
-import { attributedSeconds, MAX_ATTRIBUTED_SECONDS, MIN_DWELL_MS } from '../pages/Reels'
-import { groupHistory, recentlyWatched } from '../lib/usage'
-import { hydrate } from '../lib/reelsIndex'
-import { buildUrl, parseUrl } from '../lib/navigation'
-import { reels } from '../data/reels'
+import { attributedSeconds, MAX_ATTRIBUTED_SECONDS, MIN_DWELL_MS } from '../3-videos/telas/Finds'
+import { groupHistory, recentlyWatched } from '../5-historico/modelo/usage'
+import { hydrate } from '../3-videos/modelo/findsIndex'
+import { buildUrl, parseUrl } from '../app/navigation'
+import { finds } from '../3-videos/modelo/finds'
 
 const RUNS = 100
 
@@ -22,7 +22,7 @@ const NOW = Date.UTC(2026, 2, 15, 12, 0, 0)
 
 const eventsArbitrary = fc.array(
   fc.record({
-    reelId: fc.constantFrom(...reels.map((reel) => reel.id)),
+    findId: fc.constantFrom(...finds.map((find) => find.id)),
     // Até dez dias antes de `now`, para cobrir Today, Yesterday e datas longas.
     watchedAt: fc.integer({ min: NOW - 10 * 86_400_000, max: NOW }),
     seconds: fc.integer({ min: 1, max: 90 }),
@@ -32,7 +32,7 @@ const eventsArbitrary = fc.array(
 
 function sortedKey(events) {
   return [...events]
-    .map((event) => `${event.reelId}@${event.watchedAt}:${event.seconds}`)
+    .map((event) => `${event.findId}@${event.watchedAt}:${event.seconds}`)
     .sort()
 }
 
@@ -111,29 +111,29 @@ describe('histórico recente da Home', () => {
     )
   })
 
-  // **Item do histórico recente roteia para a comunidade e o reel certos**
+  // **Item do histórico recente roteia para a comunidade e o find certos**
 
-  it('roteia para a comunidade e o reel do item acionado', () => {
+  it('roteia para a comunidade e o find do item acionado', () => {
     fc.assert(
       fc.property(
-        fc.constantFrom(...reels.map((reel) => reel.id)),
+        fc.constantFrom(...finds.map((find) => find.id)),
         fc.integer({ min: NOW - 86_400_000, max: NOW }),
-        (reelId, watchedAt) => {
-          const [item] = hydrate([{ reelId, watchedAt, seconds: 10 }])
-          expect(item.reel.id).toBe(reelId)
+        (findId, watchedAt) => {
+          const [item] = hydrate([{ findId, watchedAt, seconds: 10 }])
+          expect(item.find.id).toBe(findId)
 
-          // O item da Home aciona openReels(reel.communityId, reel.id).
+          // O item da Home aciona openFinds(find.communityId, find.id).
           const url = buildUrl({
-            screen: 'reels',
-            communityId: item.reel.communityId,
-            reelId: item.reel.id,
+            screen: 'finds',
+            communityId: item.find.communityId,
+            findId: item.find.id,
           })
           const nav = parseUrl(url.slice(url.indexOf('?')))
 
           expect(nav).toEqual({
-            screen: 'reels',
-            communityId: item.reel.communityId,
-            reelId: item.reel.id,
+            screen: 'finds',
+            communityId: item.find.communityId,
+            findId: item.find.id,
             sanitized: false,
           })
         },
