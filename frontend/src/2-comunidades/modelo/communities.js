@@ -1,4 +1,4 @@
-// Comunidades de nicho. Cada vídeo em data/finds.js aponta para uma delas
+// Comunidades de nicho. Cada vídeo em 3-videos/modelo/finds.js aponta para uma delas
 // pelo campo `communityId`. Quando houver backend, esta lista passa a vir da
 // API (ex.: fetch('/api/communities')).
 //

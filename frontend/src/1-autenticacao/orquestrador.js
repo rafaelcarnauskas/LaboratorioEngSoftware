@@ -1,5 +1,5 @@
 // Controller de acesso. Login, Cadastro e Esqueci a senha falam só com este
-// módulo; ele encaminha para o Model de sessão (hooks/session.js). Quando houver
+// módulo; ele encaminha para o Model de sessão (modelo/session.js). Quando houver
 // backend, só este arquivo e o Model mudam: as telas continuam iguais.
 import { authenticate, createAccount, emailExists, isValidEmail, saveSession } from './modelo/session'
 

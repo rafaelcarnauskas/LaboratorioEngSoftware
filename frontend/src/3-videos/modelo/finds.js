@@ -3,7 +3,7 @@
 //
 // `title` é o rótulo curto exibido no histórico e no histórico recente.
 // `nicheId` aponta para um nicho declarado pela comunidade em `communityId`
-// (ver data/communities.js); a relação é um invariante dos dados mock.
+// (ver 2-comunidades/modelo/communities.js); a relação é um invariante dos dados mock.
 import bmpoliuspAvatar from '../../assets/finds/avatars/bmpoliusp.png'
 import sosomarianoAvatar from '../../assets/finds/avatars/sosomariano.png'
 import rafaelcarnauskasAvatar from '../../assets/finds/avatars/rafaelcarnauskas.png'

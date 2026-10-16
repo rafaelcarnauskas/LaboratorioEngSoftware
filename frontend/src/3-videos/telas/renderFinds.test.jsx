@@ -1,6 +1,6 @@
 //renderização e comentários da Tela_Finds.
 //
-// Os quatro rodam contra `pages/Finds.jsx` montado de verdade, contra o
+// Os quatro rodam contra `Finds.jsx` montado de verdade, contra o
 // catálogo real de finds — o componente é o dono dos contratos de seletor
 // (`data-find-id`, `data-testid="abrir-comentarios"`, `acao-principal`,
 // `lista-comentarios`) e das mensagens de feedback, então não há função pura

@@ -57,7 +57,7 @@ function CommunityCard({ community, isJoined, onJoin, onLeave, onOpen }) {
 }
 
 function CommunityView({ memberships, onJoin, onLeave, onOpenCommunity, onOpenCategory, storageError }) {
-  // A partição mora em data/communities.js: a Home usa a mesma função.
+  // A partição mora em modelo/communities.js: a Home usa a mesma função.
   // `suggested` é a seção "Descubra" desta tela.
   const { joined, suggested } = partitionCommunities(memberships)
 

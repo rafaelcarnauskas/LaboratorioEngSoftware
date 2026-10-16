@@ -1,5 +1,5 @@
-// Identidade de categoria entre data/videoCatalog.js ('Sports') e data/finds.js ('sports').
-// Consumido por pages/SearchView.jsx (chips) e por findsIndex.selectFinds (filtro).
+// Identidade de categoria entre modelo/videoCatalog.js ('Sports') e 3-videos/modelo/finds.js ('sports').
+// Consumido por telas/SearchView.jsx (chips) e por findsIndex.selectFinds (filtro).
 //
 // `name` é IDENTIFICADOR, não rótulo: é comparado com `videoCatalog[].category`,
 // com `finds[].category` (via `categoryKey`) e com o parâmetro de URL legado
