@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { communityCatalog as communities } from '../../app/contentController'
+import { communityCatalog as communities } from '../orquestrador'
 
 const initialQueue = [
   { id: 1, type: 'Denúncia', title: 'Vídeo aguardando revisão', detail: 'Comunidade Poli USP · há 12 min', tone: 'warning' },

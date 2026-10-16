@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { communityCatalog as communities, countByCommunity } from '../../app/contentController'
+import { countByCommunity } from '../../3-videos/orquestrador'
+import { communityCatalog as communities } from '../orquestrador'
 
 function CommunityIcon({ community }) {
   return <span className={`manage-community-icon manage-community-icon--${community.tone}`} aria-hidden="true">{community.icon}</span>

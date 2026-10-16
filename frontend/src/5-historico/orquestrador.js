@@ -1,9 +1,23 @@
-// Controller de "Meu tempo": junta as regras de uso (lib/usage.js) e as opções
-// de limite (hooks/useMyTime.js) num resumo pronto para a tela exibir.
+// Orquestrador de Atividade: histórico agrupado e resumo de "Meu tempo" a partir
+// das regras de uso (modelo/usage.js) e das opções de limite (modelo/useMyTime.js).
+import { findCommunity } from '../2-comunidades/modelo/communities'
+import { hydrate } from '../3-videos/modelo/findsIndex'
 import { limitOptions } from './modelo/useMyTime'
-import { dailyAverage, limitState, minutesToday, weeklyUsage, wellnessDays } from './modelo/usage'
+import { dailyAverage, formatTime, groupHistory, limitState, minutesToday, weeklyUsage, wellnessDays } from './modelo/usage'
 
-export { limitOptions }
+export { formatTime, limitOptions }
+
+// Histórico agrupado por dia, com o find e o nome da comunidade já anexados.
+// Eventos cujo find saiu do catálogo são descartados por `hydrate`.
+export function historyGroups(events, now) {
+  return groupHistory(hydrate(events), now).map((group) => ({
+    ...group,
+    items: group.items.map((item) => ({
+      ...item,
+      communityName: findCommunity(item.find.communityId)?.name ?? '',
+    })),
+  }))
+}
 
 export function myTimeSummary(events, now, dailyLimit) {
   const weekUsage = weeklyUsage(events, now)

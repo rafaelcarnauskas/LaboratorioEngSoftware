@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { videoCatalog } from '../../app/contentController'
+import { videoCatalog } from '../../4-busca-listas/orquestrador'
 
 const contentCategories = [...new Set(videoCatalog.map((video) => video.category))]
 

@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react'
-import { categoryDefinitions, categoryKey, resolveCategory } from '../../app/contentController'
+import { categoryDefinitions, categoryKey, resolveCategory } from '../orquestrador'
 import './SearchView.css'
 
 function SearchIcon({ name, size = 20 }) {

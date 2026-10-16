@@ -1,4 +1,5 @@
-import { countByCommunity, partitionCommunities } from '../../app/contentController'
+import { countByCommunity } from '../../3-videos/orquestrador'
+import { partitionCommunities } from '../orquestrador'
 import './CommunityView.css'
 
 function formatMembers(count) {

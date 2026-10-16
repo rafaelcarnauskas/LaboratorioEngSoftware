@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { findCommunity, findShareUrl, relatedCommunities as relatedTo, selectFinds } from '../../app/contentController'
+import { findCommunity } from '../../2-comunidades/orquestrador'
+import { findShareUrl, relatedCommunities as relatedTo, selectFinds } from '../orquestrador'
 import logoMark from '../../assets/finds/icons/logo-mark.svg'
 import commentIcon from '../../assets/finds/icons/comment.svg'
 import shareIcon from '../../assets/finds/icons/share.svg'

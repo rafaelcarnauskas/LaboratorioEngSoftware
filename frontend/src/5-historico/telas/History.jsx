@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { formatTime, historyGroups } from '../../app/contentController'
+import { formatTime, historyGroups } from '../orquestrador'
 import '../../app/App.css'
 
 export default function History({ events = [], onClearHistory, onBack, onOpenFind, onOpenCommunity }) {
