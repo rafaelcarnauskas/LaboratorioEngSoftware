@@ -139,6 +139,17 @@ def test_ids_de_lista_sao_unicos_mesmo_com_nome_igual(repo):
     assert a.id.startswith("favoritos-")
 
 
+def test_criar_com_id_do_front(repo):
+    lista = servico.criar_lista(repo, "murilo", "Favoritos", "", "gold", AGORA, lista_id="3f2c-ab_9")
+    assert lista.id == "3f2c-ab_9"
+    with pytest.raises(servico.ListaJaExiste):
+        servico.criar_lista(repo, "murilo", "Outra", "", "gold", AGORA, lista_id="3f2c-ab_9")
+    # o mesmo id pode existir para outro usuário
+    assert servico.criar_lista(repo, "victor", "Dele", "", "gold", AGORA, lista_id="3f2c-ab_9")
+    with pytest.raises(ValueError):
+        servico.criar_lista(repo, "murilo", "x", "", "gold", AGORA, lista_id="com espaço")
+
+
 def test_listar_mais_recente_primeiro(repo):
     antiga = servico.criar_lista(repo, "murilo", "Antiga", "", "gold", AGORA)
     nova = servico.criar_lista(repo, "murilo", "Nova", "", "blue", AGORA + 1)
@@ -244,6 +255,23 @@ def test_api_erros_de_validacao(cliente):
     lista_id = cliente.post("/api/v1/listas", headers=USUARIO, json={"name": "ok"}).json()["id"]
     r = cliente.post(f"/api/v1/listas/{lista_id}/itens", headers=USUARIO, json={"videoId": "x"})
     assert r.status_code == 404
+
+
+def test_api_criar_com_id_do_front(cliente):
+    corpo = {"id": "a1b2c3", "name": "Minha"}
+    assert cliente.post("/api/v1/listas", headers=USUARIO, json=corpo).json()["id"] == "a1b2c3"
+    assert cliente.post("/api/v1/listas", headers=USUARIO, json=corpo).status_code == 409
+    assert cliente.post("/api/v1/listas", headers=USUARIO,
+                        json={"id": "a b", "name": "x"}).status_code == 422
+
+
+def test_catalogo_real_tem_os_videos_da_busca_com_duracao():
+    reais = VideoService(MockVideoRepository())
+    todos = servico.pesquisar(reais)
+    assert len(todos) == 15
+    assert all(isinstance(v.duration, int) and v.duration > 0 for v in todos)
+    assert ids(servico.pesquisar(reais, duracao="long")) == ["tips-2", "technology-1"]
+    assert ids(servico.pesquisar(reais, "espresso")) == ["curiosities-2"]
 
 
 def test_api_editar_remover_e_apagar(cliente):

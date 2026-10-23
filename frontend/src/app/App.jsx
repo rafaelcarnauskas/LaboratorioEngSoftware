@@ -5,12 +5,11 @@ import Finds from '../3-videos/telas/Finds'
 import CommunityView from '../2-comunidades/telas/CommunityView'
 import CommunityDetail from '../2-comunidades/telas/CommunityDetail'
 import Home from '../2-comunidades/telas/Home'
-import useLists from '../4-busca-listas/modelo/useLists'
+import { useLists, useVideoCatalog } from '../4-busca-listas/orquestrador'
 import useCommunities from '../2-comunidades/modelo/useCommunities'
 import useCommunityNiches from '../2-comunidades/modelo/useCommunityNiches'
 import useHistory from '../5-historico/modelo/useHistory'
 import useMyTime from '../5-historico/modelo/useMyTime'
-import { videoCatalog } from '../4-busca-listas/modelo/videoCatalog'
 import Profile from '../1-autenticacao/telas/Profile'
 import History from '../5-historico/telas/History'
 import Login from '../1-autenticacao/telas/Login'
@@ -57,7 +56,8 @@ function App() {
   // volta para ela sem tocar no histórico do navegador.
   const [communityOrigin, setCommunityOrigin] = useState('Home')
   const [communityApiError, setCommunityApiError] = useState('')
-  const { lists, updateLists, storageError } = useLists()
+  const { lists, updateLists, storageError } = useLists(session?.email)
+  const { videos: videoCatalog } = useVideoCatalog()
   const {
     memberships,
     joinCommunity,

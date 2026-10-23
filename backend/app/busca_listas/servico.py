@@ -24,6 +24,13 @@ class ItemDuplicado(ValueError):
     """O vídeo já está na lista (regra do diagrama: valida duplicidade)."""
 
 
+class ListaJaExiste(ValueError):
+    """O id de lista enviado pelo front já está em uso por este usuário."""
+
+
+ID_VALIDO = re.compile(r"^[A-Za-z0-9_-]{1,80}$")
+
+
 # --- Serviço de Busca ---
 
 def normalizar(texto):
@@ -116,9 +123,16 @@ def obter(repo, usuario, lista_id):
     return _buscar(repo, usuario, lista_id)
 
 
-def criar_lista(repo, usuario, nome, descricao, tom, agora):
+def criar_lista(repo, usuario, nome, descricao, tom, agora, lista_id=None):
+    """`lista_id` é opcional: o front gera o id para funcionar offline e sincronizar depois."""
     nome, descricao = _validar_campos(nome, descricao, tom)
-    lista = Lista(_novo_id(nome), nome, descricao, tom, (), agora)
+    if lista_id is None:
+        lista_id = _novo_id(nome)
+    elif not ID_VALIDO.fullmatch(lista_id):
+        raise ValueError("id de lista inválido")
+    elif repo.lista(usuario, lista_id) is not None:
+        raise ListaJaExiste(lista_id)
+    lista = Lista(lista_id, nome, descricao, tom, (), agora)
     repo.salvar_lista(usuario, lista)
     return lista
 
