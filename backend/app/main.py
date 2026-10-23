@@ -8,22 +8,29 @@ processo antes de a porta abrir (Requisitos 13.6 e 13.7).
 import logging
 import re
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.busca_listas.api import router as busca_listas_router
+from app.busca_listas.api import get_videos as busca_get_videos
 from app.comunidades.api import router as comunidades_router
+from app.autenticacao.api import obter_usuario_atual, router as autenticacao_router
+from app.autenticacao.servico import ErroDominio
 from app.core.config import carregar_configuracao
 from app.db.sessao import criar_engine, criar_session_local
 from app.historico.api import router as historico_router
+from app.historico.api import get_repositorio as historico_get_repositorio
+from app.historico import servico as historico_servico
+from app.videos.api import create_router as create_videos_router
+from app.videos.modelo import MockVideoRepository
+from app.videos.servico import PlaybackService, VideoService
 
 logger = logging.getLogger("app.main")
 
 METODOS_CORS = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
-# X-Usuario: identificação provisória usada pelo histórico até a Parte 1 substituir.
-CABECALHOS_CORS = ["Authorization", "Content-Type", "X-Usuario"]
+CABECALHOS_CORS = ["Authorization", "Content-Type"]
 
 # Primeiro item de `loc` que indica a origem do valor, não o nome do campo.
 _ORIGENS_LOC = {"body", "query", "path", "header", "cookie"}
@@ -112,8 +119,23 @@ def create_app() -> FastAPI:
     app.add_exception_handler(Exception, _tratar_erro_interno)
 
     app.include_router(autenticacao_router, prefix="/api/v1")
-    app.include_router(comunidades_router, prefix="/api/v1")
+    app.include_router(
+        comunidades_router,
+        prefix="/api/v1",
+        dependencies=[Depends(obter_usuario_atual)],
+    )
     app.include_router(historico_router)  # já tem o prefixo /api/v1
+    app.include_router(busca_listas_router)  # já tem o prefixo /api/v1
+
+    videos = VideoService(MockVideoRepository())
+    app.dependency_overrides[busca_get_videos] = lambda: videos
+    app.include_router(
+        create_videos_router(
+            videos,
+            PlaybackService(videos, _HistoryRecorder()),
+            obter_usuario_atual,
+        )
+    )
 
     # Sem dependências: não lê Authorization nem acessa o banco (Requisito 13.10).
     @app.get("/api/v1/health", tags=["health"])
@@ -123,18 +145,28 @@ def create_app() -> FastAPI:
     # Rota antiga mantida para quem já usa /health (ex.: health check do Render).
     app.add_api_route("/health", health, methods=["GET"], tags=["health"], include_in_schema=False)
 
-# Render: CORS_ORIGINS com a URL do Static Site do front, separadas por vírgula.
-origens = [o.strip() for o in os.environ.get("CORS_ORIGINS", "http://localhost:5173").split(",") if o.strip()]
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origens,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-app.include_router(comunidades_router, prefix="/api/v1")
-app.include_router(historico_router)  # já tem o prefixo /api/v1
-app.include_router(busca_listas_router)  # já tem o prefixo /api/v1
+    return app
+
+
+class _HistoryRecorder:
+    """Adapta os registros de reprodução ao contrato do módulo Histórico."""
+
+    def registrar_visualizacao(
+        self,
+        *,
+        usuario_id: str,
+        video_id: str,
+        segundos_assistidos: int,
+        ocorrido_em,
+    ) -> None:
+        timestamp_ms = int(ocorrido_em.timestamp() * 1000)
+        historico_servico.registrar_visualizacao(
+            historico_get_repositorio(),
+            usuario_id,
+            video_id,
+            segundos_assistidos,
+            timestamp_ms,
+        )
 
 
 app = create_app()
