@@ -3,7 +3,7 @@ from dataclasses import dataclass, field, replace
 from sqlalchemy import BigInteger, Boolean, Integer, String, delete, select
 from sqlalchemy.orm import Mapped, mapped_column, sessionmaker
 
-from app.db.base import Base
+from app.db.base import Base, criar_tabelas
 
 LEMBRETES = ("bedtime", "screenTime", "weekly")
 
@@ -40,7 +40,7 @@ class PreferenciaTabela(Base):
 
 class RepositorioSQL:
     def __init__(self, engine):
-        Base.metadata.create_all(engine)  # até o Alembic entrar no Ciclo 3
+        criar_tabelas(engine)  # até o Alembic entrar no Ciclo 3
         self._sessao = sessionmaker(engine)
 
     def visualizacoes(self, usuario):

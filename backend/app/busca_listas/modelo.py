@@ -5,7 +5,7 @@ from dataclasses import dataclass, replace
 from sqlalchemy import BigInteger, ForeignKeyConstraint, Integer, String, delete, select
 from sqlalchemy.orm import Mapped, mapped_column, sessionmaker
 
-from app.db.base import Base
+from app.db.base import Base, criar_tabelas
 
 
 @dataclass(frozen=True)
@@ -44,7 +44,7 @@ class ItemListaTabela(Base):
 
 class RepositorioSQL:
     def __init__(self, engine):
-        Base.metadata.create_all(engine)  # até o Alembic entrar no Ciclo 3
+        criar_tabelas(engine)  # até o Alembic entrar no Ciclo 3
         self._sessao = sessionmaker(engine)
 
     def listas(self, usuario):
