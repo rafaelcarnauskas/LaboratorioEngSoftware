@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { apiAtiva, carregarHistorico, erroApi, limparHistorico, registrarVisualizacao } from '../servico'
 
 const storageKey = 'choosen.history.v1'
 const maxEvents = 100
@@ -61,10 +62,25 @@ export function mergeEvent(events, event) {
     .slice(0, maxEvents)
 }
 
-export default function useHistory() {
+// Com `usuario` e a API no ar, o servidor é a fonte; o localStorage vira cópia local.
+export default function useHistory(usuario) {
   const [state, setState] = useState(loadHistory)
+  const usarApi = apiAtiva && Boolean(usuario)
+
+  useEffect(() => {
+    if (!usarApi) return
+    carregarHistorico(usuario)
+      .then((events) => {
+        setState({ events, storageError: '' })
+        try { localStorage.setItem(storageKey, JSON.stringify(events)) } catch { /* cópia local opcional */ }
+      })
+      .catch(() => setState((current) => ({ ...current, storageError: erroApi })))
+  }, [usarApi, usuario])
+
+  const avisarErroApi = () => setState((current) => ({ ...current, storageError: erroApi }))
 
   function recordView(findId, seconds, watchedAt = Date.now()) {
+    if (usarApi) registrarVisualizacao(usuario, { findId, seconds, watchedAt }).catch(avisarErroApi)
     setState((current) => {
       const events = mergeEvent(current.events, { findId, watchedAt, seconds })
       let storageError = ''
@@ -78,6 +94,7 @@ export default function useHistory() {
   }
 
   function clearHistory() {
+    if (usarApi) limparHistorico(usuario).catch(avisarErroApi)
     try {
       localStorage.removeItem(storageKey)
       setState({ events: [], storageError: '' })
