@@ -27,7 +27,10 @@ Cada contexto segue o mesmo formato: `telas/` (View), `orquestrador.js`
 
 A versão integrada reúne Home, Profile, My Time, History, Lists e Search da
 branch `victor`, os Reels de `murilo/reels` e os testes Selenium dos dois autores.
-Os dados são de demonstração; as listas são salvas no navegador.
+Os dados são de demonstração. Com o backend rodando (seção Backend), Histórico,
+Meu tempo, Busca e Listas usam a API e o navegador guarda só uma cópia; sem o
+backend, essas telas continuam funcionando com os dados salvos no navegador e
+mostram um aviso.
 
 O `package.json` existe apenas dentro de `frontend/`. Rode os comandos npm a
 partir dessa pasta, não da raiz do repositório.

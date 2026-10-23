@@ -1,7 +1,4 @@
 // Comunicação com o Serviço de Busca e o Serviço de Listas (backend/app/busca_listas).
-// Ainda não está ligado às telas: Busca e Listas usam o catálogo local
-// (modelo/videoCatalog.js, ids numéricos) e o backend usa o catálogo da parte 3
-// (ids texto, ex.: 'sports-1'). Ligar depois que o grupo unificar o catálogo.
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 
 // Nos testes as telas ficam só no localStorage.
@@ -33,8 +30,9 @@ export function buscarVideos({ termo = '', categoria, duracao = 'any', ordem = '
 
 export const carregarListas = (usuario) => chamar(usuario, '/listas')
 
-export const criarLista = (usuario, { name, description = '', tone = 'gold' }) =>
-  chamar(usuario, '/listas', { method: 'POST', body: JSON.stringify({ name, description, tone }) })
+// `id` é opcional: o front gera o id da lista (crypto.randomUUID) e o back o mantém.
+export const criarLista = (usuario, { id, name, description = '', tone = 'gold' }) =>
+  chamar(usuario, '/listas', { method: 'POST', body: JSON.stringify({ ...(id ? { id } : {}), name, description, tone }) })
 
 export const editarLista = (usuario, listaId, campos) =>
   chamar(usuario, `/listas/${encodeURIComponent(listaId)}`, { method: 'PATCH', body: JSON.stringify(campos) })
@@ -51,3 +49,20 @@ export const removerDaLista = (usuario, listaId, videoId) =>
 // Modal "Salvar em uma lista": o vídeo fica exatamente nas listas marcadas.
 export const definirListasDoVideo = (usuario, videoId, listIds) =>
   chamar(usuario, `/videos/${encodeURIComponent(videoId)}/listas`, { method: 'PUT', body: JSON.stringify({ listIds }) })
+
+// Executa, em ordem, as operações calculadas por modelo/listsSync.js.
+// 409 (já existe) e 404 (já não existe) indicam que o back já está no estado
+// desejado, então não são erro de sincronização.
+export async function enviarOperacoes(usuario, operacoes) {
+  for (const op of operacoes) {
+    try {
+      if (op.type === 'create') await criarLista(usuario, { id: op.listId, ...op.fields })
+      else if (op.type === 'edit') await editarLista(usuario, op.listId, op.fields)
+      else if (op.type === 'delete') await apagarLista(usuario, op.listId)
+      else if (op.type === 'add') await salvarNaLista(usuario, op.listId, op.videoId)
+      else if (op.type === 'remove') await removerDaLista(usuario, op.listId, op.videoId)
+    } catch (erro) {
+      if (erro.status !== 409 && erro.status !== 404) throw erro
+    }
+  }
+}

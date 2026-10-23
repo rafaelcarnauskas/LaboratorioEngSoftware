@@ -1,5 +1,5 @@
-import { useLayoutEffect, useRef, useState } from 'react'
-import { categoryDefinitions, categoryKey, resolveCategory } from '../orquestrador'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { categoryDefinitions, resolveCategory, searchOnServer, searchVideos } from '../orquestrador'
 import './SearchView.css'
 
 function SearchIcon({ name, size = 20 }) {
@@ -25,9 +25,6 @@ function SearchIcon({ name, size = 20 }) {
     </svg>
   )
 }
-
-const seconds = (duration) => duration.split(':').reduce((total, part) => total * 60 + Number(part), 0)
-const normalize = (value) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()
 
 function SaveVideoDialog({ video, lists, onSave, onClose }) {
   const dialogRef = useRef(null)
@@ -104,18 +101,21 @@ export default function SearchView({ videos, lists, onListsChange, storageError 
   const [savingVideo, setSavingVideo] = useState(null)
   const [notice, setNotice] = useState('')
   const inputRef = useRef(null)
-  const terms = normalize(query).split(/\s+/).filter(Boolean)
-  const hasFilters = terms.length > 0 || category !== 'All' || duration !== 'any'
-  const results = videos.filter((video) => {
-    const text = normalize(`${video.title} ${video.creator} ${video.category}`)
-    return terms.every((term) => text.includes(term)) &&
-      (category === 'All' || categoryKey(video.category) === categoryKey(category)) &&
-      (duration === 'any' || (duration === 'short' ? seconds(video.duration) <= 60 : seconds(video.duration) > 60))
-  }).sort((a, b) => {
-    if (sort === 'title') return a.title.localeCompare(b.title)
-    if (sort === 'shortest') return seconds(a.duration) - seconds(b.duration)
-    return 0
-  })
+  const hasFilters = query.trim().length > 0 || category !== 'All' || duration !== 'any'
+  // O resultado local aparece na hora; o do Serviço de Busca o substitui quando chega.
+  const filtersKey = JSON.stringify([query, category, duration, sort])
+  const [serverResults, setServerResults] = useState(null)
+  useEffect(() => {
+    let ativo = true
+    const timer = setTimeout(() => {
+      searchOnServer({ query, category, duration, sort })
+        .then((found) => { if (ativo && found) setServerResults({ key: filtersKey, found }) })
+    }, 250)
+    return () => { ativo = false; clearTimeout(timer) }
+  }, [filtersKey, query, category, duration, sort])
+  const results = serverResults?.key === filtersKey
+    ? serverResults.found
+    : searchVideos(videos, { query, category, duration, sort })
 
   function resetFilters() {
     setQuery('')

@@ -14,6 +14,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { act, renderHook } from '@testing-library/react'
 import fc from 'fast-check'
 import useLists from '../4-busca-listas/modelo/useLists'
+import { videoCatalog } from '../4-busca-listas/modelo/videoCatalog'
 import useCommunities from '../2-comunidades/modelo/useCommunities'
 import useHistory, { MAX_EVENT_SECONDS } from '../5-historico/modelo/useHistory'
 import useMyTime, { limitOptions } from '../5-historico/modelo/useMyTime'
@@ -49,7 +50,7 @@ const listArb = fc.record({
   description: fc.string({ unit: fc.constantFrom('x', ' '), maxLength: 40 }),
   tone: fc.constantFrom('gold', 'blue', 'green', 'purple'),
   updatedAt: fc.integer({ min: 0, max: 1_000_000 }),
-  videoIds: fc.uniqueArray(fc.integer({ min: 1, max: 9 }), { maxLength: 5 }),
+  videoIds: fc.uniqueArray(fc.constantFrom(...videoCatalog.map((video) => video.id)), { maxLength: 5 }),
 })
 
 const validListsArb = fc.uniqueArray(listArb, { maxLength: 4, selector: (list) => list.id })
@@ -115,7 +116,7 @@ const hookSpecs = [
     write: (result, lists) => act(() => result.current.updateLists(lists)),
     stateArb: validListsArb,
     mutate: (result) => {
-      const next = [{ id: 'novo', name: 'Nova lista', description: '', tone: 'gold', updatedAt: 9, videoIds: [1] }]
+      const next = [{ id: 'novo', name: 'Nova lista', description: '', tone: 'gold', updatedAt: 9, videoIds: ['curiosities-1'] }]
       act(() => result.current.updateLists(next))
       return next
     },
@@ -127,6 +128,8 @@ const hookSpecs = [
       json([{ id: 'a', name: 'ok', description: '', tone: 'gold', updatedAt: null, videoIds: [] }]),
       json([{ id: 'a', name: 'ok', description: '', tone: 'gold', updatedAt: 1, videoIds: [1.5] }]),
       json([{ id: 'a', name: 'ok', description: '', tone: 'gold', updatedAt: 1, videoIds: [1, 1] }]),
+      json([{ id: 'a', name: 'ok', description: '', tone: 'gold', updatedAt: 1, videoIds: ['tips-1', 'tips-1'] }]),
+      json([{ id: 'a', name: 'ok', description: '', tone: 'gold', updatedAt: 1, videoIds: [''] }]),
       json([
         { id: 'a', name: 'ok', description: '', tone: 'gold', updatedAt: 1, videoIds: [] },
         { id: 'a', name: 'ok', description: '', tone: 'blue', updatedAt: 2, videoIds: [] },
@@ -498,7 +501,7 @@ describe('validação de lista', () => {
         const expectedAccepted =
           name.trim().length > 0 && name.length <= 60 && description.length <= 180
 
-        const saved = [{ id: 'alvo', name, description, tone: 'gold', updatedAt: 1, videoIds: [1] }]
+        const saved = [{ id: 'alvo', name, description, tone: 'gold', updatedAt: 1, videoIds: ['curiosities-1'] }]
 
         stub.reset()
         stub.seed({ 'choosen.lists.v1': JSON.stringify(saved) })
@@ -517,5 +520,16 @@ describe('validação de lista', () => {
       }),
       { numRuns: RUNS },
     )
+  })
+})
+
+describe('migração das listas antigas', () => {
+  it('converte os ids numéricos (1 a 9) para os ids do catálogo do back', () => {
+    stub.reset()
+    stub.seed({ 'choosen.lists.v1': JSON.stringify([{ id: 'antiga', name: 'Antiga', description: '', tone: 'gold', updatedAt: 1, videoIds: [1, 8] }]) })
+    const { result, unmount } = renderHook(() => useLists())
+    expect(result.current.lists[0].videoIds).toEqual(['curiosities-1', 'technology-1'])
+    expect(result.current.storageError).toBe('')
+    unmount()
   })
 })
