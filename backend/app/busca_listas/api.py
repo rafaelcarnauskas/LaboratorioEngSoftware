@@ -64,6 +64,7 @@ class ListaSaida(BaseModel):
 
 class ListaEntrada(BaseModel):
     model_config = ConfigDict(extra="forbid")
+    id: str | None = Field(default=None, pattern=r"^[A-Za-z0-9_-]{1,80}$")
     name: str = Field(min_length=1, max_length=servico.MAX_NOME)
     description: str = Field(default="", max_length=servico.MAX_DESCRICAO)
     tone: Tom = "gold"
@@ -101,6 +102,8 @@ def _executar(funcao, *args, **kwargs):
         return funcao(*args, **kwargs)
     except servico.ItemDuplicado as erro:
         raise HTTPException(status_code=409, detail="Este vídeo já está na lista.") from erro
+    except servico.ListaJaExiste as erro:
+        raise HTTPException(status_code=409, detail="Já existe uma lista com este id.") from erro
     except servico.ListaNaoEncontrada as erro:
         raise HTTPException(status_code=404, detail="Lista ou item não encontrado.") from erro
     except VideoNotFoundError as erro:
@@ -131,7 +134,7 @@ def listar(usuario=Depends(usuario_atual), repo=Depends(get_repositorio)):
 def criar(entrada: ListaEntrada, usuario=Depends(usuario_atual), repo=Depends(get_repositorio),
           agora=Depends(get_agora)):
     return _lista(_executar(servico.criar_lista, repo, usuario, entrada.name, entrada.description,
-                            entrada.tone, agora))
+                            entrada.tone, agora, lista_id=entrada.id))
 
 
 @router.get("/listas/{lista_id}", response_model=ListaSaida)
