@@ -75,8 +75,8 @@ function App() {
     recordView,
     clearHistory,
     storageError: historyStorageError,
-  } = useHistory()
-  const myTime = useMyTime()
+  } = useHistory(session?.email)
+  const myTime = useMyTime(session?.email)
   // Perfis seguidos e finds salvos no Finds. Por enquanto só em memória: a
   // persistência entra quando o Model tiver um serviço para isso.
   const [followedAuthors, setFollowedAuthors] = useState([])
