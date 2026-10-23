@@ -45,6 +45,7 @@ class VideoResponse(BaseModel):
     likes: int
     comment_count: int
     posted_at: str
+    duration: int
     media_url: str | None
 
 
