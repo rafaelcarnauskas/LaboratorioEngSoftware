@@ -32,3 +32,17 @@ def test_database_url_converte_url_do_render(monkeypatch):
     assert database_url() == "postgresql+psycopg://u:s@host/db"
     monkeypatch.delenv("DATABASE_URL")
     assert database_url().startswith("sqlite")
+
+
+def test_primeiro_acesso_simultaneo_nao_quebra_a_criacao_de_tabelas(tmp_path):
+    from concurrent.futures import ThreadPoolExecutor
+
+    from app.busca_listas.modelo import RepositorioSQL as Listas
+    from app.db.base import criar_engine
+    from app.historico.modelo import RepositorioSQL as Historico
+
+    url = f"sqlite:///{tmp_path / 'corrida.db'}"
+    fabricas = [lambda: Historico(criar_engine(url)), lambda: Listas(criar_engine(url))] * 8
+    with ThreadPoolExecutor(max_workers=16) as pool:
+        repos = list(pool.map(lambda criar: criar(), fabricas))
+    assert len(repos) == 16

@@ -27,7 +27,10 @@ Cada contexto segue o mesmo formato: `telas/` (View), `orquestrador.js`
 
 A versão integrada reúne Home, Profile, My Time, History, Lists e Search da
 branch `victor`, os Reels de `murilo/reels` e os testes Selenium dos dois autores.
-Os dados são de demonstração; as listas são salvas no navegador.
+Os dados são de demonstração. Com o backend rodando (seção Backend), Histórico,
+Meu tempo, Busca e Listas usam a API e o navegador guarda só uma cópia; sem o
+backend, essas telas continuam funcionando com os dados salvos no navegador e
+mostram um aviso.
 
 O `package.json` existe apenas dentro de `frontend/`. Rode os comandos npm a
 partir dessa pasta, não da raiz do repositório.
@@ -52,6 +55,29 @@ contas ficam salvas só no navegador em que foram criadas.
 Os cards Sports e Cute abrem os Reels. As demais categorias abrem Search.
 Também é possível abrir http://localhost:5173/?tela=reels&categoria=sports.
 O botão Home dos Reels retorna à aplicação principal.
+
+## Backend
+
+API FastAPI em `backend/`, organizada nos mesmos cinco contextos do front.
+
+```powershell
+cd backend
+python -m pip install -r requirements.txt
+python -m uvicorn app.main:app --reload
+python -m pytest
+```
+
+Documentação interativa em http://localhost:8000/docs. Sem `DATABASE_URL` o banco é
+um SQLite local (`choosen.db`). Enquanto a parte 1 (autenticação) não existe no
+back, as rotas por usuário (Histórico, Listas) identificam o usuário pelo
+cabeçalho provisório `X-Usuario`.
+
+Parte 4 (Busca e listas), prefixo `/api/v1`:
+
+- `GET /busca?termo=&categoria=&duracao=any|short|long&ordem=featured|title|shortest`
+- `GET /listas`, `POST /listas`, `GET|PATCH|DELETE /listas/{id}`
+- `POST /listas/{id}/itens` (409 se o vídeo já estiver na lista), `DELETE /listas/{id}/itens/{videoId}`
+- `PUT /videos/{videoId}/listas` (modal "Salvar em uma lista": define em quais listas o vídeo fica)
 
 ## Testes Selenium
 
@@ -90,7 +116,7 @@ Para executar separadamente:
 ./.venv/Scripts/python.exe selenium/test_login.py
 ./.venv/Scripts/python.exe selenium/test_cadastro.py
 ./.venv/Scripts/python.exe selenium/test_app.py
-./.venv/Scripts/python.exe selenium/test_reels.py
+./.venv/Scripts/python.exe selenium/test_finds.py
 ```
 
 - Murilo (login): login válido e lembrado, campos vazios, e-mail inválido, senha

@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { apiAtiva, carregarPreferencias, erroApi, salvarPreferencias } from '../servico'
 
 const storageKey = 'choosen.mytime.v1'
 const reminderKeys = ['bedtime', 'screenTime', 'weekly']
@@ -37,10 +38,21 @@ function loadSettings() {
   }
 }
 
-export default function useMyTime() {
+export default function useMyTime(usuario) {
   const [state, setState] = useState(loadSettings)
+  const usarApi = apiAtiva && Boolean(usuario)
+
+  useEffect(() => {
+    if (!usarApi) return
+    carregarPreferencias(usuario)
+      .then((settings) => setState({ settings, storageError: '' }))
+      .catch(() => setState((current) => ({ ...current, storageError: erroApi })))
+  }, [usarApi, usuario])
 
   function updateSettings(settings) {
+    if (usarApi) {
+      salvarPreferencias(usuario, settings).catch(() => setState((current) => ({ ...current, storageError: erroApi })))
+    }
     let storageError = ''
     try {
       localStorage.setItem(storageKey, JSON.stringify(settings))
