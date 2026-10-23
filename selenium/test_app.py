@@ -1,4 +1,5 @@
 import os
+import sys
 import unittest
 from pathlib import Path
 
@@ -7,6 +8,14 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+
+# Garante que `apoio_sessao` (nesta mesma pasta) seja importável também quando o
+# arquivo é carregado por run_all.py ou por outro runner a partir de outra pasta.
+_PASTA_SELENIUM = str(Path(__file__).resolve().parent)
+if _PASTA_SELENIUM not in sys.path:
+    sys.path.insert(0, _PASTA_SELENIUM)
+
+from apoio_sessao import entrar_via_api  # noqa: E402
 
 
 URL = os.environ.get("URL_APP", "http://localhost:5173")
@@ -23,14 +32,11 @@ class TestChoosen(unittest.TestCase):
         self.addCleanup(self.driver.quit)
         self.wait = WebDriverWait(self.driver, 10)
 
-        # Estes testes começam já logados: grava a sessão do usuário de teste
-        # e recarrega, para pular a tela de login (testada em test_login.py).
-        self.driver.get(URL)
-        self.driver.execute_script(
-            "localStorage.setItem('choosen.session', JSON.stringify("
-            "{email: 'victor@email.com', name: 'Victor Mendes'}))"
-        )
-        self.driver.get(URL)
+        # Estes testes começam já logados: faz o login real do usuário de
+        # demonstração no Backend (POST /auth/login), grava {token, expiresAt, user}
+        # em choosen.session e recarrega, para pular a tela de login (testada em
+        # test_login.py). Exige o Backend rodando e o usuário semeado.
+        entrar_via_api(self.driver, URL)
 
         # A navegacao so aparece depois da tela inicial de loading.
         self.wait.until(

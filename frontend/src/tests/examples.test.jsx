@@ -21,6 +21,7 @@ import userEvent from '@testing-library/user-event'
 import App from '../app/App'
 import { videoCatalog } from '../4-busca-listas/modelo/videoCatalog'
 import { installLocalStorageStub } from './helpers/localStorageStub'
+import { mockarFetchPerfil, semearSessao } from './helpers/sessaoValida'
 
 let stub = null
 let restoreStorage = null
@@ -40,15 +41,18 @@ beforeEach(() => {
 afterEach(() => {
   cleanup()
   Element.prototype.scrollIntoView = originalScrollIntoView
+  vi.unstubAllGlobals()
   restoreStorage?.()
   stub = null
   restoreStorage = null
 })
 
 // Monta o App já passado da tela de carregamento e devolve o `user-event`.
-// Começa com sessão salva para pular a tela de login (testada no Selenium).
+// Começa com sessão salva (token válido, confirmado pelo `GET /usuarios/me`
+// simulado) para pular a tela de login (testada no Selenium).
 async function mountApp() {
-  stub.seed({ 'choosen.session': JSON.stringify({ email: 'victor@email.com', name: 'Victor Mendes' }) })
+  semearSessao(stub)
+  mockarFetchPerfil()
   vi.useFakeTimers()
   try {
     // `createElement` em vez de JSX: a configuração atual do Vitest transforma

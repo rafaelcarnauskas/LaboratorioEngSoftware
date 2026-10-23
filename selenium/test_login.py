@@ -10,7 +10,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 # O app precisa estar rodando (npm run dev na pasta frontend).
 URL_APP = os.environ.get("URL_APP", "http://localhost:5173")
 
-# Usuário de teste definido em frontend/src/1-autenticacao/modelo/session.js.
+# Usuário de demonstração criado no Backend pela semeadura
+# (`python -m app.autenticacao.semear` em backend/, com CHOOSEN_ENV=development).
 EMAIL_TESTE = "victor@email.com"
 SENHA_TESTE = "choosen123"
 

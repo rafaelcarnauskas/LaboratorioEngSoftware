@@ -15,7 +15,17 @@ import History from '../5-historico/telas/History'
 import Login from '../1-autenticacao/telas/Login'
 import SignUp from '../1-autenticacao/telas/SignUp'
 import ForgotPassword from '../1-autenticacao/telas/ForgotPassword'
-import { clearSession, getSession } from '../1-autenticacao/modelo/session'
+import ResetPassword from '../1-autenticacao/telas/ResetPassword'
+import '../1-autenticacao/telas/Login.css'
+import { getSession, getToken } from '../1-autenticacao/modelo/session'
+import { lerRedefinicaoDaUrl } from '../1-autenticacao/modelo/redefinicao'
+import {
+  MENSAGEM_ERRO_CONEXAO,
+  logOut,
+  mensagemDeErro,
+  onSessionExpired,
+  restoreSession,
+} from '../1-autenticacao/orquestrador'
 import { findCommunity, partitionCommunities } from '../2-comunidades/modelo/communities'
 import { participarNaComunidade } from '../2-comunidades/servico'
 import { hydrate } from '../3-videos/modelo/findsIndex'
@@ -43,13 +53,31 @@ function tabLabel(tabId) {
   return navigationItems.find((item) => item.id === tabId)?.label ?? tabId
 }
 
+// Usuário salvo em `choosen.session`, só se o token ainda vale. Ele é
+// confirmado por `restoreSession()` antes de qualquer tela logada (10.6).
+function savedUser() {
+  return getToken() !== null ? getSession()?.user ?? null : null
+}
+
 function App() {
   const [isLoading, setIsLoading] = useState(true)
-  const [session, setSession] = useState(getSession)
+  // Link de redefinição (`?tela=redefinir-senha&token=...`), lido antes de
+  // `parseUrl`, que descartaria essa `tela` desconhecida (16.1). O token fica só
+  // em memória.
+  const [redefinicao, setRedefinicao] = useState(() => lerRedefinicaoDaUrl(window.location.search))
+  // Perfil_Publico de quem está logado, ou `null`.
+  const [user, setUser] = useState(savedUser)
+  // 'verificando' (confirmando o token salvo), 'autenticado', 'anonimo' ou
+  // 'falha' (rede/servidor na confirmação; a sessão salva é mantida) (10.6–10.8).
+  const [authStatus, setAuthStatus] = useState(() => (getToken() !== null ? 'verificando' : 'anonimo'))
+  const [authFailure, setAuthFailure] = useState('')
   // Sem sessão, qual tela de acesso mostrar: 'login', 'signup' (cadastro) ou
   // 'forgot' (esqueci a senha).
   const [authScreen, setAuthScreen] = useState('login')
-  const [nav, setNav] = useState(() => parseUrl(window.location.search))
+  const [nav, setNav] = useState(() =>
+    // Com o link de redefinição, nada é "sanitizado": a URL é tratada abaixo.
+    lerRedefinicaoDaUrl(window.location.search) !== null ? homeState : parseUrl(window.location.search),
+  )
   const [profilePath, setProfilePath] = useState(() => getProfilePathFromUrl() ?? '/profile')
   const [activeTab, setActiveTab] = useState(() => getProfilePathFromUrl() ? 'Profile' : 'Home')
   // Aba de onde a Tela_Comunidade foi aberta: o controle de retorno
@@ -122,6 +150,81 @@ function App() {
     return () => clearTimeout(loadingTimer)
   }, [])
 
+  // Confirmação da sessão salva por `GET /usuarios/me` (10.6–10.8). O resultado
+  // só é aplicado com o App montado.
+  const montadoRef = useRef(false)
+  const confirmarSessao = useCallback(async () => {
+    try {
+      const perfil = await restoreSession()
+      if (!montadoRef.current) return
+      if (perfil) {
+        setUser(perfil)
+        setAuthStatus('autenticado')
+      } else {
+        // Sem token ou 401: a sessão já foi limpa; volta ao Login.
+        setUser(null)
+        setAuthStatus('anonimo')
+        setAuthScreen('login')
+      }
+    } catch (erro) {
+      // Rede, timeout ou 5xx: `choosen.session` é mantida e a Tela_Inicio não abre.
+      if (!montadoRef.current) return
+      setAuthFailure(mensagemDeErro(erro, MENSAGEM_ERRO_CONEXAO))
+      setAuthStatus('falha')
+    }
+  }, [])
+
+  // A confirmação roda uma única vez por carregamento, mesmo com o efeito
+  // executado duas vezes pelo StrictMode (o ref sobrevive à remontagem simulada).
+  const deveConfirmarRef = useRef(authStatus === 'verificando')
+  useEffect(() => {
+    montadoRef.current = true
+    // Aviso global de sessão inválida: um 401 de Endpoint_Protegido leva ao
+    // Login uma única vez (o próprio módulo garante o aviso único) (10.4, 12.11).
+    const cancelarAviso = onSessionExpired(() => {
+      setUser(null)
+      setAuthStatus('anonimo')
+      setAuthScreen('login')
+    })
+    if (deveConfirmarRef.current) {
+      deveConfirmarRef.current = false
+      confirmarSessao()
+    }
+    return () => {
+      montadoRef.current = false
+      cancelarAviso()
+    }
+  }, [confirmarSessao])
+
+  const tentarConfirmarDeNovo = () => {
+    setAuthStatus('verificando')
+    confirmarSessao()
+  }
+
+  // O token de redefinição sai da barra de endereço sem criar entrada nova no
+  // histórico (16.10).
+  useEffect(() => {
+    if (redefinicao !== null) window.history.replaceState(null, '', '/?tela=redefinir-senha')
+  }, [redefinicao])
+
+  // Sair da Tela_Redefinir_Senha limpa a URL e escolhe a tela de acesso. Se a
+  // redefinição concluiu, a sessão salva já foi removida (16.6): o App volta
+  // ao fluxo sem login; senão, segue com a sessão que existir.
+  const sairDaRedefinicao = (tela) => {
+    setRedefinicao(null)
+    window.history.replaceState(null, '', '/')
+    setAuthScreen(tela)
+    if (getToken() === null) {
+      setUser(null)
+      setAuthStatus('anonimo')
+    }
+  }
+
+  const entrar = (perfil) => {
+    setUser(perfil)
+    setAuthStatus('autenticado')
+  }
+
   // A URL suja é trocada sem criar entrada nova no histórico.
   useEffect(() => {
     if (nav.sanitized) window.history.replaceState(null, '', buildUrl(nav))
@@ -178,15 +281,18 @@ function App() {
     setActiveTab('Profile')
   }
 
-  // Sair apaga a sessão salva: na próxima abertura o login aparece de novo.
-  const handleSignOut = () => {
-    clearSession()
+  // Sair: uma chamada a `logOut()` por acionamento (a Profile aguarda esta
+  // Promise e bloqueia o clique duplo). `logOut()` nunca rejeita e sempre
+  // limpa `choosen.session`; depois disso o App abre a Tela_Login (9.1, 9.6).
+  const handleSignOut = async () => {
+    await logOut()
     window.history.pushState(null, '', '/')
     setNav(homeState)
     setProfilePath('/profile')
     setActiveTab('Home')
     setAuthScreen('login')
-    setSession(null)
+    setUser(null)
+    setAuthStatus('anonimo')
   }
 
   const handleNavigation = (tab) => {
@@ -203,7 +309,10 @@ function App() {
     setActiveTab(tab)
   }
 
-  if (isLoading) {
+  // Splash enquanto o tempo mínimo corre ou a sessão salva é confirmada: nem a
+  // Tela_Inicio nem a Tela_Login aparecem antes da resposta (10.6). O limite de
+  // 10 s fica com a Comunicacao_Frontend.
+  if (isLoading || authStatus === 'verificando') {
     return (
       <main className="loading-page" aria-label="Carregando Choosen">
         <div className="loading-content"><div className="loading-mark" aria-hidden="true"><span className="loading-dot" /><span className="loading-dot loading-dot--active" /></div><h1>Choosen</h1><p>Escolha o que você assiste.</p></div>
@@ -211,22 +320,57 @@ function App() {
     )
   }
 
-  // Login só na primeira vez: com sessão salva, o app abre direto (inclusive pelos links de Finds).
-  if (!session) {
+  // A Tela_Redefinir_Senha não exige login: tem precedência sobre a sessão (16.1, 10.5).
+  if (redefinicao !== null) {
+    return (
+      <ResetPassword
+        key={redefinicao.token ?? ''}
+        token={redefinicao.token}
+        onGoToLogin={() => sairDaRedefinicao('login')}
+        onGoToForgot={() => sairDaRedefinicao('forgot')}
+      />
+    )
+  }
+
+  // Falha de rede/servidor ao confirmar a sessão: a sessão salva continua e o
+  // usuário pode tentar de novo (10.8).
+  if (authStatus === 'falha') {
+    return (
+      <main className="login-page" aria-label="Falha ao confirmar a sessão">
+        <section className="login-card" aria-labelledby="sessao-falha-titulo">
+          <header className="login-header">
+            <h1 id="sessao-falha-titulo">Não foi possível confirmar sua sessão</h1>
+          </header>
+          <p className="login-banner" role="alert" data-testid="sessao-falha">{authFailure}</p>
+          <button className="login-submit" type="button" onClick={tentarConfirmarDeNovo} data-testid="sessao-tentar-novamente">
+            Tentar novamente
+          </button>
+        </section>
+      </main>
+    )
+  }
+
+  // Sem sessão válida, só as telas de acesso (10.5). Com sessão confirmada, o
+  // app abre direto (inclusive pelos links de Finds).
+  if (!user) {
     const goToLogin = () => setAuthScreen('login')
-    if (authScreen === 'signup') return <SignUp onSignUp={setSession} onGoToLogin={goToLogin} />
+    if (authScreen === 'signup') return <SignUp onSignUp={entrar} onGoToLogin={goToLogin} />
     if (authScreen === 'forgot') return <ForgotPassword onGoToLogin={goToLogin} />
     return (
       <Login
-        onLogin={setSession}
+        onLogin={entrar}
         onCreateAccount={() => setAuthScreen('signup')}
         onForgotPassword={() => setAuthScreen('forgot')}
       />
     )
   }
 
-  // Primeiro nome de quem entrou, para a saudação da Home.
-  const firstName = session.name?.trim().split(/\s+/)[0] || 'você'
+  // Primeiro nome de quem entrou (Perfil_Publico de Login/SignUp ou o restaurado
+  // por `GET /usuarios/me`), para a saudação da Home.
+  // A sessão salva é lida a cada render para acompanhar a edição do perfil, que
+  // troca o Perfil_Publico salvo (`atualizarPerfil`).
+  const displayName = getSession()?.user?.name ?? user.name
+  const firstName = displayName?.trim().split(/\s+/)[0] || 'você'
 
   if (nav.screen === 'finds') {
     return (

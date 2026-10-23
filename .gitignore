@@ -32,3 +32,8 @@ pnpm-debug.log*
 *.md
 # Banco SQLite local do backend
 backend/*.db
+
+# Backend de autenticação: banco local e exceção para o README
+backend/choosen.db
+backend/choosen.db-journal
+!backend/README.md

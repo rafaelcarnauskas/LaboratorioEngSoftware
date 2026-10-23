@@ -1,20 +1,23 @@
-import { useState } from 'react'
-import { isEmailTaken, isValidEmail, signUp } from '../orquestrador'
+import { useEffect, useRef, useState } from 'react'
+import { ErroConflito, isEmailTaken, isValidEmail, mensagemDeErro, signUp } from '../orquestrador'
 import logoMark from '../../assets/finds/icons/logo-mark.svg'
 import './Login.css'
 
 const MIN_PASSWORD_LENGTH = 8
 
+const MENSAGEM_EMAIL_EM_USO = 'An account with this email already exists.'
+const MENSAGEM_CAMPO_INVALIDO = 'Some of the information is invalid. Please check your details and try again.'
+
 const emptyForm = { name: '', email: '', password: '', confirmPassword: '' }
 
-function validate(form) {
+// Validações locais (síncronas), com os mesmos textos do mock (Requisito 15.4).
+function validateLocal(form) {
   const errors = {}
 
   if (!form.name.trim()) errors.name = 'Name is required.'
 
   if (!form.email.trim()) errors.email = 'Email is required.'
   else if (!isValidEmail(form.email)) errors.email = 'Enter a valid email address.'
-  else if (isEmailTaken(form.email)) errors.email = 'An account with this email already exists.'
 
   if (!form.password) errors.password = 'Password is required.'
   else if (form.password.length < MIN_PASSWORD_LENGTH) {
@@ -24,6 +27,14 @@ function validate(form) {
   if (!form.confirmPassword) errors.confirmPassword = 'Please confirm your password.'
   else if (form.confirmPassword !== form.password) errors.confirmPassword = 'Passwords do not match.'
 
+  return errors
+}
+
+// Validação completa: com o e-mail válido, consulta o Backend para saber se já está
+// em uso (4.12). Falha de rede resolve `false`; a decisão final fica com o cadastro (4.13).
+async function validate(form) {
+  const errors = validateLocal(form)
+  if (!errors.email && (await isEmailTaken(form.email))) errors.email = MENSAGEM_EMAIL_EM_USO
   return errors
 }
 
@@ -58,6 +69,19 @@ function SignUp({ onSignUp, onGoToLogin }) {
   const [showPassword, setShowPassword] = useState(false)
   const [fieldErrors, setFieldErrors] = useState({})
   const [formError, setFormError] = useState('')
+  const [enviando, setEnviando] = useState(false)
+
+  // A ref bloqueia um segundo envio no mesmo tick, antes do re-render que
+  // desabilita o botão (Requisito 12.12).
+  const enviandoRef = useRef(false)
+  const montadoRef = useRef(false)
+
+  useEffect(() => {
+    montadoRef.current = true
+    return () => {
+      montadoRef.current = false
+    }
+  }, [])
 
   function handleChange(event) {
     const { name, value } = event.target
@@ -66,20 +90,57 @@ function SignUp({ onSignUp, onGoToLogin }) {
     setFormError('')
   }
 
-  function handleSubmit(event) {
+  // Mantém nome e e-mail e limpa só as senhas (4.10, 12.9, 12.10).
+  function limparSenhas() {
+    setForm((current) => ({ ...current, password: '', confirmPassword: '' }))
+  }
+
+  async function handleSubmit(event) {
     event.preventDefault()
+    if (enviandoRef.current) return
 
-    const errors = validate(form)
-    setFieldErrors(errors)
-    if (Object.keys(errors).length > 0) return
+    // Valores do momento do envio, exatamente como digitados (4.1).
+    const dados = form
 
-    const user = signUp(form)
-    if (!user) {
-      setFormError("We couldn't save your account. Please try again.")
+    enviandoRef.current = true
+    setEnviando(true)
+    setFormError('')
+
+    let perfil
+    try {
+      const errors = await validate(dados)
+      if (!montadoRef.current) return
+      setFieldErrors(errors)
+      // Com erro de validação, o cadastro não é enviado.
+      if (Object.keys(errors).length > 0) return
+
+      // Sem o campo de confirmação de senha (4.1).
+      perfil = await signUp({ name: dados.name, email: dados.email, password: dados.password })
+    } catch (erro) {
+      if (!montadoRef.current) return
+      if (erro instanceof ErroConflito) {
+        // 409: e-mail já em uso, no campo e no aviso geral (4.10, 15.5).
+        setFieldErrors((current) => ({ ...current, email: MENSAGEM_EMAIL_EM_USO }))
+        setFormError(MENSAGEM_EMAIL_EM_USO)
+        return
+      }
+      // Conexão, timeout ou 5xx: mensagem do mapa único (4.11, 12.9, 12.10).
+      setFormError(mensagemDeErro(erro))
+      limparSenhas()
+      return
+    } finally {
+      enviandoRef.current = false
+      if (montadoRef.current) setEnviando(false)
+    }
+
+    if (!perfil) {
+      // 422: o Backend recusou algum campo (4.10).
+      if (montadoRef.current) setFormError(MENSAGEM_CAMPO_INVALIDO)
       return
     }
 
-    onSignUp(user)
+    // Sessão já salva pelo orquestrador; login automático abre a Tela_Inicio (4.6).
+    onSignUp(perfil)
   }
 
   return (
@@ -159,8 +220,14 @@ function SignUp({ onSignUp, onGoToLogin }) {
             error={fieldErrors.confirmPassword}
           />
 
-          <button className="login-submit" type="submit" data-testid="cadastro-criar">
-            Create account
+          <button
+            className="login-submit"
+            type="submit"
+            data-testid="cadastro-criar"
+            disabled={enviando}
+            aria-busy={enviando}
+          >
+            {enviando ? 'Creating account…' : 'Create account'}
           </button>
         </form>
 

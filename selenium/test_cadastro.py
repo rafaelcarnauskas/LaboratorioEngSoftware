@@ -1,13 +1,25 @@
 import os
+import sys
 import unittest
+from pathlib import Path
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
+# Garante que `apoio_sessao` (nesta mesma pasta) seja importável também quando o
+# arquivo é carregado por run_all.py ou por outro runner a partir de outra pasta.
+_PASTA_SELENIUM = str(Path(__file__).resolve().parent)
+if _PASTA_SELENIUM not in sys.path:
+    sys.path.insert(0, _PASTA_SELENIUM)
 
-# O app precisa estar rodando (npm run dev na pasta frontend).
+from apoio_sessao import EMAIL_DEMONSTRACAO, email_unico  # noqa: E402
+
+
+# O app e o Backend precisam estar rodando (npm run dev na pasta frontend e
+# uvicorn em backend/), com o usuário de demonstração semeado
+# (`python -m app.autenticacao.semear` em backend/).
 URL_APP = os.environ.get("URL_APP", "http://localhost:5173")
 
 
@@ -62,7 +74,10 @@ class TestCadastro(unittest.TestCase):
         )
 
     def test_cadastro_valido_entra_e_permite_novo_login(self):
-        self.preencher("Ana Souza", "ana@email.com", "senhaforte1", "senhaforte1")
+        # E-mail novo a cada execução: o Backend guarda as contas, e um e-mail fixo
+        # receberia "e-mail já cadastrado" (409) na segunda execução (Requisito 15.8).
+        email = email_unico()
+        self.preencher("Ana Souza", email, "senhaforte1", "senhaforte1")
         self.esperar_home("Ana")
 
         # Sai pelo Perfil e entra de novo com a conta recém-criada.
@@ -76,7 +91,7 @@ class TestCadastro(unittest.TestCase):
         ).click()
 
         self.wait.until(EC.visibility_of_element_located((By.ID, "login-email"))).send_keys(
-            "ana@email.com"
+            email
         )
         self.driver.find_element(By.ID, "login-password").send_keys("senhaforte1")
         self.driver.find_element(By.CSS_SELECTOR, '[data-testid="login-entrar"]').click()
@@ -93,8 +108,9 @@ class TestCadastro(unittest.TestCase):
         )
 
     def test_email_ja_cadastrado_e_senhas_invalidas(self):
-        # O e-mail do usuário de teste já existe; senha curta; confirmação diferente.
-        self.preencher("Victor", "victor@email.com", "curta", "diferente")
+        # O e-mail do usuário de demonstração já existe no Backend (semeadura);
+        # senha curta; confirmação diferente.
+        self.preencher("Victor", EMAIL_DEMONSTRACAO, "curta", "diferente")
 
         self.assertEqual(
             self.erro_do_campo("signup-email"), "An account with this email already exists."

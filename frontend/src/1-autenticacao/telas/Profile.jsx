@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { loadProfile, mensagemDeErro } from '../orquestrador'
 import MyPlan from './MyPlan'
 import GroupSettings from '../../5-historico/telas/GroupSettings'
 import EditProfile, { ProfileAvatar } from './EditProfile'
@@ -22,20 +23,90 @@ const profileRoutes = {
   '/profile/sign-out': { title: 'Sair' },
 }
 
-function Profile({ path = '/profile', onNavigate, onSignOut, events = [], clearHistory, myTime }) {
+const MENSAGEM_PERFIL_NAO_CARREGADO = 'Não foi possível carregar o perfil.'
+
+// O Perfil_Publico chega da API com strings e booleanos; a normalização só
+// garante os tipos que `ProfileAvatar` e `EditProfile` usam (`.trim()`, `.length`).
+function normalizarPerfil(perfil) {
+  const texto = (valor) => (typeof valor === 'string' ? valor : '')
+  return {
+    ...perfil,
+    name: texto(perfil?.name),
+    username: texto(perfil?.username),
+    email: texto(perfil?.email),
+    description: texto(perfil?.description),
+    photo: texto(perfil?.photo),
+    isCommunityAdmin: perfil?.isCommunityAdmin === true,
+    isSystemAdmin: perfil?.isSystemAdmin === true,
+  }
+}
+
+// `clearHistory` também chega do App junto com `events` e `myTime`, mas
+// nenhuma subtela do perfil o usa hoje (a limpeza fica na aba Histórico);
+// por isso não é desestruturado.
+function Profile({ path = '/profile', onNavigate, onSignOut, events = [], myTime }) {
   const route = profileRoutes[path] ?? profileRoutes['/profile']
-  const [profile, setProfile] = useState({
-    name: 'Victor Mendes',
-    username: 'victor',
-    email: 'victor@email.com',
-    description: 'Compartilhando o que escolho assistir.',
-    photo: '',
-    isCommunityAdmin: true,
-    isSystemAdmin: true,
-  })
+  // Perfil_Publico vindo de `GET /usuarios/me`, sem dados fixos (6.3).
+  // status: 'carregando' | 'erro' | 'pronto'.
+  const [carga, setCarga] = useState({ status: 'carregando', perfil: null, erro: '' })
   // Comunidade escolhida em "Gerenciar" no Administrador do sistema: abre
   // Administrar comunidades já com ela selecionada.
   const [managedCommunityId, setManagedCommunityId] = useState(null)
+
+  // Uma requisição por abertura de `/profile` (6.1). `/profile/edit` aberto
+  // direto pela URL, sem perfil em memória, também carrega (o formulário
+  // precisa dos dados). Cada passagem de `deveCarregar` para `true` é uma nova
+  // abertura: o estado é ajustado durante o render (padrão do React para
+  // derivar estado de props) e o efeito dispara a requisição.
+  const deveCarregar = path === '/profile' || (path === '/profile/edit' && carga.perfil === null)
+  const [carregavaAntes, setCarregavaAntes] = useState(false)
+  const [abertura, setAbertura] = useState(0)
+  if (deveCarregar !== carregavaAntes) {
+    setCarregavaAntes(deveCarregar)
+    if (deveCarregar) {
+      setAbertura((atual) => atual + 1)
+      // Indicador no lugar dos dados enquanto a resposta não chega (6.6).
+      setCarga((atual) => ({ status: 'carregando', perfil: atual.perfil, erro: '' }))
+    }
+  }
+
+  const montadoRef = useRef(false)
+  // Última abertura já requisitada: o StrictMode repete o efeito na montagem
+  // e isso não pode virar uma segunda requisição.
+  const aberturaRequisitadaRef = useRef(0)
+
+  useEffect(() => {
+    montadoRef.current = true
+    return () => {
+      montadoRef.current = false
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!deveCarregar || abertura === aberturaRequisitadaRef.current) return
+    aberturaRequisitadaRef.current = abertura
+
+    // A resposta só vale para a abertura mais recente; navegar para uma
+    // subtela não descarta o pedido em andamento.
+    loadProfile().then(
+      (perfil) => {
+        if (!montadoRef.current || aberturaRequisitadaRef.current !== abertura) return
+        setCarga({ status: 'pronto', perfil: normalizarPerfil(perfil), erro: '' })
+      },
+      (erro) => {
+        // Sessão inválida: o aviso global do App leva ao login. Rede/servidor:
+        // mensagem do mapa único. Em nenhum caso a sessão salva é apagada aqui (6.7).
+        if (!montadoRef.current || aberturaRequisitadaRef.current !== abertura) return
+        setCarga((atual) => ({ status: 'erro', perfil: atual.perfil, erro: mensagemDeErro(erro) }))
+      },
+    )
+  }, [deveCarregar, abertura])
+
+  // Perfil devolvido pelo Backend após a edição: a Tela_Perfil passa a exibi-lo
+  // sem recarregar a página (7.6).
+  const handleProfileSaved = (perfil) => {
+    setCarga({ status: 'pronto', perfil: normalizarPerfil(perfil), erro: '' })
+  }
 
   if (path === '/profile/my-time') {
     return (
@@ -56,10 +127,23 @@ function Profile({ path = '/profile', onNavigate, onSignOut, events = [], clearH
   }
 
   if (path === '/profile/edit') {
+    if (carga.perfil === null) {
+      return (
+        <div className="profile-subpage" aria-busy={carga.status === 'carregando'}>
+          <button className="profile-back-button" type="button" onClick={() => onNavigate('/profile')}>← Voltar ao perfil</button>
+          <p className="profile-eyebrow">PERFIL</p>
+          <h1>{route.title}</h1>
+          <ProfileLoadState carga={carga} />
+        </div>
+      )
+    }
+    // `onSaved` recebe o Perfil_Publico devolvido pelo Backend (7.6);
+    // `onSave` mantém o contrato atual do EditProfile até ele chamar `onSaved`.
     return (
       <EditProfile
-        profile={profile}
-        onSave={(nextProfile) => setProfile(nextProfile)}
+        profile={carga.perfil}
+        onSaved={handleProfileSaved}
+        onSave={handleProfileSaved}
         onBack={() => onNavigate('/profile')}
       />
     )
@@ -104,10 +188,60 @@ function Profile({ path = '/profile', onNavigate, onSignOut, events = [], clearH
     return <ProfilePlaceholder title={route.title} onBack={() => onNavigate('/profile')} />
   }
 
-  return <ProfileOverview profile={profile} onNavigate={onNavigate} onSignOut={onSignOut} />
+  return <ProfileOverview carga={carga} onNavigate={onNavigate} onSignOut={onSignOut} />
 }
 
-function ProfileOverview({ profile, onNavigate, onSignOut }) {
+// Indicador de carregamento (6.6) ou mensagem de perfil não carregado (6.7).
+function ProfileLoadState({ carga }) {
+  if (carga.status === 'erro') {
+    return (
+      <div className="profile-load-error" role="alert" data-testid="perfil-erro">
+        <strong>{MENSAGEM_PERFIL_NAO_CARREGADO}</strong>
+        {carga.erro && <small>{carga.erro}</small>}
+      </div>
+    )
+  }
+  return (
+    <p className="profile-loading" role="status" data-testid="perfil-carregando">
+      Carregando perfil…
+    </p>
+  )
+}
+
+function ProfileOverview({ carga, onNavigate, onSignOut }) {
+  // Dados e botões de administração só com o perfil carregado (6.3, 6.5–6.7).
+  const profile = carga.status === 'pronto' ? carga.perfil : null
+
+  // O Sair fica bloqueado enquanto o App conclui o logout: um acionamento,
+  // uma chamada (9.1). A ref segura o segundo clique antes do re-render.
+  const [saindo, setSaindo] = useState(false)
+  const saindoRef = useRef(false)
+  const montadoRef = useRef(false)
+
+  useEffect(() => {
+    montadoRef.current = true
+    return () => {
+      montadoRef.current = false
+    }
+  }, [])
+
+  async function handleSignOut() {
+    if (!onSignOut) {
+      onNavigate('/profile/sign-out')
+      return
+    }
+    if (saindoRef.current) return
+    saindoRef.current = true
+    setSaindo(true)
+    try {
+      await onSignOut()
+    } finally {
+      // Normalmente o App já trocou de tela e este componente saiu da árvore.
+      saindoRef.current = false
+      if (montadoRef.current) setSaindo(false)
+    }
+  }
+
   return (
     <div className="profile-main">
       <div className="profile-heading">
@@ -118,21 +252,31 @@ function ProfileOverview({ profile, onNavigate, onSignOut }) {
 
       <div className="profile-layout">
         <div className="profile-column">
-          <section className="profile-card profile-user-card" aria-label="Perfil do usuário">
-            <div className="profile-user">
-              <ProfileAvatar profile={profile} />
-              <div>
-                <strong>{profile.name}</strong>
-                <small>@{profile.username}</small>
-                <small>{profile.email}</small>
-                {profile.description && <small className="profile-description">{profile.description}</small>}
-              </div>
-            </div>
-            {profile.isCommunityAdmin && (
-              <ProfileLink className="admin-button" label="▣  Administrar comunidades ↗" onClick={() => onNavigate('/profile/admin')} />
-            )}
-            {profile.isSystemAdmin && (
-              <ProfileLink className="admin-button profile-system-admin-button" label="⚙  Administração do sistema ↗" onClick={() => onNavigate('/profile/system-admin')} />
+          <section
+            className="profile-card profile-user-card"
+            aria-label="Perfil do usuário"
+            aria-busy={carga.status === 'carregando'}
+          >
+            {profile ? (
+              <>
+                <div className="profile-user">
+                  <ProfileAvatar profile={profile} />
+                  <div>
+                    <strong>{profile.name}</strong>
+                    <small>@{profile.username}</small>
+                    <small>{profile.email}</small>
+                    {profile.description.length > 0 && <small className="profile-description">{profile.description}</small>}
+                  </div>
+                </div>
+                {profile.isCommunityAdmin && (
+                  <ProfileLink className="admin-button" label="▣  Administrar comunidades ↗" onClick={() => onNavigate('/profile/admin')} />
+                )}
+                {profile.isSystemAdmin && (
+                  <ProfileLink className="admin-button profile-system-admin-button" label="⚙  Administração do sistema ↗" onClick={() => onNavigate('/profile/system-admin')} />
+                )}
+              </>
+            ) : (
+              <ProfileLoadState carga={carga} />
             )}
           </section>
 
@@ -142,7 +286,7 @@ function ProfileOverview({ profile, onNavigate, onSignOut }) {
           </ProfileSection>
 
           <ProfileSection id="profile-system" title="SISTEMA">
-            <ProfileAction className="profile-action--danger" icon="⇥" label="Sair" onClick={onSignOut ?? (() => onNavigate('/profile/sign-out'))} />
+            <ProfileAction className="profile-action--danger" icon="⇥" label="Sair" onClick={handleSignOut} busy={saindo} />
           </ProfileSection>
         </div>
 
@@ -193,9 +337,15 @@ function ProfileSection({ id, title, children }) {
   )
 }
 
-function ProfileAction({ className = '', icon, label, onClick }) {
+function ProfileAction({ className = '', icon, label, onClick, busy = false }) {
   return (
-    <button className={`profile-action ${className}`.trim()} type="button" onClick={onClick}>
+    <button
+      className={`profile-action ${className}`.trim()}
+      type="button"
+      onClick={onClick}
+      disabled={busy}
+      aria-busy={busy}
+    >
       <span className="profile-action-icon" aria-hidden="true">{icon}</span>
       <span>{label}</span>
       <span className="profile-action-arrow" aria-hidden="true">›</span>

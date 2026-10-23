@@ -207,6 +207,12 @@
   filter: brightness(0.95);
 }
 
+.login-submit:disabled {
+  cursor: progress;
+  opacity: 0.7;
+  filter: none;
+}
+
 .login-signup {
   color: var(--login-muted);
   font-size: 14px;

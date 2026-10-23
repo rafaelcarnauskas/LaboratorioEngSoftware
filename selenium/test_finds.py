@@ -1,11 +1,21 @@
 import os
+import sys
 import unittest
+from pathlib import Path
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+
+# Garante que `apoio_sessao` (nesta mesma pasta) seja importável também quando o
+# arquivo é carregado por run_all.py ou por outro runner a partir de outra pasta.
+_PASTA_SELENIUM = str(Path(__file__).resolve().parent)
+if _PASTA_SELENIUM not in sys.path:
+    sys.path.insert(0, _PASTA_SELENIUM)
+
+from apoio_sessao import entrar_via_api  # noqa: E402
 
 
 # O app precisa estar rodando (npm run dev na pasta frontend).
@@ -28,13 +38,11 @@ class TestFinds(unittest.TestCase):
         self.addCleanup(self.driver.quit)
         self.wait = WebDriverWait(self.driver, 10)
 
-        # Começa já logado: grava a sessão do usuário de teste antes de abrir os
-        # Finds, para pular a tela de login (testada em test_login.py).
-        self.driver.get(URL_APP)
-        self.driver.execute_script(
-            "localStorage.setItem('choosen.session', JSON.stringify("
-            "{email: 'victor@email.com', name: 'Victor Mendes'}))"
-        )
+        # Começa já logado: faz o login real do usuário de demonstração no
+        # Backend (POST /auth/login), grava {token, expiresAt, user} em
+        # choosen.session e abre os Finds, para pular a tela de login (testada em
+        # test_login.py). Exige o Backend rodando e o usuário semeado.
+        entrar_via_api(self.driver, URL_APP)
         self.driver.get(URL_FINDS)
 
         # Aguarda a tela de loading sumir e o primeiro vídeo aparecer.
