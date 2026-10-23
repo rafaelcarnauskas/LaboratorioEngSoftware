@@ -20,6 +20,7 @@ class Video:
     likes: int
     comment_count: int
     posted_at: str
+    duration: int
     media_url: str | None = None
 
 
@@ -78,7 +79,7 @@ DEMO_VIDEOS = (
         author="BmPoliUsp", avatar="/src/assets/finds/avatars/bmpoliusp.png",
         image="/src/assets/finds/posts/sports-1.png",
         caption="Final do basquete masculino no interusp 2026, vitória da Poli contra",
-        likes=1069, comment_count=100, posted_at="1 hour ago",
+        likes=1069, comment_count=100, posted_at="1 hour ago", duration=42,
     ),
     Video(
         id="sports-2", title="Treino intenso de judô", category="sports",
@@ -86,7 +87,7 @@ DEMO_VIDEOS = (
         avatar="/src/assets/finds/avatars/sosomariano.png",
         image="/src/assets/finds/posts/sports-2.png",
         caption="Treino intenso de judô hoje!", likes=1069, comment_count=100,
-        posted_at="1 hour ago",
+        posted_at="1 hour ago", duration=28,
     ),
     Video(
         id="sports-3", title="Final do basquete masculino — Interusp 2025",
@@ -94,7 +95,7 @@ DEMO_VIDEOS = (
         author="BmPoliUsp", avatar="/src/assets/finds/avatars/bmpoliusp.png",
         image="/src/assets/finds/posts/sports-3.png",
         caption="Final do basquete masculino no interusp 2025, vitória da Poli contra",
-        likes=1069, comment_count=100, posted_at="1 hour ago",
+        likes=1069, comment_count=100, posted_at="1 hour ago", duration=35,
     ),
     Video(
         id="cute-1", title="Aniversário da princesinha", category="cute",
@@ -102,7 +103,7 @@ DEMO_VIDEOS = (
         avatar="/src/assets/finds/avatars/rafaelcarnauskas.png",
         image="/src/assets/finds/posts/cute-1.png",
         caption="Aniversário da minha princesinha", likes=1069, comment_count=100,
-        posted_at="1 hour ago",
+        posted_at="1 hour ago", duration=19,
     ),
     Video(
         id="cute-2", title="Aurora no descanso da tarde", category="cute",
@@ -110,7 +111,7 @@ DEMO_VIDEOS = (
         avatar="/src/assets/finds/avatars/mendesvictor.png",
         image="/src/assets/finds/posts/cute-2.png",
         caption="Aurora no seu descanso da tarde!", likes=1069, comment_count=100,
-        posted_at="1 hour ago",
+        posted_at="1 hour ago", duration=24,
     ),
     Video(
         id="cute-3", title="Dia de petshop", category="cute",
@@ -118,6 +119,6 @@ DEMO_VIDEOS = (
         avatar="/src/assets/finds/avatars/marcolinocarlos.png",
         image="/src/assets/finds/posts/cute-3.png",
         caption="Dia de petshop", likes=1069, comment_count=100,
-        posted_at="1 hour ago",
+        posted_at="1 hour ago", duration=31,
     ),
 )
