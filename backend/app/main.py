@@ -3,6 +3,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.busca_listas.api import router as busca_listas_router
 from app.comunidades.api import router as comunidades_router
 from app.historico.api import router as historico_router
 
@@ -20,6 +21,7 @@ app.add_middleware(
 )
 app.include_router(comunidades_router, prefix="/api/v1")
 app.include_router(historico_router)  # já tem o prefixo /api/v1
+app.include_router(busca_listas_router)  # já tem o prefixo /api/v1
 
 
 @app.get("/health", tags=["health"])

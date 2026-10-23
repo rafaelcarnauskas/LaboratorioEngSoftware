@@ -53,6 +53,29 @@ Os cards Sports e Cute abrem os Reels. As demais categorias abrem Search.
 Também é possível abrir http://localhost:5173/?tela=reels&categoria=sports.
 O botão Home dos Reels retorna à aplicação principal.
 
+## Backend
+
+API FastAPI em `backend/`, organizada nos mesmos cinco contextos do front.
+
+```powershell
+cd backend
+python -m pip install -r requirements.txt
+python -m uvicorn app.main:app --reload
+python -m pytest
+```
+
+Documentação interativa em http://localhost:8000/docs. Sem `DATABASE_URL` o banco é
+um SQLite local (`choosen.db`). Enquanto a parte 1 (autenticação) não existe no
+back, as rotas por usuário (Histórico, Listas) identificam o usuário pelo
+cabeçalho provisório `X-Usuario`.
+
+Parte 4 (Busca e listas), prefixo `/api/v1`:
+
+- `GET /busca?termo=&categoria=&duracao=any|short|long&ordem=featured|title|shortest`
+- `GET /listas`, `POST /listas`, `GET|PATCH|DELETE /listas/{id}`
+- `POST /listas/{id}/itens` (409 se o vídeo já estiver na lista), `DELETE /listas/{id}/itens/{videoId}`
+- `PUT /videos/{videoId}/listas` (modal "Salvar em uma lista": define em quais listas o vídeo fica)
+
 ## Testes Selenium
 
 Pré-requisitos: Node.js, Python 3.10 ou superior e Google Chrome. Mantenha o app
@@ -90,7 +113,7 @@ Para executar separadamente:
 ./.venv/Scripts/python.exe selenium/test_login.py
 ./.venv/Scripts/python.exe selenium/test_cadastro.py
 ./.venv/Scripts/python.exe selenium/test_app.py
-./.venv/Scripts/python.exe selenium/test_reels.py
+./.venv/Scripts/python.exe selenium/test_finds.py
 ```
 
 - Murilo (login): login válido e lembrado, campos vazios, e-mail inválido, senha
