@@ -1,7 +1,10 @@
-import { useState } from 'react'
-import { isValidEmail, logIn } from '../orquestrador'
+import { useEffect, useRef, useState } from 'react'
+import { isValidEmail, logIn, mensagemDeErro } from '../orquestrador'
 import logoMark from '../../assets/finds/icons/logo-mark.svg'
 import './Login.css'
+
+const MENSAGEM_CREDENCIAIS_INVALIDAS = 'Incorrect email or password. Please try again.'
+const MENSAGEM_CAMPOS_OBRIGATORIOS = 'Email and password are required.'
 
 function validate(email, password) {
   const errors = {}
@@ -9,7 +12,8 @@ function validate(email, password) {
   if (!email.trim()) errors.email = 'Email is required.'
   else if (!isValidEmail(email)) errors.email = 'Enter a valid email address.'
 
-  if (!password) errors.password = 'Password is required.'
+  // Senha só com espaços conta como vazia (Requisito 3.9).
+  if (!password.trim()) errors.password = 'Password is required.'
 
   return errors
 }
@@ -20,6 +24,19 @@ function Login({ onLogin, onCreateAccount, onForgotPassword }) {
   const [showPassword, setShowPassword] = useState(false)
   const [fieldErrors, setFieldErrors] = useState({})
   const [formError, setFormError] = useState('')
+  const [enviando, setEnviando] = useState(false)
+
+  // A ref bloqueia um segundo envio no mesmo tick, antes do re-render que
+  // desabilita o botão (Requisito 3.11).
+  const enviandoRef = useRef(false)
+  const montadoRef = useRef(false)
+
+  useEffect(() => {
+    montadoRef.current = true
+    return () => {
+      montadoRef.current = false
+    }
+  }, [])
 
   function handleEmailChange(event) {
     setEmail(event.target.value)
@@ -33,23 +50,50 @@ function Login({ onLogin, onCreateAccount, onForgotPassword }) {
     setFormError('')
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault()
+    if (enviandoRef.current) return
 
+    // Validação local: com erro, o Orquestrador_Acesso não é acionado (3.9).
     const errors = validate(email, password)
     setFieldErrors(errors)
     if (errors.email || errors.password) {
-      setFormError('')
+      const algumVazio = !email.trim() || !password.trim()
+      setFormError(algumVazio ? MENSAGEM_CAMPOS_OBRIGATORIOS : '')
       return
     }
 
-    const user = logIn(email, password)
-    if (!user) {
-      setFormError('Incorrect email or password. Please try again.')
+    enviandoRef.current = true
+    setEnviando(true)
+    setFormError('')
+
+    let perfil
+    try {
+      // E-mail e senha exatamente como digitados (3.1).
+      perfil = await logIn(email, password)
+    } catch (erro) {
+      // Conexão, timeout ou 5xx: mensagem do mapa único (3.10, 12.9, 12.10).
+      if (montadoRef.current) {
+        setFormError(mensagemDeErro(erro))
+        setPassword('')
+      }
+      return
+    } finally {
+      enviandoRef.current = false
+      if (montadoRef.current) setEnviando(false)
+    }
+
+    if (!perfil) {
+      // 401/422: mensagem genérica, mantém o e-mail e limpa a senha (3.7).
+      if (montadoRef.current) {
+        setFormError(MENSAGEM_CREDENCIAIS_INVALIDAS)
+        setPassword('')
+      }
       return
     }
 
-    onLogin(user)
+    // Sessão já salva pelo orquestrador; App abre a Tela_Inicio (3.6).
+    onLogin(perfil)
   }
 
   return (
@@ -135,8 +179,14 @@ function Login({ onLogin, onCreateAccount, onForgotPassword }) {
             </button>
           </div>
 
-          <button className="login-submit" type="submit" data-testid="login-entrar">
-            Log in
+          <button
+            className="login-submit"
+            type="submit"
+            data-testid="login-entrar"
+            disabled={enviando}
+            aria-busy={enviando}
+          >
+            {enviando ? 'Logging in…' : 'Log in'}
           </button>
         </form>
 

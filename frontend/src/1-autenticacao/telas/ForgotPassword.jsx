@@ -1,33 +1,81 @@
-import { useState } from 'react'
-import { requestPasswordReset } from '../orquestrador'
+import { useEffect, useRef, useState } from 'react'
+import {
+  isValidEmail,
+  MENSAGEM_EMAIL_INVALIDO,
+  mensagemDeErro,
+  mensagemDoCampo,
+  requestPasswordReset,
+} from '../orquestrador'
 import logoMark from '../../assets/finds/icons/logo-mark.svg'
 import './Login.css'
 
-// "Esqueci a senha": pede o e-mail e confirma o envio das instruções. Sem backend
-// nenhum e-mail sai de fato; a tela já fica pronta para quando a API existir.
+const MENSAGEM_PEDIDO_NAO_ENVIADO = "We couldn't send your reset request."
+
+// "Esqueci a senha": pede o e-mail ao Backend e confirma o envio das instruções.
+// A confirmação é a mesma exista ou não uma conta com o e-mail (5.2, 5.8).
 function ForgotPassword({ onGoToLogin }) {
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')
+  const [formError, setFormError] = useState('')
   const [sentTo, setSentTo] = useState('')
+  const [enviando, setEnviando] = useState(false)
+
+  // A ref bloqueia um segundo envio no mesmo tick, antes do re-render que
+  // desabilita o botão (12.12).
+  const enviandoRef = useRef(false)
+  const montadoRef = useRef(false)
+
+  useEffect(() => {
+    montadoRef.current = true
+    return () => {
+      montadoRef.current = false
+    }
+  }, [])
 
   function handleChange(event) {
     setEmail(event.target.value)
     setError('')
+    setFormError('')
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault()
+    if (enviandoRef.current) return
 
+    // Validação local: com erro, o Orquestrador_Acesso não é acionado e o
+    // valor digitado é mantido (5.9).
     if (!email.trim()) {
       setError('Email is required.')
       return
     }
-    if (!requestPasswordReset(email)) {
-      setError('Enter a valid email address.')
+    if (!isValidEmail(email)) {
+      setError(MENSAGEM_EMAIL_INVALIDO)
       return
     }
 
-    setSentTo(email.trim())
+    enviandoRef.current = true
+    setEnviando(true)
+    setError('')
+    setFormError('')
+
+    try {
+      await requestPasswordReset(email)
+    } catch (erro) {
+      // Rede, timeout, 5xx ou outro status: pedido não enviado, e-mail mantido,
+      // sem `recuperar-sucesso` (5.11, 12.9, 12.10).
+      if (montadoRef.current) {
+        const erroDoCampo = mensagemDoCampo(erro, 'email')
+        if (erroDoCampo) setError(erroDoCampo)
+        else setFormError(`${MENSAGEM_PEDIDO_NAO_ENVIADO} ${mensagemDeErro(erro)}`)
+      }
+      return
+    } finally {
+      enviandoRef.current = false
+      if (montadoRef.current) setEnviando(false)
+    }
+
+    // 202: oculta o formulário e confirma com o e-mail informado (5.8).
+    if (montadoRef.current) setSentTo(email.trim())
   }
 
   return (
@@ -49,6 +97,12 @@ function ForgotPassword({ onGoToLogin }) {
           </p>
         ) : (
           <form className="login-form" noValidate onSubmit={handleSubmit}>
+            {formError && (
+              <p className="login-banner" role="alert">
+                {formError}
+              </p>
+            )}
+
             <div className="login-field">
               <label htmlFor="forgot-email">Email</label>
               <div className="login-input">
@@ -71,8 +125,14 @@ function ForgotPassword({ onGoToLogin }) {
               )}
             </div>
 
-            <button className="login-submit" type="submit" data-testid="recuperar-enviar">
-              Send reset link
+            <button
+              className="login-submit"
+              type="submit"
+              data-testid="recuperar-enviar"
+              disabled={enviando}
+              aria-busy={enviando}
+            >
+              {enviando ? 'Sending…' : 'Send reset link'}
             </button>
           </form>
         )}

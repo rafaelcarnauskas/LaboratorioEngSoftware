@@ -18,6 +18,7 @@ import { communities } from '../2-comunidades/modelo/communities'
 import { countByCommunity } from '../3-videos/modelo/findsIndex'
 import { formatTime, recentlyWatched } from '../5-historico/modelo/usage'
 import { installLocalStorageStub } from './helpers/localStorageStub'
+import { mockarFetchPerfil, semearSessao } from './helpers/sessaoValida'
 
 const RUNS = 25
 const PROPERTY_TIMEOUT_MS = 120_000
@@ -35,11 +36,14 @@ beforeEach(() => {
   const installed = installLocalStorageStub()
   stub = installed.storage
   restoreStorage = installed.restore
+  // Confirmação do token salvo pelo `App` (`GET /usuarios/me`).
+  mockarFetchPerfil()
 })
 
 afterEach(() => {
   cleanup()
   vi.useRealTimers()
+  vi.unstubAllGlobals()
   restoreStorage?.()
   stub = null
   restoreStorage = null
@@ -74,16 +78,21 @@ function buildEvents(plans, now) {
 const findsById = new Map(finds.map((find) => [find.id, find]))
 
 // App exibe uma tela de carregamento por 1,5s antes do conteúdo.
-// Começa com sessão salva para pular a tela de login (testada no Selenium).
-function renderApp() {
-  stub.seed({ 'choosen.session': JSON.stringify({ email: 'victor@email.com', name: 'Victor Mendes' }) })
+// Começa com sessão salva (token válido, confirmado pelo `GET /usuarios/me`
+// simulado) para pular a tela de login (testada no Selenium). A confirmação é
+// assíncrona, por isso o relógio avança dentro de um `act` assíncrono.
+async function renderApp() {
+  semearSessao(stub)
   vi.useFakeTimers()
-  const utils = render(<App />)
-  act(() => {
-    vi.advanceTimersByTime(2000)
-  })
-  vi.useRealTimers()
-  return utils
+  try {
+    const utils = render(<App />)
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2000)
+    })
+    return utils
+  } finally {
+    vi.useRealTimers()
+  }
 }
 
 describe('Cards de histórico', () => {
@@ -120,9 +129,9 @@ describe('Cards de histórico', () => {
 
   // ** Card de histórico expõe título, autor e hora em `HH:MM`**
 
-  it('expõe título, autor e hora em HH:MM em cada card do histórico recente da Tela_Home', () => {
-    fc.assert(
-      fc.property(eventPlansArbitrary, (plans) => {
+  it('expõe título, autor e hora em HH:MM em cada card do histórico recente da Tela_Home', async () => {
+    await fc.assert(
+      fc.asyncProperty(eventPlansArbitrary, async (plans) => {
         cleanup()
         stub.reset()
 
@@ -130,7 +139,7 @@ describe('Cards de histórico', () => {
         const events = buildEvents(plans, now)
         stub.seed({ [historyKey]: JSON.stringify(events) })
 
-        const { container } = renderApp()
+        const { container } = await renderApp()
 
         //a seção mostra os quatro mais recentes.
         const expected = recentlyWatched(events, 4)
@@ -170,14 +179,14 @@ describe('Card de comunidade da Home', () => {
   // **Card de comunidade expõe nome, ícone, descrição, membros e
   // contagem de finds**
 
-  it('expõe nome, ícone, descrição, membros e a contagem de finds de cada comunidade do catálogo', () => {
-    fc.assert(
-      fc.property(membershipsArbitrary, (memberships) => {
+  it('expõe nome, ícone, descrição, membros e a contagem de finds de cada comunidade do catálogo', async () => {
+    await fc.assert(
+      fc.asyncProperty(membershipsArbitrary, async (memberships) => {
         cleanup()
         stub.reset()
         stub.seed({ [communitiesKey]: JSON.stringify(memberships) })
 
-        const { container } = renderApp()
+        const { container } = await renderApp()
 
         // Aderidas e sugeridas particionam o catálogo: um card por comunidade.
         const tiles = [...container.querySelectorAll('.community-tile')]

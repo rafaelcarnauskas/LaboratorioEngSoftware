@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { notificationTypes } from './Notifications'
+import { notificationTypes } from './notificationTypes'
 
 const initialAlerts = Object.fromEntries(notificationTypes.map(({ key }) => [key, true]))
 
