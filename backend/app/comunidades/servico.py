@@ -23,6 +23,11 @@ class ServicoComunidades:
             raise ComunidadeNaoEncontradaError(comunidade_id)
         return comunidade
 
+    def registrar_usuario(self, usuario_id: str, nome: str, email: str) -> None:
+        """Registra no repositório em memória o perfil autenticado atual."""
+        if usuario_id not in self._usuarios:
+            self._usuarios[usuario_id] = Usuario(id=usuario_id, nome=nome, email=email)
+
     def participar(self, comunidade_id: str, usuario_id: str) -> bool:
         comunidade = self.buscar_comunidade(comunidade_id)
         usuario = self._usuarios.get(usuario_id)

@@ -60,6 +60,7 @@ function savedUser() {
 }
 
 function App() {
+  const session = getSession()
   const [isLoading, setIsLoading] = useState(true)
   // Link de redefinição (`?tela=redefinir-senha&token=...`), lido antes de
   // `parseUrl`, que descartaria essa `tela` desconhecida (16.1). O token fica só
@@ -84,7 +85,7 @@ function App() {
   // volta para ela sem tocar no histórico do navegador.
   const [communityOrigin, setCommunityOrigin] = useState('Home')
   const [communityApiError, setCommunityApiError] = useState('')
-  const { lists, updateLists, storageError } = useLists(session?.email)
+  const { lists, updateLists, storageError } = useLists(session?.user?.email)
   const { videos: videoCatalog } = useVideoCatalog()
   const {
     memberships,
@@ -103,8 +104,8 @@ function App() {
     recordView,
     clearHistory,
     storageError: historyStorageError,
-  } = useHistory(session?.email)
-  const myTime = useMyTime(session?.email)
+  } = useHistory(session?.user?.email)
+  const myTime = useMyTime(session?.user?.email)
   // Perfis seguidos e finds salvos no Finds. Por enquanto só em memória: a
   // persistência entra quando o Model tiver um serviço para isso.
   const [followedAuthors, setFollowedAuthors] = useState([])

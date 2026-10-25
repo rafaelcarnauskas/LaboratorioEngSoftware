@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict
 
+from app.autenticacao.api import PerfilPublico, obter_usuario_atual
 from app.comunidades.modelo import Comunidade
 from app.comunidades.servico import (
     ComunidadeNaoEncontradaError,
@@ -64,10 +65,14 @@ def detalhar_comunidade(comunidade_id: str) -> Comunidade:
 )
 def participar(
     comunidade_id: str,
-    requisicao: ParticipacaoRequisicao,
+    # Mantém aceitação do corpo enviado por versões anteriores do frontend;
+    # a identidade usada sempre vem do token, nunca do id recebido no corpo.
+    requisicao: ParticipacaoRequisicao | None = None,
+    usuario: PerfilPublico = Depends(obter_usuario_atual),
 ) -> ParticipacaoResposta:
     try:
-        participou_agora = servico.participar(comunidade_id, requisicao.usuario_id)
+        servico.registrar_usuario(usuario.id, usuario.name, usuario.email)
+        participou_agora = servico.participar(comunidade_id, usuario.id)
     except ComunidadeNaoEncontradaError as error:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -85,7 +90,7 @@ def participar(
         else "Usuário já participa da comunidade."
     )
     return ParticipacaoResposta(
-        usuario_id=requisicao.usuario_id,
+        usuario_id=usuario.id,
         comunidade_id=comunidade_id,
         participou_agora=participou_agora,
         mensagem=mensagem,
