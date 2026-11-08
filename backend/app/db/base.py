@@ -47,8 +47,8 @@ def normalizar_url_postgres(url):
             return "postgresql+psycopg://" + url[len(prefixo):]
     return url
 # Local: SQLite em arquivo. Render: DATABASE_URL do Postgres.
-def database_url():
-    return normalizar_url_postgres(os.environ.get("DATABASE_URL", "sqlite:///./choosen.db"))
+def database_url(variavel="DATABASE_URL", padrao="sqlite:///./choosen.db"):
+    return normalizar_url_postgres(os.environ.get(variavel, padrao))
 
 
 def criar_engine(url=None):
@@ -65,6 +65,6 @@ _trava_tabelas = threading.Lock()
 # Os repositórios SQL de cada contexto criam suas tabelas no primeiro acesso.
 # Requisições simultâneas logo após o servidor subir faziam dois create_all
 # concorrerem no mesmo banco ("table ... already exists", erro 500).
-def criar_tabelas(engine):
+def criar_tabelas(engine, base=Base):
     with _trava_tabelas:
-        Base.metadata.create_all(engine)
+        base.metadata.create_all(engine)

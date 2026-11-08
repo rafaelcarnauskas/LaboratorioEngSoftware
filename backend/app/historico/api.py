@@ -1,16 +1,18 @@
 # Rotas do Serviço de Histórico e do Serviço de Tempo de Uso.
 # Os campos JSON seguem os nomes do front (findId, seconds, watchedAt...).
+import os
 import time
 from functools import lru_cache
 from typing import Literal
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.autenticacao.api import PerfilPublico, obter_usuario_atual
 from app.db.base import criar_engine
 
-from . import modelo, servico
+from . import compartilhado, modelo, servico
 
 router = APIRouter(prefix="/api/v1", tags=["historico"])
 
@@ -20,11 +22,20 @@ def get_repositorio():
     return modelo.RepositorioSQL(criar_engine())
 
 
+# Sem COMPARTILHADO_URL não valida nada: o banco compartilhado ainda não tem dados.
+@lru_cache
+def get_remoto():
+    url = os.environ.get("COMPARTILHADO_URL")
+    return compartilhado.ClienteRemoto(httpx.Client(base_url=url, timeout=5)) if url else None
+
+
 def get_agora():
     return int(time.time() * 1000)
 
 
-def usuario_atual(usuario: PerfilPublico = Depends(obter_usuario_atual)) -> str:
+def usuario_atual(usuario: PerfilPublico = Depends(obter_usuario_atual), remoto=Depends(get_remoto)) -> str:
+    if remoto and not remoto.usuario_existe(usuario.id):
+        raise HTTPException(status_code=401, detail="Usuário não identificado")
     return usuario.id
 
 
@@ -83,7 +94,9 @@ def _saida(v):
 
 @router.post("/historico/visualizacoes", response_model=VisualizacaoSaida, status_code=201)
 def registrar(entrada: VisualizacaoEntrada, usuario=Depends(usuario_atual),
-              repo=Depends(get_repositorio), agora=Depends(get_agora)):
+              repo=Depends(get_repositorio), agora=Depends(get_agora), remoto=Depends(get_remoto)):
+    if remoto and not remoto.video_existe(entrada.findId):
+        raise HTTPException(status_code=404, detail="Vídeo não encontrado")
     v = servico.registrar_visualizacao(repo, usuario, entrada.findId, entrada.seconds,
                                        entrada.watchedAt or agora)
     return _saida(v)
