@@ -7,7 +7,6 @@ pydantic-settings==2.16.0
 argon2-cffi==25.1.0
 pytest==9.1.1
 httpx==0.28.1
-SQLAlchemy==2.0.54
 psycopg[binary]==3.3.6
 # Base de fusos horários para ZoneInfo("America/Sao_Paulo") no Windows (usado em historico).
 tzdata==2026.5

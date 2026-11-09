@@ -84,7 +84,7 @@ function App() {
   // volta para ela sem tocar no histórico do navegador.
   const [communityOrigin, setCommunityOrigin] = useState('Home')
   const [communityApiError, setCommunityApiError] = useState('')
-  const { lists, updateLists, storageError } = useLists(session?.email)
+  const { lists, updateLists, storageError } = useLists(user?.email)
   const { videos: videoCatalog } = useVideoCatalog()
   const {
     memberships,
@@ -103,8 +103,8 @@ function App() {
     recordView,
     clearHistory,
     storageError: historyStorageError,
-  } = useHistory(session?.email)
-  const myTime = useMyTime(session?.email)
+  } = useHistory(user?.email)
+  const myTime = useMyTime(user?.email)
   // Perfis seguidos e finds salvos no Finds. Por enquanto só em memória: a
   // persistência entra quando o Model tiver um serviço para isso.
   const [followedAuthors, setFollowedAuthors] = useState([])
