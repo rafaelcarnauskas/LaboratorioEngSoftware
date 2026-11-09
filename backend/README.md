@@ -31,6 +31,7 @@ Lida de variáveis de ambiente em `app/core/config.py`. Valor inválido interrom
 | `CHOOSEN_CORS_ORIGINS` | `http://localhost:5173` | Origens permitidas, separadas por vírgula (espaços nas pontas são ignorados). Se ausente, usa `CORS_ORIGINS`. |
 | `CHOOSEN_SESSION_TTL_MINUTES` | `10080` (7 dias) | Validade da sessão em minutos, inteiro de 1 a 525600. |
 | `CHOOSEN_FRONTEND_URL` | `http://localhost:5173` | Base do link de redefinição de senha. |
+| `CHOOSEN_SHARED_DATABASE_URL` | a mesma URL do banco próprio | URL do banco compartilhado com os outros microserviços (tabela `usuario_publico`). `postgres://` e `postgresql://` são convertidos para `postgresql+psycopg://`. Sem ela, a tabela fica no mesmo banco de `CHOOSEN_DATABASE_URL`. |
 
 No frontend, `VITE_API_URL` é só o host do Backend (padrão `http://localhost:8000`); o frontend acrescenta `/api/v1`. Isso difere do texto do Requisito 12.1 (que põe `/api/v1` no padrão) por decisão do projeto, para seguir a mesma convenção de `frontend/src/2-comunidades/servico.js`.
 
@@ -43,6 +44,61 @@ alembic upgrade head
 ```
 
 Com a configuração padrão, isso cria `backend/choosen.db` se ele não existir.
+
+O banco compartilhado (tabela `usuario_publico`) tem um segundo ambiente do Alembic, em `alembic_compartilhado/` (seção `[compartilhado]` do `alembic.ini`):
+
+```powershell
+alembic -n compartilhado upgrade head
+```
+
+| Comando | Banco (variável) | Tabela de versão |
+|---|---|---|
+| `alembic upgrade head` | próprio (`CHOOSEN_DATABASE_URL`) | `alembic_version` |
+| `alembic -n compartilhado upgrade head` | compartilhado (`CHOOSEN_SHARED_DATABASE_URL`) | `alembic_version_compartilhado` |
+
+Sem `CHOOSEN_SHARED_DATABASE_URL`, os dois comandos usam o mesmo banco; as tabelas de versão separadas permitem isso. Exemplo com dois bancos PostgreSQL:
+
+```powershell
+$env:CHOOSEN_DATABASE_URL = "postgresql://usuario:senha@localhost/choosen_autenticacao"
+$env:CHOOSEN_SHARED_DATABASE_URL = "postgresql://usuario:senha@localhost/choosen_compartilhado"
+alembic upgrade head
+alembic -n compartilhado upgrade head
+```
+
+Para ver o SQL sem conectar, acrescente `--sql` a qualquer um dos comandos.
+
+Depois da primeira migration do banco compartilhado, copie para ele os usuários que já existem no banco próprio:
+
+```powershell
+python -m app.autenticacao.republicar
+```
+
+O comando publica a mensagem `usuario.perfil_publicado` para cada usuário e pode rodar quantas vezes for preciso (a réplica não volta para um estado mais antigo). Também conserta a réplica depois de um WARNING em `choosen.integracao`. Sai com código 1 se alguma entrega falhar.
+
+### Deploy (Render)
+
+O comando de start do Render fica no painel, fora do repositório. Ele precisa rodar as duas migrations e a carga da réplica antes de subir o servidor:
+
+```bash
+alembic upgrade head && alembic -n compartilhado upgrade head && python -m app.autenticacao.republicar && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+```
+
+Sem a migration compartilhada, a API funciona, mas cada escrita de usuário registra um WARNING e a réplica fica vazia.
+
+## Modelo de dados da autenticação
+
+O microserviço de autenticação tem dois bancos (SQLAlchemy; PostgreSQL em produção, SQLite local):
+
+- **Banco próprio** (`app/autenticacao/modelo.py`, migration `alembic/versions/0001`), fonte da verdade:
+  - `usuario`: PK `id`; `email`, `username`, `username_normalizado`, `hash_senha`, `nome`, `descricao`, `foto`, `is_community_admin`, `is_system_admin`, `criado_em`, `atualizado_em`. Únicos: `uq_usuario_email` (`email`) e `uq_usuario_username_normalizado`.
+  - `sessao`: PK `id`; FK `usuario_id → usuario.id` (`ON DELETE CASCADE`, índice `ix_sessao_usuario_id`); `token_hash` único; `criada_em`, `expira_em`, `revogada_em`.
+  - `token_redefinicao`: PK `id`; FK `usuario_id → usuario.id` (`ON DELETE CASCADE`, índice `ix_token_redefinicao_usuario_id`); `token_hash` único; `criado_em`, `expira_em`, `usado_em`, `invalidado_em`.
+- **Banco compartilhado** (`app/autenticacao/modelo_compartilhado.py`, migration `alembic_compartilhado/versions/c0001`):
+  - `usuario_publico`: réplica do perfil público. PK `id` (o mesmo valor de `usuario.id`); `nome`, `username`, `email`, `descricao`, `foto`, `is_community_admin`, `is_system_admin`, `criado_em`, `atualizado_em`. Sem senha, sessões ou tokens, e sem constraints únicas além da PK.
+
+`usuario.id = usuario_publico.id` é uma relação lógica 1 para 0..1, sem FK, porque as tabelas ficam em bancos diferentes. Depois de cada `commit` que cria ou altera um usuário (cadastro, edição de perfil, troca ou redefinição de senha, semeadura), `app/autenticacao/mensagens.py` publica a mensagem JSON `usuario.perfil_publicado`; o assinante grava a réplica pela `InterfaceDadosCompartilhados` (`app/autenticacao/dados_compartilhados.py`), que recebe e devolve só JSON. Uma mensagem com `updatedAt` mais antigo que o da réplica é ignorada. O barramento e a interface rodam hoje no mesmo processo da API; o contrato só com JSON é o que permite trocá-los por um broker e uma chamada remota.
+
+A entrega acontece depois que a conexão do banco próprio volta ao pool. Se o banco compartilhado falhar, a resposta da API é a mesma e o logger `choosen.integracao` registra um WARNING. A resposta só atrasa enquanto a conexão ao banco compartilhado espera: com `CHOOSEN_SHARED_DATABASE_URL` em PostgreSQL, no máximo 5 segundos (`connect_timeout`, acrescentado se a URL não o definir).
 
 O `alembic/env.py` só gerencia as tabelas da Parte 1. As tabelas do `historico` (`historico_visualizacoes` e `historico_preferencias`) são criadas pelo próprio módulo com `create_all` na primeira requisição a essas rotas. Esse módulo lê `DATABASE_URL` (e não `CHOOSEN_DATABASE_URL`) e, sem ela, usa `./choosen.db` relativo ao diretório atual, ou seja, o mesmo arquivo quando o servidor roda em `backend/`.
 
@@ -92,8 +148,11 @@ Estado inicial = banco criado pelas migrations com só o usuário de demonstraç
 ```powershell
 Remove-Item choosen.db -ErrorAction SilentlyContinue
 alembic upgrade head
+alembic -n compartilhado upgrade head
 python -m app.autenticacao.semear
 ```
+
+(Com `CHOOSEN_SHARED_DATABASE_URL` apontando para outro banco, esvazie também a tabela `usuario_publico` dele.)
 
 Isso também apaga as contas criadas pelos testes, as sessões e os dados do `historico` gravados no mesmo arquivo.
 
@@ -126,6 +185,8 @@ Divergência já existente, não causada pela Parte 1: `test_app.py` procura tex
 - Incluir cada router em `main.py` com `dependencies=[Depends(obter_usuario_atual)]`, para que todos os seus endpoints exijam sessão válida (sem ela: `401 sessao_invalida`).
 - O endpoint que precisa do usuário recebe o perfil público (sem token nem hash de senha) declarando um parâmetro `usuario = Depends(obter_usuario_atual)`; o FastAPI reaproveita o resultado da dependência do router.
 - De `app.autenticacao`, importar só `obter_usuario_atual` (de `app.autenticacao.api`) e `buscar_por_id` (de `app.autenticacao.servico`). Nunca ler `modelo.py` nem as tabelas `usuario` e `sessao` diretamente.
+- Para ler dados de usuário a partir de outro microserviço, usar o banco compartilhado pela dependência `obter_dados_compartilhados` (de `app.autenticacao.dados_compartilhados`), que devolve só a leitura (`buscar_usuario_publico`). Só a autenticação grava a réplica. `obter_usuario_atual` e `buscar_por_id` continuam valendo.
+- Para decidir permissão (por exemplo, `isSystemAdmin`), usar `obter_usuario_atual`, que lê o banco próprio. A réplica pode estar atrasada.
 
 ```python
 from fastapi import Depends

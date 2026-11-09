@@ -6,6 +6,7 @@ processo antes de a porta abrir (Requisitos 13.6 e 13.7).
 """
 
 import logging
+import os
 import re
 
 from fastapi import Depends, FastAPI, Request
@@ -13,6 +14,9 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from app.autenticacao.api import router as autenticacao_router
+from app.autenticacao.mensagens import ligar_publicacao_de_usuarios, montar_integracao
+from app.autenticacao.servico import ErroDominio
 from app.busca_listas.api import router as busca_listas_router
 from app.busca_listas.api import get_videos as busca_get_videos
 from app.comunidades.api import router as comunidades_router
@@ -86,8 +90,9 @@ async def _tratar_validacao(_request: Request, exc: RequestValidationError) -> J
 
 
 async def _tratar_erro_dominio(_request: Request, exc: ErroDominio) -> JSONResponse:
-    # `exc.headers` leva, por exemplo, `WWW-Authenticate: Bearer` no 401 sessao_invalida.
-    return resposta_erro(exc.status, exc.code, exc.message, exc.fields, exc.headers)
+    # `headers` leva, por exemplo, `WWW-Authenticate: Bearer` no 401 sessao_invalida.
+    return resposta_erro(exc.status, exc.code, exc.message, exc.fields,
+                         getattr(exc, "headers", None))
 
 
 async def _tratar_erro_interno(request: Request, exc: Exception) -> JSONResponse:
@@ -97,18 +102,35 @@ async def _tratar_erro_interno(request: Request, exc: Exception) -> JSONResponse
     return resposta_erro(500, "erro_interno", "Ocorreu um erro inesperado. Tente novamente.")
 
 
+def _origens_cors(config) -> list[str]:
+    """Origens de `CHOOSEN_CORS_ORIGINS` mais, se existir, `CORS_ORIGINS` (usada no Render)."""
+    origens = list(config.lista_cors)
+    extras = os.environ.get("CORS_ORIGINS", "")
+    for origem in extras.split(","):
+        origem = origem.strip()
+        if origem and origem not in origens:
+            origens.append(origem)
+    return origens
+
+
 def create_app() -> FastAPI:
     config = carregar_configuracao()
 
     app = FastAPI(title="Choosen API", version="0.1.0")
     app.state.config = config
-    # Só cria o engine e a fábrica de sessões; o esquema vem do Alembic (Requisito 13.8).
+    # Só cria os engines e a fábrica de sessões; o esquema dos dois bancos (próprio e
+    # compartilhado) vem do Alembic (Requisito 13.8).
     app.state.engine = criar_engine(config.database_url)
     app.state.session_local = criar_session_local(app.state.engine)
+    integracao = montar_integracao(config, app.state.engine)
+    app.state.engine_compartilhado = integracao.engine_compartilhado
+    app.state.dados_compartilhados = integracao.leitura  # só leitura para as outras partes
+    app.state.barramento = integracao.barramento
+    ligar_publicacao_de_usuarios(app.state.session_local, integracao.barramento)
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=config.lista_cors,
+        allow_origins=_origens_cors(config),
         allow_credentials=False,  # o token vai no cabeçalho Authorization, não em cookie
         allow_methods=METODOS_CORS,
         allow_headers=CABECALHOS_CORS,
