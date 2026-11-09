@@ -39,6 +39,9 @@ class Configuracao(BaseSettings):
     )
     session_ttl_minutes: int = Field(default=10080, ge=TTL_MIN, le=TTL_MAX, strict=False)
     frontend_url: str = "http://localhost:5173"
+    # Banco compartilhado com os outros microserviços (CHOOSEN_SHARED_DATABASE_URL).
+    # Ausente: usa o mesmo banco de `database_url`.
+    shared_database_url: str | None = None
 
     @field_validator("session_ttl_minutes", mode="before")
     @classmethod
@@ -57,9 +60,21 @@ class Configuracao(BaseSettings):
     def _normalizar_database_url(cls, valor: str) -> str:
         return normalizar_url_postgres(valor)
 
+    @field_validator("shared_database_url")
+    @classmethod
+    def _normalizar_shared_database_url(cls, valor: str | None) -> str | None:
+        if valor is None:
+            return None
+        return normalizar_url_postgres(valor)
+
     @property
     def lista_cors(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+
+    @property
+    def url_compartilhada(self) -> str:
+        """URL do banco compartilhado; sem `CHOOSEN_SHARED_DATABASE_URL`, a do banco próprio."""
+        return self.shared_database_url or self.database_url
 
 
 _MENSAGENS = {

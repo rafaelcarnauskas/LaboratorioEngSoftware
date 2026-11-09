@@ -24,6 +24,7 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from app.autenticacao.mensagens import ligar_publicacao_de_usuarios, montar_integracao
 from app.autenticacao.modelo import Usuario
 from app.autenticacao.servico import (
     CODIGO_FALHA_AO_SALVAR,
@@ -158,6 +159,7 @@ def main() -> int:
         return _erro(MSG_AMBIENTE_RECUSADO)  # antes de qualquer conexão (14.4)
 
     engine = criar_engine(config.database_url)
+    integracao = None
     try:
         try:
             if not _esquema_pronto(engine):
@@ -166,6 +168,9 @@ def main() -> int:
             return _erro(f"Não foi possível conectar ao banco: {erro.__class__.__name__}.")
 
         fabrica = criar_session_local(engine)
+        # Publica o Perfil_Publico no banco compartilhado depois do commit.
+        integracao = montar_integracao(config, engine)
+        ligar_publicacao_de_usuarios(fabrica, integracao.barramento)
         with fabrica() as db:
             try:
                 mensagem = _semear(db)
@@ -180,6 +185,8 @@ def main() -> int:
         print(mensagem)
         return 0
     finally:
+        if integracao is not None:
+            integracao.fechar()
         engine.dispose()
 
 
