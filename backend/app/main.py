@@ -23,6 +23,7 @@ from app.db.sessao import criar_engine, criar_session_local
 from app.historico.api import router as historico_router
 from app.historico.api import get_repositorio as historico_get_repositorio
 from app.historico import servico as historico_servico
+from app.historico.compartilhado import router as compartilhado_router
 from app.videos.api import create_router as create_videos_router
 from app.videos.modelo import MockVideoRepository
 from app.videos.servico import PlaybackService, VideoService
@@ -125,6 +126,7 @@ def create_app() -> FastAPI:
         dependencies=[Depends(obter_usuario_atual)],
     )
     app.include_router(historico_router)  # já tem o prefixo /api/v1
+    app.include_router(compartilhado_router)  # interface remota do banco compartilhado
     app.include_router(busca_listas_router)  # já tem o prefixo /api/v1
 
     videos = VideoService(MockVideoRepository())
