@@ -97,7 +97,7 @@ def create_router(
     that module is integrated. ``PlaybackService`` receives the History service
     through its ``HistoryRecorder`` port.
     """
-    router = APIRouter(prefix="/api/videos", tags=["Vídeos"])
+    router = APIRouter(prefix="/api/v1/videos", tags=["Vídeos"])
 
     @router.get("", response_model=list[VideoResponse], name="listar_videos")
     def list_videos(

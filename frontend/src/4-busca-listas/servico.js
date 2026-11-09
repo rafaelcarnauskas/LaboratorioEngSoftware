@@ -1,4 +1,6 @@
 // Comunicação com o Serviço de Busca e o Serviço de Listas (backend/app/busca_listas).
+import { getToken } from '../1-autenticacao/modelo/session.js'
+
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 
 // Nos testes as telas ficam só no localStorage.
@@ -6,11 +8,15 @@ export const apiAtiva = import.meta.env.MODE !== 'test'
 
 export const erroApi = 'Não foi possível falar com o servidor. Suas listas ficam salvas só neste navegador.'
 
-// X-Usuario é provisório até a parte 1 (autenticação) existir no back.
 async function chamar(usuario, caminho, opcoes = {}) {
+  const token = usuario ? getToken() : null
   const response = await fetch(`${API_URL}/api/v1${caminho}`, {
     ...opcoes,
-    headers: { 'Content-Type': 'application/json', ...(usuario ? { 'X-Usuario': usuario } : {}) },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...opcoes.headers,
+    },
   })
   if (!response.ok) {
     const body = await response.json().catch(() => null)

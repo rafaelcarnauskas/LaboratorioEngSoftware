@@ -1,3 +1,5 @@
+import { getToken } from '../1-autenticacao/modelo/session.js'
+
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 
 export async function participarNaComunidade(comunidadeId, usuarioId = 'usuario-demo') {
@@ -6,11 +8,15 @@ export async function participarNaComunidade(comunidadeId, usuarioId = 'usuario-
   }
 
   let response
+  const token = getToken()
 
   try {
     response = await fetch(`${API_URL}/api/v1/comunidades/${comunidadeId}/participar`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       body: JSON.stringify({ usuario_id: usuarioId }),
     })
   } catch {

@@ -4,9 +4,10 @@ import time
 from functools import lru_cache
 from typing import Literal
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.autenticacao.api import PerfilPublico, obter_usuario_atual
 from app.db.base import criar_engine
 from app.videos.modelo import MockVideoRepository
 from app.videos.servico import VideoNotFoundError, VideoService
@@ -34,11 +35,8 @@ def get_agora():
     return int(time.time() * 1000)
 
 
-# Provisório até a parte 1 (autenticação) existir no back, igual ao Histórico.
-def usuario_atual(x_usuario: str | None = Header(default=None)):
-    if not x_usuario:
-        raise HTTPException(status_code=401, detail="Usuário não identificado")
-    return x_usuario
+def usuario_atual(usuario: PerfilPublico = Depends(obter_usuario_atual)) -> str:
+    return usuario.id
 
 
 # --- esquemas ---
