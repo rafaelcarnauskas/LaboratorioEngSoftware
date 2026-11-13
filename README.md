@@ -63,14 +63,16 @@ API FastAPI em `backend/`, organizada nos mesmos cinco contextos do front.
 ```powershell
 cd backend
 python -m pip install -r requirements.txt
+python -m app.db.migrar      # cria/atualiza os seis bancos
+python -m app.semear         # usuário, comunidades e vídeos de demonstração
 python -m uvicorn app.main:app --reload
-python -m pytest
 ```
 
-Documentação interativa em http://localhost:8000/docs. Sem `DATABASE_URL` o banco é
-um SQLite local (`choosen.db`). Enquanto a parte 1 (autenticação) não existe no
-back, as rotas por usuário (Histórico, Listas) identificam o usuário pelo
-cabeçalho provisório `X-Usuario`.
+Documentação interativa em http://localhost:8000/docs. Cada microserviço tem o
+próprio banco e há um banco compartilhado, acessado só pela infraestrutura
+(modelo de dados no README do backend). Sem variáveis de ambiente, cada banco é
+um arquivo SQLite em `backend/` (`choosen.db`, `choosen_comunidades.db`...); em
+produção, PostgreSQL. As rotas por usuário exigem a sessão da autenticação.
 
 Parte 4 (Busca e listas), prefixo `/api/v1`:
 
