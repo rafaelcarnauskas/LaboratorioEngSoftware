@@ -1,34 +1,31 @@
 # Rotas do Serviço de Busca e do Serviço de Listas (parte 4).
 # Os campos JSON seguem os nomes do front (name, description, tone, videoIds...).
 import time
-from functools import lru_cache
 from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.autenticacao.api import PerfilPublico, obter_usuario_atual
-from app.db.base import criar_engine
-from app.videos.modelo import MockVideoRepository
-from app.videos.servico import VideoNotFoundError, VideoService
 
-from . import modelo, servico
+from . import servico
 
 router = APIRouter(prefix="/api/v1", tags=["busca e listas"])
 
 Tom = Literal["gold", "blue", "green", "purple"]
 
 
-@lru_cache
-def get_repositorio():
-    return modelo.RepositorioSQL(criar_engine())
+def get_repositorio(request: Request):
+    return request.app.state.plataforma.busca_listas.repositorio
 
 
-@lru_cache
-def get_videos():
-    # Serviço de Vídeos da parte 3. Trocar pela instância compartilhada quando o
-    # router de vídeos for registrado no main.py.
-    return VideoService(MockVideoRepository())
+def get_indice(request: Request):
+    return request.app.state.plataforma.busca_listas.indice
+
+
+def get_videos(request: Request):
+    """Confere se o vídeo existe (indice_busca ou video_publico)."""
+    return request.app.state.plataforma.busca_listas.videos
 
 
 def get_agora():
@@ -85,7 +82,7 @@ class ListasDoVideo(BaseModel):
 
 def _video(v):
     return VideoResultado(id=v.id, title=v.title, creator=v.author, category=v.category,
-                          communityId=v.community_id, image=v.image,
+                          communityId=v.community_id or "", image=v.image,
                           durationSeconds=servico.segundos_do_video(v))
 
 
@@ -104,7 +101,7 @@ def _executar(funcao, *args, **kwargs):
         raise HTTPException(status_code=409, detail="Já existe uma lista com este id.") from erro
     except servico.ListaNaoEncontrada as erro:
         raise HTTPException(status_code=404, detail="Lista ou item não encontrado.") from erro
-    except VideoNotFoundError as erro:
+    except servico.VideoNaoEncontrado as erro:
         raise HTTPException(status_code=404, detail="Vídeo não encontrado.") from erro
     except ValueError as erro:
         raise HTTPException(status_code=422, detail=str(erro)) from erro
@@ -117,8 +114,8 @@ def buscar(termo: str = Query(default="", max_length=200),
            categoria: str | None = Query(default=None, max_length=60),
            duracao: Literal["any", "short", "long"] = "any",
            ordem: Literal["featured", "title", "shortest"] = "featured",
-           videos=Depends(get_videos)):
-    return [_video(v) for v in _executar(servico.pesquisar, videos, termo, categoria, duracao, ordem)]
+           indice=Depends(get_indice)):
+    return [_video(v) for v in _executar(servico.pesquisar, indice, termo, categoria, duracao, ordem)]
 
 
 # --- Serviço de Listas ---

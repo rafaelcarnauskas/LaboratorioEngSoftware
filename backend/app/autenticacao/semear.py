@@ -10,6 +10,11 @@ maiúsculas de minúsculas), restaura nome, username, flags de administração e
 senha ``choosen123``, sem duplicar o registro. Descrição, foto, ``criado_em`` e
 as Sessoes existentes não são tocados.
 
+Também cria os autores dos vídeos de demonstração (:data:`AUTORES_DEMONSTRACAO`).
+Eles não entram no sistema: o ``hash_senha`` deles não é um hash válido, então
+nenhuma senha confere. Cada criação publica UsuarioCadastrado, que preenche
+``usuario_publico`` no banco compartilhado.
+
 Código de saída 0 em sucesso e 1 em qualquer recusa ou falha, com a mensagem
 de erro em ``stderr``.
 """
@@ -24,7 +29,6 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.autenticacao.mensagens import ligar_publicacao_de_usuarios, montar_integracao
 from app.autenticacao.modelo import Usuario
 from app.autenticacao.servico import (
     CODIGO_FALHA_AO_SALVAR,
@@ -35,12 +39,30 @@ from app.autenticacao.servico import (
 from app.core.config import carregar_configuracao
 from app.core.relogio import agora_utc
 from app.core.seguranca import gerar_hash_senha
-from app.db.sessao import criar_engine, criar_session_local
+from app.plataforma import montar_plataforma
 
 EMAIL_DEMONSTRACAO = "victor@email.com"
 NOME_DEMONSTRACAO = "Victor Mendes"
 USERNAME_DEMONSTRACAO = "victor"
 SENHA_DEMONSTRACAO = "choosen123"
+
+# Autores dos vídeos de demonstração: (username, nome, foto).
+AUTORES_DEMONSTRACAO = (
+    ("BmPoliUsp", "Basquete Poli USP", "/src/assets/finds/avatars/bmpoliusp.png"),
+    ("SoSoMariano", "Sofia Mariano", "/src/assets/finds/avatars/sosomariano.png"),
+    ("RafaelCarnauskas", "Rafael Carnauskas", "/src/assets/finds/avatars/rafaelcarnauskas.png"),
+    ("mendesvictor", "Victor Mendes", "/src/assets/finds/avatars/mendesvictor.png"),
+    ("MarcolinoCarlos", "Carlos Marcolino", "/src/assets/finds/avatars/marcolinocarlos.png"),
+    ("curiouslab", "Curious Lab", ""),
+    ("codequick", "Code Quick", ""),
+    ("smallspaces", "Small Spaces", ""),
+    ("dailybrew", "Daily Brew", ""),
+    ("movebetter", "Move Better", ""),
+    ("goodmood", "Good Mood", ""),
+    ("littlepaws", "Little Paws", ""),
+    ("futurebits", "Future Bits", ""),
+)
+HASH_SEM_LOGIN = "!"  # não é um hash Argon2: verificar_senha sempre devolve False
 
 MSG_AMBIENTE_RECUSADO = "A semeadura só é permitida com CHOOSEN_ENV=development."
 MSG_CRIADO = "Usuário de demonstração criado."
@@ -148,6 +170,34 @@ def _semear(db: Session) -> str:
     return mensagem
 
 
+def _semear_autores(db: Session) -> int:
+    """Cria os autores de demonstração que ainda não existem; devolve quantos criou."""
+    agora = agora_utc()
+    criados = 0
+    for username, nome, foto in AUTORES_DEMONSTRACAO:
+        existente = db.scalars(
+            select(Usuario).where(Usuario.username_normalizado == username.lower())
+        ).first()
+        if existente is not None:
+            continue
+        db.add(Usuario(
+            email=f"{username.lower()}@autores.choosen.demo",
+            username=username,
+            username_normalizado=username.lower(),
+            hash_senha=HASH_SEM_LOGIN,
+            nome=nome,
+            descricao="",
+            foto=foto,
+            is_community_admin=False,
+            is_system_admin=False,
+            criado_em=agora,
+            atualizado_em=agora,
+        ))
+        criados += 1
+    confirmar(db, CODIGO_FALHA_AO_SALVAR)
+    return criados
+
+
 def main() -> int:
     """Executa a semeadura; devolve o código de saída do processo."""
     try:
@@ -158,8 +208,8 @@ def main() -> int:
     if config.env != "development":
         return _erro(MSG_AMBIENTE_RECUSADO)  # antes de qualquer conexão (14.4)
 
-    engine = criar_engine(config.database_url)
-    integracao = None
+    plataforma = montar_plataforma(config)
+    engine = plataforma.engines["autenticacao"]
     try:
         try:
             if not _esquema_pronto(engine):
@@ -167,13 +217,12 @@ def main() -> int:
         except SQLAlchemyError as erro:
             return _erro(f"Não foi possível conectar ao banco: {erro.__class__.__name__}.")
 
-        fabrica = criar_session_local(engine)
-        # Publica o Perfil_Publico no banco compartilhado depois do commit.
-        integracao = montar_integracao(config, engine)
-        ligar_publicacao_de_usuarios(fabrica, integracao.barramento)
-        with fabrica() as db:
+        plataforma.preparar()
+        # As mensagens UsuarioCadastrado/PerfilAtualizado saem depois de cada commit.
+        with plataforma.fabricas["autenticacao"]() as db:
             try:
                 mensagem = _semear(db)
+                autores = _semear_autores(db)
             except _Recusa as recusa:
                 db.rollback()
                 return _erro(str(recusa))
@@ -183,11 +232,11 @@ def main() -> int:
                 db.rollback()
                 return _erro(f"Não foi possível semear: {erro.__class__.__name__}.")
         print(mensagem)
+        if autores:
+            print(f"{autores} autores de demonstração criados.")
         return 0
     finally:
-        if integracao is not None:
-            integracao.fechar()
-        engine.dispose()
+        plataforma.fechar()
 
 
 if __name__ == "__main__":

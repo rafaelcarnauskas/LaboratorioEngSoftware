@@ -1,7 +1,7 @@
 """HTTP endpoints for the Videos context.
 
-The application composes this router with its authentication and History
-services. Example: ``app.include_router(create_router(videos, playback))``.
+The application composes this router with the authentication dependency.
+Example: ``app.include_router(create_router(videos, playback, obter_usuario_atual))``.
 """
 
 from __future__ import annotations
@@ -11,9 +11,8 @@ from typing import Any, Callable
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel, ConfigDict, Field
 
-from .modelo import MockVideoRepository, Video
+from .modelo import Video
 from .servico import (
-    HistoryPersistenceError,
     InvalidWatchedSecondsError,
     PlaybackService,
     VideoNotFoundError,
@@ -37,7 +36,7 @@ class VideoResponse(BaseModel):
     title: str
     category: str
     community_id: str
-    niche_id: str
+    niche_id: str | None
     author: str
     avatar: str | None
     image: str | None
@@ -51,6 +50,10 @@ class VideoResponse(BaseModel):
 
 class PlaybackRequest(BaseModel):
     seconds: int = Field(ge=3, le=90, description="Tempo assistido, em segundos.")
+
+
+class CommentRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=500)
 
 
 class PlaybackResponse(BaseModel):
@@ -94,8 +97,8 @@ def create_router(
     """Build the video API with services supplied by the application layer.
 
     ``current_user_dependency`` is provided by the authentication context when
-    that module is integrated. ``PlaybackService`` receives the History service
-    through its ``HistoryRecorder`` port.
+    that module is integrated. ``PlaybackService`` records the reproduction and
+    publishes ReproducaoRegistrada, which the History service consumes.
     """
     router = APIRouter(prefix="/api/v1/videos", tags=["Vídeos"])
 
@@ -145,11 +148,6 @@ def create_router(
             raise HTTPException(status_code=404, detail="Vídeo não encontrado.") from error
         except InvalidWatchedSecondsError as error:
             raise HTTPException(status_code=422, detail=str(error)) from error
-        except HistoryPersistenceError as error:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Não foi possível registrar a visualização no Histórico.",
-            ) from error
 
         return PlaybackResponse(
             message="Visualização registrada.",
@@ -158,14 +156,26 @@ def create_router(
             recorded_at=receipt.recorded_at.isoformat(),
         )
 
+    def _interagir(funcao, *args) -> Video:
+        try:
+            return funcao(*args)
+        except VideoNotFoundError as error:
+            raise HTTPException(status_code=404, detail="Vídeo não encontrado.") from error
+        except ValueError as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
+
+    @router.put("/{video_id}/curtida", response_model=VideoResponse, name="curtir_video")
+    def like(video_id: str, user: Any = Depends(current_user_dependency)) -> Video:
+        return _interagir(videos.curtir, video_id, _user_id(user), True)
+
+    @router.delete("/{video_id}/curtida", response_model=VideoResponse, name="descurtir_video")
+    def unlike(video_id: str, user: Any = Depends(current_user_dependency)) -> Video:
+        return _interagir(videos.curtir, video_id, _user_id(user), False)
+
+    @router.post("/{video_id}/comentarios", response_model=VideoResponse, status_code=201,
+                 name="comentar_video")
+    def comment(video_id: str, payload: CommentRequest,
+                user: Any = Depends(current_user_dependency)) -> Video:
+        return _interagir(videos.comentar, video_id, _user_id(user), payload.text)
+
     return router
-
-
-def create_default_router(
-    history_recorder: Any,
-    current_user_dependency: Callable[..., Any] = _authenticated_user_from_request,
-) -> APIRouter:
-    """Create the router with the demonstration catalog and supplied adapters."""
-    video_service = VideoService(MockVideoRepository())
-    playback_service = PlaybackService(video_service, history_recorder)
-    return create_router(video_service, playback_service, current_user_dependency)

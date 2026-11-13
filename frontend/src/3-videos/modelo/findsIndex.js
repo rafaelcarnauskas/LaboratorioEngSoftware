@@ -7,6 +7,14 @@ import { categoryKey } from '../../4-busca-listas/modelo/categories'
 
 export const findsById = new Map(finds.map((find) => [find.id, find]))
 
+// Troca o catálogo pelo que veio da API (app/catalogo.js). O array `finds` e o
+// mapa são alterados no lugar porque vários módulos os importam diretamente.
+export function substituirFinds(novos) {
+  finds.splice(0, finds.length, ...novos)
+  findsById.clear()
+  for (const find of finds) findsById.set(find.id, find)
+}
+
 // Eventos cujo find saiu do catálogo são descartados na exibição, mas
 // permanecem no storage: o catálogo mock pode mudar entre sessões.
 export function hydrate(events) {

@@ -4,7 +4,9 @@
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from .modelo import LEMBRETES, PreferenciaTempo, Visualizacao
+from app.mensageria import ler_instante
+
+from .modelo import LEMBRETES, PreferenciaTempo, RepositorioNaSessao, Visualizacao, apagar_usuario
 
 FUSO = ZoneInfo("America/Sao_Paulo")
 MAX_SEGUNDOS = 86400
@@ -133,3 +135,18 @@ def atualizar_preferencias(repo, usuario, limite_diario, lembretes):
     pref = PreferenciaTempo(limite_diario, dict(lembretes))
     repo.salvar_preferencia(usuario, pref)
     return pref
+
+
+# --- consumidor de mensagens ---
+
+def ao_registrar_reproducao(sessao, mensagem):
+    """ReproducaoRegistrada (Vídeos): soma à visualização do vídeo, como a rota do front."""
+    c = mensagem.conteudo
+    assistido_em = int(ler_instante(c["iniciada_em"]).timestamp() * 1000)
+    registrar_visualizacao(RepositorioNaSessao(sessao), c["usuario_id"], c["video_id"],
+                           int(c["segundos_assistidos"]), assistido_em)
+
+
+def ao_remover_usuario(sessao, mensagem):
+    """UsuarioRemovido: apaga o histórico e as preferências do usuário."""
+    apagar_usuario(sessao, mensagem.conteudo["usuario_id"])

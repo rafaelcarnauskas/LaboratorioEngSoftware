@@ -18,6 +18,10 @@ TTL_MAX = 525600  # 365 dias em minutos
 _SO_DIGITOS = re.compile(r"[0-9]+")
 
 
+def _sqlite_padrao(nome: str) -> str:
+    return f"sqlite:///{(BACKEND_DIR / f'choosen_{nome}.db').as_posix()}"
+
+
 class Configuracao(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="CHOOSEN_",
@@ -39,9 +43,22 @@ class Configuracao(BaseSettings):
     )
     session_ttl_minutes: int = Field(default=10080, ge=TTL_MIN, le=TTL_MAX, strict=False)
     frontend_url: str = "http://localhost:5173"
-    # Banco compartilhado com os outros microserviços (CHOOSEN_SHARED_DATABASE_URL).
-    # Ausente: usa o mesmo banco de `database_url`.
-    shared_database_url: str | None = None
+    # Bancos próprios dos outros microserviços e o banco compartilhado. Cada um tem
+    # a sua variável; sem ela, um arquivo SQLite próprio em backend/.
+    shared_database_url: str = _sqlite_padrao("compartilhado")
+    comunidades_database_url: str = _sqlite_padrao("comunidades")
+    videos_database_url: str = _sqlite_padrao("videos")
+    busca_listas_database_url: str = _sqlite_padrao("busca_listas")
+    historico_database_url: str = _sqlite_padrao("historico")
+    # Endereço da API de Dados Compartilhados. Sem ele, os serviços a chamam no
+    # mesmo processo; com ele, por HTTP (cabeçalhos X-Servico e X-Credencial).
+    infra_url: str | None = None
+    # Credenciais dos serviços na API HTTP: CHOOSEN_CREDENCIAL_<SERVICO>.
+    credencial_autenticacao: str | None = None
+    credencial_comunidades: str | None = None
+    credencial_videos: str | None = None
+    credencial_busca_listas: str | None = None
+    credencial_historico: str | None = None
 
     @field_validator("session_ttl_minutes", mode="before")
     @classmethod
@@ -60,11 +77,10 @@ class Configuracao(BaseSettings):
     def _normalizar_database_url(cls, valor: str) -> str:
         return normalizar_url_postgres(valor)
 
-    @field_validator("shared_database_url")
+    @field_validator("shared_database_url", "comunidades_database_url", "videos_database_url",
+                     "busca_listas_database_url", "historico_database_url")
     @classmethod
-    def _normalizar_shared_database_url(cls, valor: str | None) -> str | None:
-        if valor is None:
-            return None
+    def _normalizar_urls_dos_servicos(cls, valor: str) -> str:
         return normalizar_url_postgres(valor)
 
     @property
@@ -73,8 +89,30 @@ class Configuracao(BaseSettings):
 
     @property
     def url_compartilhada(self) -> str:
-        """URL do banco compartilhado; sem `CHOOSEN_SHARED_DATABASE_URL`, a do banco próprio."""
-        return self.shared_database_url or self.database_url
+        return self.shared_database_url
+
+    @property
+    def urls_bancos(self) -> dict[str, str]:
+        """Banco de cada microserviço (e o compartilhado, da infraestrutura)."""
+        return {
+            "autenticacao": self.database_url,
+            "comunidades": self.comunidades_database_url,
+            "videos": self.videos_database_url,
+            "busca_listas": self.busca_listas_database_url,
+            "historico": self.historico_database_url,
+            "infraestrutura": self.shared_database_url,
+        }
+
+    @property
+    def credenciais(self) -> dict[str, str]:
+        valores = {
+            "autenticacao": self.credencial_autenticacao,
+            "comunidades": self.credencial_comunidades,
+            "videos": self.credencial_videos,
+            "busca_listas": self.credencial_busca_listas,
+            "historico": self.credencial_historico,
+        }
+        return {servico: c for servico, c in valores.items() if c}
 
 
 _MENSAGENS = {

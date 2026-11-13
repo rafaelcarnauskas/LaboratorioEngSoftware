@@ -31,7 +31,7 @@ def _ativar_foreign_keys(conexao_dbapi, _registro):
         cursor.close()
 
 
-def criar_engine(url: str | None = None) -> Engine:
+def criar_engine(url: str) -> Engine:
     """Cria o engine reaproveitando `app.db.base.criar_engine`.
 
     Para SQLite (`check_same_thread=False` já vem da base) liga
