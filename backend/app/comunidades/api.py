@@ -1,13 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, ConfigDict
 
 from app.autenticacao.api import PerfilPublico, obter_usuario_atual
 from app.comunidades.modelo import Comunidade
-from app.comunidades.servico import (
-    ComunidadeNaoEncontradaError,
-    ServicoComunidades,
-    UsuarioNaoEncontradoError,
-)
+from app.comunidades.servico import ComunidadeNaoEncontradaError, ServicoComunidades
 
 
 class NichoResposta(BaseModel):
@@ -40,16 +36,24 @@ class ParticipacaoResposta(BaseModel):
 
 
 router = APIRouter(prefix="/comunidades", tags=["comunidades"])
-servico = ServicoComunidades()
 
 
-@router.get("", response_model=list[ComunidadeResumoResposta])
-def listar_comunidades() -> list[Comunidade]:
+def obter_servico(request: Request) -> ServicoComunidades:
+    return request.app.state.plataforma.comunidades
+
+
+def _nao_encontrada(error: Exception) -> HTTPException:
+    return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Comunidade não encontrada.")
+
+
+@router.get("", response_model=list[ComunidadeResposta])
+def listar_comunidades(servico: ServicoComunidades = Depends(obter_servico)) -> list[Comunidade]:
     return servico.listar_comunidades()
 
 
 @router.get("/{comunidade_id}", response_model=ComunidadeResposta)
-def detalhar_comunidade(comunidade_id: str) -> Comunidade:
+def detalhar_comunidade(comunidade_id: str,
+                        servico: ServicoComunidades = Depends(obter_servico)) -> Comunidade:
     try:
         return servico.buscar_comunidade(comunidade_id)
     except ComunidadeNaoEncontradaError as error:
@@ -69,20 +73,12 @@ def participar(
     # a identidade usada sempre vem do token, nunca do id recebido no corpo.
     requisicao: ParticipacaoRequisicao | None = None,
     usuario: PerfilPublico = Depends(obter_usuario_atual),
+    servico: ServicoComunidades = Depends(obter_servico),
 ) -> ParticipacaoResposta:
     try:
-        servico.registrar_usuario(usuario.id, usuario.name, usuario.email)
         participou_agora = servico.participar(comunidade_id, usuario.id)
     except ComunidadeNaoEncontradaError as error:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Comunidade não encontrada.",
-        ) from error
-    except UsuarioNaoEncontradoError as error:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Usuário não encontrado.",
-        ) from error
+        raise _nao_encontrada(error) from error
 
     mensagem = (
         "Usuário entrou na comunidade."
@@ -94,4 +90,22 @@ def participar(
         comunidade_id=comunidade_id,
         participou_agora=participou_agora,
         mensagem=mensagem,
+    )
+
+
+@router.delete("/{comunidade_id}/participar", response_model=ParticipacaoResposta)
+def sair(
+    comunidade_id: str,
+    usuario: PerfilPublico = Depends(obter_usuario_atual),
+    servico: ServicoComunidades = Depends(obter_servico),
+) -> ParticipacaoResposta:
+    try:
+        saiu = servico.sair(comunidade_id, usuario.id)
+    except ComunidadeNaoEncontradaError as error:
+        raise _nao_encontrada(error) from error
+    return ParticipacaoResposta(
+        usuario_id=usuario.id,
+        comunidade_id=comunidade_id,
+        participou_agora=False,
+        mensagem="Usuário saiu da comunidade." if saiu else "Usuário não participava da comunidade.",
     )

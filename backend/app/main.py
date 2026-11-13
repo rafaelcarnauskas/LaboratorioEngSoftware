@@ -14,22 +14,15 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.autenticacao.api import router as autenticacao_router
-from app.autenticacao.mensagens import ligar_publicacao_de_usuarios, montar_integracao
-from app.autenticacao.servico import ErroDominio
-from app.busca_listas.api import router as busca_listas_router
-from app.busca_listas.api import get_videos as busca_get_videos
-from app.comunidades.api import router as comunidades_router
 from app.autenticacao.api import obter_usuario_atual, router as autenticacao_router
 from app.autenticacao.servico import ErroDominio
+from app.busca_listas.api import router as busca_listas_router
+from app.comunidades.api import router as comunidades_router
 from app.core.config import carregar_configuracao
-from app.db.sessao import criar_engine, criar_session_local
 from app.historico.api import router as historico_router
-from app.historico.api import get_repositorio as historico_get_repositorio
-from app.historico import servico as historico_servico
+from app.infraestrutura.api import router as infraestrutura_router
+from app.plataforma import montar_plataforma
 from app.videos.api import create_router as create_videos_router
-from app.videos.modelo import MockVideoRepository
-from app.videos.servico import PlaybackService, VideoService
 
 logger = logging.getLogger("app.main")
 
@@ -118,15 +111,14 @@ def create_app() -> FastAPI:
 
     app = FastAPI(title="Choosen API", version="0.1.0")
     app.state.config = config
-    # Só cria os engines e a fábrica de sessões; o esquema dos dois bancos (próprio e
-    # compartilhado) vem do Alembic (Requisito 13.8).
-    app.state.engine = criar_engine(config.database_url)
-    app.state.session_local = criar_session_local(app.state.engine)
-    integracao = montar_integracao(config, app.state.engine)
-    app.state.engine_compartilhado = integracao.engine_compartilhado
-    app.state.dados_compartilhados = integracao.leitura  # só leitura para as outras partes
-    app.state.barramento = integracao.barramento
-    ligar_publicacao_de_usuarios(app.state.session_local, integracao.barramento)
+    # Cada microserviço com o próprio banco; o compartilhado só pela infraestrutura.
+    # Só cria engines e fábricas de sessões: o esquema vem das migrations
+    # (`python -m app.db.migrar`, Requisito 13.8).
+    plataforma = montar_plataforma(config)
+    app.state.plataforma = plataforma
+    app.state.engine = plataforma.engines["autenticacao"]
+    app.state.session_local = plataforma.fabricas["autenticacao"]
+    plataforma.preparar()
 
     app.add_middleware(
         CORSMiddleware,
@@ -148,16 +140,11 @@ def create_app() -> FastAPI:
     )
     app.include_router(historico_router)  # já tem o prefixo /api/v1
     app.include_router(busca_listas_router)  # já tem o prefixo /api/v1
-
-    videos = VideoService(MockVideoRepository())
-    app.dependency_overrides[busca_get_videos] = lambda: videos
     app.include_router(
-        create_videos_router(
-            videos,
-            PlaybackService(videos, _HistoryRecorder()),
-            obter_usuario_atual,
-        )
+        create_videos_router(plataforma.videos, plataforma.reproducoes, obter_usuario_atual)
     )
+    # API de Dados Compartilhados (interface remota da infraestrutura, para serviços).
+    app.include_router(infraestrutura_router)
 
     # Sem dependências: não lê Authorization nem acessa o banco (Requisito 13.10).
     @app.get("/api/v1/health", tags=["health"])
@@ -168,27 +155,6 @@ def create_app() -> FastAPI:
     app.add_api_route("/health", health, methods=["GET"], tags=["health"], include_in_schema=False)
 
     return app
-
-
-class _HistoryRecorder:
-    """Adapta os registros de reprodução ao contrato do módulo Histórico."""
-
-    def registrar_visualizacao(
-        self,
-        *,
-        usuario_id: str,
-        video_id: str,
-        segundos_assistidos: int,
-        ocorrido_em,
-    ) -> None:
-        timestamp_ms = int(ocorrido_em.timestamp() * 1000)
-        historico_servico.registrar_visualizacao(
-            historico_get_repositorio(),
-            usuario_id,
-            video_id,
-            segundos_assistidos,
-            timestamp_ms,
-        )
 
 
 app = create_app()

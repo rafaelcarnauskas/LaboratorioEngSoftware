@@ -13,9 +13,17 @@ from datetime import datetime
 from uuid import uuid4
 
 from sqlalchemy import Boolean, ForeignKey, Index, String, Text, UniqueConstraint
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-from app.db.base import Base, DataHoraUTC
+from app.db.base import DataHoraUTC
+from app.mensageria.outbox import MensagemEnviadaMixin, MensagemRecebidaMixin
+
+
+class BaseAutenticacao(DeclarativeBase):
+    """Tabelas do banco próprio ``choosen_autenticacao``."""
+
+
+Base = BaseAutenticacao  # nome antigo, usado pelo alembic/env.py
 
 
 def _novo_id() -> str:
@@ -80,3 +88,11 @@ class TokenRedefinicao(Base):
         UniqueConstraint("token_hash", name="uq_token_redefinicao_token_hash"),
         Index("ix_token_redefinicao_usuario_id", "usuario_id"),
     )
+
+
+class MensagemEnviada(MensagemEnviadaMixin, BaseAutenticacao):
+    """Outbox: UsuarioCadastrado, PerfilAtualizado e UsuarioRemovido."""
+
+
+class MensagemRecebida(MensagemRecebidaMixin, BaseAutenticacao):
+    """A autenticação não assina mensagens; a tabela existe em todo banco próprio."""

@@ -1,11 +1,21 @@
 # Regras do Serviço de Busca e do Serviço de Listas (parte 4).
 # Mesmas regras de frontend/src/4-busca-listas (SearchView.jsx, ListsView.jsx e useLists.js).
-# A busca consulta o Serviço de Vídeos (parte 3); nunca acessa os dados de vídeo direto.
+# A busca roda no indice_busca do banco próprio, mantido pelas mensagens de Vídeos.
+# Para salvar um vídeo numa lista, o vídeo precisa estar no índice ou em video_publico
+# (consultado pela API de Dados Compartilhados).
+import logging
 import re
 import unicodedata
 import uuid
 
-from .modelo import Lista
+from sqlalchemy import delete
+
+from app.infraestrutura.catalogo import VIDEO_PUBLICO
+from app.mensageria import ler_instante
+
+from .modelo import IndiceBusca, ItemListaTabela, Lista, ListaTabela
+
+logger = logging.getLogger("choosen.busca_listas")
 
 TONS = ("gold", "blue", "green", "purple")
 MAX_NOME = 60
@@ -18,6 +28,10 @@ LIMITE_CURTO = 60  # segundos: "1 minuto ou menos"
 
 class ListaNaoEncontrada(LookupError):
     pass
+
+
+class VideoNaoEncontrado(LookupError):
+    """O vídeo não está no índice de busca nem em video_publico."""
 
 
 class ItemDuplicado(ValueError):
@@ -66,19 +80,19 @@ def _casa_duracao(video, duracao):
     return segundos <= LIMITE_CURTO if duracao == "short" else segundos > LIMITE_CURTO
 
 
-def pesquisar(videos, termo="", categoria=None, duracao="any", ordem="featured"):
-    """`videos` é o Serviço de Vídeos. Todos os termos precisam aparecer no texto."""
+def texto_indexado(titulo, autor, categoria):
+    return normalizar(f"{titulo} {autor} {categoria}")
+
+
+def pesquisar(indice, termo="", categoria=None, duracao="any", ordem="featured"):
+    """`indice` é o RepositorioIndice. Todos os termos precisam aparecer no texto."""
     if duracao not in DURACOES:
         raise ValueError("duração inválida")
     if ordem not in ORDENS:
         raise ValueError("ordem inválida")
     termos = normalizar(termo).split()
-    categoria = (categoria or "").strip() or None
-    resultado = [
-        v for v in videos.list_videos(category=categoria)
-        if all(t in normalizar(f"{v.title} {v.author} {v.category}") for t in termos)
-        and _casa_duracao(v, duracao)
-    ]
+    categoria = normalizar(categoria) or None
+    resultado = [v for v in indice.buscar(termos, categoria) if _casa_duracao(v, duracao)]
     if ordem == "title":
         resultado.sort(key=lambda v: normalizar(v.title))
     elif ordem == "shortest":
@@ -158,7 +172,7 @@ def apagar_lista(repo, usuario, lista_id):
 def adicionar_item(repo, videos, usuario, lista_id, video_id, agora):
     """adicionarItem(usuário, lista, vídeo) do diagrama de sequência."""
     lista = _buscar(repo, usuario, lista_id)
-    videos.get_video(video_id)  # VideoNotFoundError se o vídeo não existir
+    videos.exigir(video_id)  # VideoNaoEncontrado se o vídeo não existir
     if video_id in lista.video_ids:
         raise ItemDuplicado(video_id)
     if len(lista.video_ids) >= MAX_VIDEOS_POR_LISTA:
@@ -181,7 +195,7 @@ def remover_item(repo, usuario, lista_id, video_id, agora):
 
 def definir_listas_do_video(repo, videos, usuario, video_id, lista_ids, agora):
     """Modal "Salvar em uma lista" da Busca: o vídeo fica exatamente nas listas marcadas."""
-    videos.get_video(video_id)
+    videos.exigir(video_id)
     marcadas = set(lista_ids)
     existentes = {lista.id: lista for lista in repo.listas(usuario)}
     faltando = marcadas - existentes.keys()
@@ -194,3 +208,60 @@ def definir_listas_do_video(repo, videos, usuario, video_id, lista_ids, agora):
         elif lista.id not in marcadas and dentro:
             remover_item(repo, usuario, lista.id, video_id, agora)
     return listar(repo, usuario)
+
+
+# --- Vídeos conhecidos pelo serviço ---
+
+class VerificadorVideos:
+    """Confere se um vídeo existe: primeiro no indice_busca, depois em video_publico."""
+
+    def __init__(self, indice, dados):
+        self._indice = indice
+        self._dados = dados
+
+    def exigir(self, video_id):
+        if self._indice.existe(video_id):
+            return
+        try:
+            encontrado = self._dados.obter(VIDEO_PUBLICO, video_id)
+        except Exception as erro:  # noqa: BLE001 - sem a API, vale só o índice
+            logger.warning("video_publico indisponível (%s).", type(erro).__name__)
+            encontrado = None
+        if encontrado is None:
+            raise VideoNaoEncontrado(video_id)
+
+
+# --- Consumidor de mensagens ---
+
+def ao_publicar_video(sessao, mensagem):
+    """VideoPublicado/VideoAtualizado: atualiza o indice_busca (ignora mensagem mais velha)."""
+    c = mensagem.conteudo
+    atualizado_em = ler_instante(c["atualizado_em"])
+    atual = sessao.get(IndiceBusca, c["video_id"])
+    if atual is not None and atual.atualizado_em > atualizado_em:
+        return
+    autor = c.get("autor_username", "")
+    sessao.merge(IndiceBusca(
+        video_id=c["video_id"],
+        titulo=c["titulo"],
+        texto_normalizado=texto_indexado(c["titulo"], autor, c["categoria"]),
+        categoria=normalizar(c["categoria"]),
+        comunidade_id=c.get("comunidade_id"),
+        duracao_segundos=c.get("duracao_segundos"),
+        autor=autor,
+        thumbnail_url=c.get("thumbnail_url"),
+        publicado_em=ler_instante(c["publicado_em"]) if c.get("publicado_em") else None,
+        atualizado_em=atualizado_em,
+    ))
+
+
+def ao_remover_video(sessao, mensagem):
+    """VideoRemovido: o vídeo sai da busca. Os itens de lista ficam (a tela mostra indisponível)."""
+    sessao.execute(delete(IndiceBusca).where(IndiceBusca.video_id == mensagem.conteudo["video_id"]))
+
+
+def ao_remover_usuario(sessao, mensagem):
+    """UsuarioRemovido: apaga as listas do usuário."""
+    usuario_id = mensagem.conteudo["usuario_id"]
+    sessao.execute(delete(ItemListaTabela).where(ItemListaTabela.usuario_id == usuario_id))
+    sessao.execute(delete(ListaTabela).where(ListaTabela.usuario_id == usuario_id))

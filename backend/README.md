@@ -1,6 +1,6 @@
 # Backend do Choosen
 
-API em FastAPI + SQLAlchemy + Alembic. A Parte 1 (autenticação e conta) fica em `app/autenticacao/`; as rotas ficam sob `/api/v1`.
+API em FastAPI + SQLAlchemy + Alembic, com os cinco microserviços (autenticação, comunidades, vídeos, busca e listas, histórico) e a infraestrutura de dados compartilhados; as rotas ficam sob `/api/v1`.
 
 Os comandos abaixo são para PowerShell (Windows) e, salvo indicação, rodam dentro de `backend/`.
 
@@ -15,9 +15,9 @@ python -m venv .venv
 pip install -r backend/requirements.txt
 ```
 
-Todas as dependências em `requirements.txt` têm versão fixa (`==`). Duas não são usadas diretamente pela Parte 1:
+Todas as dependências em `requirements.txt` têm versão fixa (`==`). Duas merecem nota:
 
-- `psycopg[binary]`: driver do Postgres usado no Render (`DATABASE_URL` vira `postgresql+psycopg://`).
+- `psycopg[binary]`: driver do PostgreSQL (`postgresql://` vira `postgresql+psycopg://`).
 - `tzdata`: base de fusos horários para `ZoneInfo("America/Sao_Paulo")` no Windows, usada pelo `historico`.
 
 ## Configuração
@@ -27,88 +27,133 @@ Lida de variáveis de ambiente em `app/core/config.py`. Valor inválido interrom
 | Variável | Padrão | Descrição |
 |---|---|---|
 | `CHOOSEN_ENV` | `development` | `development`, `test` ou `production`. |
-| `CHOOSEN_DATABASE_URL` | `sqlite:///<backend>/choosen.db` | URL do SQLAlchemy. Se ausente, usa `DATABASE_URL` (nome do Render). `postgres://` e `postgresql://` são convertidos para `postgresql+psycopg://`. |
+| `CHOOSEN_DATABASE_URL` | `sqlite:///<backend>/choosen.db` | Banco próprio da autenticação. Se ausente, usa `DATABASE_URL` (nome do Render). |
+| `CHOOSEN_SHARED_DATABASE_URL` | `sqlite:///<backend>/choosen_compartilhado.db` | Banco compartilhado (`choosen_compartilhado`). Só a infraestrutura usa esta URL. |
+| `CHOOSEN_COMUNIDADES_DATABASE_URL` | `sqlite:///<backend>/choosen_comunidades.db` | Banco próprio das Comunidades. |
+| `CHOOSEN_VIDEOS_DATABASE_URL` | `sqlite:///<backend>/choosen_videos.db` | Banco próprio dos Vídeos. |
+| `CHOOSEN_BUSCA_LISTAS_DATABASE_URL` | `sqlite:///<backend>/choosen_busca_listas.db` | Banco próprio da Busca e Listas. |
+| `CHOOSEN_HISTORICO_DATABASE_URL` | `sqlite:///<backend>/choosen_historico.db` | Banco próprio do Histórico. |
+| `CHOOSEN_INFRA_URL` | (vazio) | Endereço da API de Dados Compartilhados. Vazio: os serviços a chamam no mesmo processo. Preenchido (ex.: `http://localhost:8000`): por HTTP, com as credenciais abaixo. |
+| `CHOOSEN_CREDENCIAL_<SERVICO>` | (vazio) | Credencial de cada serviço na API HTTP (`AUTENTICACAO`, `COMUNIDADES`, `VIDEOS`, `BUSCA_LISTAS`, `HISTORICO`). O banco guarda só o SHA-256. Sem ela, o serviço não usa a API por HTTP. |
 | `CHOOSEN_CORS_ORIGINS` | `http://localhost:5173` | Origens permitidas, separadas por vírgula (espaços nas pontas são ignorados). Se ausente, usa `CORS_ORIGINS`. |
 | `CHOOSEN_SESSION_TTL_MINUTES` | `10080` (7 dias) | Validade da sessão em minutos, inteiro de 1 a 525600. |
 | `CHOOSEN_FRONTEND_URL` | `http://localhost:5173` | Base do link de redefinição de senha. |
-| `CHOOSEN_SHARED_DATABASE_URL` | a mesma URL do banco próprio | URL do banco compartilhado com os outros microserviços (tabela `usuario_publico`). `postgres://` e `postgresql://` são convertidos para `postgresql+psycopg://`. Sem ela, a tabela fica no mesmo banco de `CHOOSEN_DATABASE_URL`. |
+
+Todas as URLs de banco aceitam `postgres://` e `postgresql://`, convertidas para `postgresql+psycopg://`.
 
 No frontend, `VITE_API_URL` é só o host do Backend (padrão `http://localhost:8000`); o frontend acrescenta `/api/v1`. Isso difere do texto do Requisito 12.1 (que põe `/api/v1` no padrão) por decisão do projeto, para seguir a mesma convenção de `frontend/src/2-comunidades/servico.js`.
 
+## Modelo de dados
+
+O sistema tem cinco microserviços. Cada um tem **um banco próprio**, que nenhum outro usa, e todos compartilham **um banco compartilhado**, de acesso controlado pela infraestrutura. Tudo em SQLAlchemy 2 (um `DeclarativeBase` por banco) com PostgreSQL; o SQLite fica só para o desenvolvimento local. O diagrama ER completo está no documento do grupo (`Modelo_de_Dados_Choosen.pdf`).
+
+| Banco | Dono | Tabelas | Código |
+|---|---|---|---|
+| `choosen_autenticacao` | Autenticação | `usuario`, `sessao`, `token_redefinicao` | `app/autenticacao/modelo.py` |
+| `choosen_comunidades` | Comunidades | `comunidade`, `nicho`, `participacao` | `app/comunidades/modelo.py` |
+| `choosen_videos` | Vídeos | `video`, `curtida`, `comentario`, `reproducao` | `app/videos/modelo.py` |
+| `choosen_busca_listas` | Busca e Listas | `lista`, `item_lista`, `indice_busca` | `app/busca_listas/modelo.py` |
+| `choosen_historico` | Histórico | `visualizacao`, `preferencia_tempo` | `app/historico/modelo.py` |
+| `choosen_compartilhado` | Infraestrutura | `usuario_publico`, `comunidade_publica`, `nicho_publico`, `video_publico`; `servico`, `permissao`, `assinatura`, `mensagem`, `entrega` | `app/infraestrutura/modelo.py` |
+
+Todo banco próprio tem também `mensagem_enviada` (outbox: a mensagem é gravada na mesma transação da mudança e publicada depois do `commit`) e `mensagem_recebida` (ids já processados, para não aplicar a mesma mensagem duas vezes). Ver `app/mensageria/outbox.py`.
+
+Referências para outro banco (por exemplo `lista.usuario_id`) são **lógicas**: guardam só o id, sem FK. Contadores (membros, curtidas, comentários) são derivados das tabelas de origem e chegam pré-calculados ao banco compartilhado por mensagem.
+
+### Banco compartilhado e interface remota
+
+- Nenhum serviço tem a URL do banco compartilhado. Cada um recebe um `ClienteDadosCompartilhados` (`app/infraestrutura/cliente.py`) com o próprio id. O cliente chama a **API de Dados Compartilhados** (`app/infraestrutura/dados.py`), que confere a tabela `permissao` antes de executar. Entra e sai só JSON.
+- A mesma API é exposta por HTTP em `/api/v1/infra/dados/{tabela}` (`app/infraestrutura/api.py`), com os cabeçalhos `X-Servico` e `X-Credencial`: `GET /{tabela}?coluna=valor`, `GET /{tabela}/{chave}` e `PUT /{tabela}/{chave}` (só o dono). Credencial errada: 401; sem permissão: 403. Com `CHOOSEN_INFRA_URL`, os serviços usam esse caminho; sem ela, a chamada acontece no mesmo processo, com a mesma checagem de permissão.
+- A matriz de acesso (dono de cada tabela e leitores) e as assinaturas de mensagens ficam em `app/infraestrutura/catalogo.py`. Elas são gravadas em `servico`, `permissao` e `assinatura` ao subir a API e no `python -m app.db.migrar`.
+
+| Tabela compartilhada | Dono (escreve) | Leitores |
+|---|---|---|
+| `usuario_publico` | Autenticação | Comunidades, Vídeos, Busca e Listas, Histórico |
+| `comunidade_publica`, `nicho_publico` | Comunidades | Vídeos, Busca e Listas |
+| `video_publico` | Vídeos | Busca e Listas, Histórico, Comunidades |
+
+### Mensagens
+
+O barramento (`app/infraestrutura/barramento.py`) registra cada mensagem em `mensagem`, cria uma `entrega` por assinante e marca `entregue` ou `falhou` (com `tentativas`). Ele recusa mensagem de um serviço que não é o publicador daquele tipo. As entregas que falharam são tentadas de novo ao subir a API. Os consumidores rodam hoje no mesmo processo; um broker (RabbitMQ, Kafka) pode substituir a entrega sem mudar as tabelas.
+
+| Mensagem | Publicada por | Assinantes | Efeito |
+|---|---|---|---|
+| `UsuarioCadastrado`, `PerfilAtualizado` | Autenticação | Infraestrutura | Grava `usuario_publico`. |
+| `UsuarioRemovido` | Autenticação | Infraestrutura, Comunidades, Vídeos, Busca e Listas, Histórico | Remove `usuario_publico` e os dados do usuário em cada serviço. |
+| `ComunidadeCriada`, `ComunidadeAtualizada` | Comunidades | Infraestrutura | Grava `comunidade_publica` e `nicho_publico`. |
+| `MembroEntrou`, `MembroSaiu` | Comunidades | Infraestrutura | Atualiza `comunidade_publica.quantidade_membros`. |
+| `VideoPublicado`, `VideoAtualizado`, `VideoRemovido` | Vídeos | Infraestrutura, Busca e Listas | Atualiza `video_publico` e o `indice_busca`. |
+| `ReproducaoRegistrada` | Vídeos | Histórico | Soma a reprodução em `visualizacao`. |
+
+Na autenticação, as mensagens de usuário saem de um evento `before_flush` (`app/autenticacao/mensagens.py`), então cadastro, edição de perfil, troca e redefinição de senha e semeadura publicam sem mudar `servico.py`. O conteúdo não tem e-mail, senha, sessões nem tokens.
+
+### Diferenças em relação ao PDF
+
+- `lista` tem chave `(usuario_id, id)` e `item_lista` leva `usuario_id`: o front gera o id e as listas iniciais têm ids fixos (`watch-later`...), iguais para todos os usuários.
+- `indice_busca` também guarda `autor`, `thumbnail_url` e `publicado_em`, para a busca por autor e a ordem "em destaque" responderem sem chamada remota.
+- As tabelas da autenticação continuam com `id` em `varchar(36)` e datas sem fuso (migration `0001`); as tabelas novas usam `uuid` e `timestamptz`.
+
 ## Banco e migrations
 
-O esquema da Parte 1 (tabelas `usuario`, `sessao` e `token_redefinicao`) é criado e alterado só pelo Alembic; o Backend não cria tabelas ao iniciar.
+O esquema de cada banco é criado e alterado só pelo Alembic; o Backend não cria tabelas ao iniciar. Um comando aplica as migrations de todos os bancos e preenche `usuario_publico` com os usuários que já existem:
 
 ```powershell
-alembic upgrade head
+python -m app.db.migrar
 ```
 
-Com a configuração padrão, isso cria `backend/choosen.db` se ele não existir.
-
-O banco compartilhado (tabela `usuario_publico`) tem um segundo ambiente do Alembic, em `alembic_compartilhado/` (seção `[compartilhado]` do `alembic.ini`):
-
-```powershell
-alembic -n compartilhado upgrade head
-```
+Com a configuração padrão, isso cria os seis arquivos SQLite em `backend/`. Cada banco tem o próprio ambiente do Alembic (seção do `alembic.ini`), que também pode ser rodado sozinho:
 
 | Comando | Banco (variável) | Tabela de versão |
 |---|---|---|
-| `alembic upgrade head` | próprio (`CHOOSEN_DATABASE_URL`) | `alembic_version` |
+| `alembic upgrade head` | autenticação (`CHOOSEN_DATABASE_URL`) | `alembic_version` |
 | `alembic -n compartilhado upgrade head` | compartilhado (`CHOOSEN_SHARED_DATABASE_URL`) | `alembic_version_compartilhado` |
+| `alembic -n comunidades upgrade head` | `CHOOSEN_COMUNIDADES_DATABASE_URL` | `alembic_version_comunidades` |
+| `alembic -n videos upgrade head` | `CHOOSEN_VIDEOS_DATABASE_URL` | `alembic_version_videos` |
+| `alembic -n busca_listas upgrade head` | `CHOOSEN_BUSCA_LISTAS_DATABASE_URL` | `alembic_version_busca_listas` |
+| `alembic -n historico upgrade head` | `CHOOSEN_HISTORICO_DATABASE_URL` | `alembic_version_historico` |
 
-Sem `CHOOSEN_SHARED_DATABASE_URL`, os dois comandos usam o mesmo banco; as tabelas de versão separadas permitem isso. Exemplo com dois bancos PostgreSQL:
-
-```powershell
-$env:CHOOSEN_DATABASE_URL = "postgresql://usuario:senha@localhost/choosen_autenticacao"
-$env:CHOOSEN_SHARED_DATABASE_URL = "postgresql://usuario:senha@localhost/choosen_compartilhado"
-alembic upgrade head
-alembic -n compartilhado upgrade head
-```
-
-Para ver o SQL sem conectar, acrescente `--sql` a qualquer um dos comandos.
-
-Depois da primeira migration do banco compartilhado, copie para ele os usuários que já existem no banco próprio:
+Exemplo com PostgreSQL (um banco por serviço no mesmo servidor):
 
 ```powershell
-python -m app.autenticacao.republicar
+$base = "postgresql://usuario:senha@localhost"
+$env:CHOOSEN_DATABASE_URL = "$base/choosen_autenticacao"
+$env:CHOOSEN_SHARED_DATABASE_URL = "$base/choosen_compartilhado"
+$env:CHOOSEN_COMUNIDADES_DATABASE_URL = "$base/choosen_comunidades"
+$env:CHOOSEN_VIDEOS_DATABASE_URL = "$base/choosen_videos"
+$env:CHOOSEN_BUSCA_LISTAS_DATABASE_URL = "$base/choosen_busca_listas"
+$env:CHOOSEN_HISTORICO_DATABASE_URL = "$base/choosen_historico"
+python -m app.db.migrar
 ```
 
-O comando publica a mensagem `usuario.perfil_publicado` para cada usuário e pode rodar quantas vezes for preciso (a réplica não volta para um estado mais antigo). Também conserta a réplica depois de um WARNING em `choosen.integracao`. Sai com código 1 se alguma entrega falhar.
+Se só houver um banco PostgreSQL disponível (como no plano gratuito do Render), dê a cada serviço um schema próprio acrescentando `?options=-csearch_path%3D<schema>` à URL (por exemplo `.../choosen?options=-csearch_path%3Dcomunidades`). O schema é criado antes das migrations.
+
+Para ver o SQL sem conectar, acrescente `--sql` a qualquer comando `alembic`.
+
+`python -m app.autenticacao.republicar` publica de novo `PerfilAtualizado` para todos os usuários (o `migrar` já faz isso). Pode rodar quantas vezes for preciso: a infraestrutura ignora mensagem mais velha que a linha atual.
 
 ### Deploy (Render)
 
-O comando de start do Render fica no painel, fora do repositório. Ele precisa rodar as duas migrations e a carga da réplica antes de subir o servidor:
+O comando de start do Render fica no painel, fora do repositório. Ele precisa rodar as migrations antes de subir o servidor:
 
 ```bash
-alembic upgrade head && alembic -n compartilhado upgrade head && python -m app.autenticacao.republicar && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+python -m app.db.migrar && uvicorn app.main:app --host 0.0.0.0 --port $PORT
 ```
 
-Sem a migration compartilhada, a API funciona, mas cada escrita de usuário registra um WARNING e a réplica fica vazia.
+Configure no Render as URLs dos seis bancos (ou os schemas, como acima). Sem elas, os outros serviços usam arquivos SQLite no disco do Render, que é apagado a cada deploy.
 
-## Modelo de dados da autenticação
-
-O microserviço de autenticação tem dois bancos (SQLAlchemy; PostgreSQL em produção, SQLite local):
-
-- **Banco próprio** (`app/autenticacao/modelo.py`, migration `alembic/versions/0001`), fonte da verdade:
-  - `usuario`: PK `id`; `email`, `username`, `username_normalizado`, `hash_senha`, `nome`, `descricao`, `foto`, `is_community_admin`, `is_system_admin`, `criado_em`, `atualizado_em`. Únicos: `uq_usuario_email` (`email`) e `uq_usuario_username_normalizado`.
-  - `sessao`: PK `id`; FK `usuario_id → usuario.id` (`ON DELETE CASCADE`, índice `ix_sessao_usuario_id`); `token_hash` único; `criada_em`, `expira_em`, `revogada_em`.
-  - `token_redefinicao`: PK `id`; FK `usuario_id → usuario.id` (`ON DELETE CASCADE`, índice `ix_token_redefinicao_usuario_id`); `token_hash` único; `criado_em`, `expira_em`, `usado_em`, `invalidado_em`.
-- **Banco compartilhado** (`app/autenticacao/modelo_compartilhado.py`, migration `alembic_compartilhado/versions/c0001`):
-  - `usuario_publico`: réplica do perfil público. PK `id` (o mesmo valor de `usuario.id`); `nome`, `username`, `email`, `descricao`, `foto`, `is_community_admin`, `is_system_admin`, `criado_em`, `atualizado_em`. Sem senha, sessões ou tokens, e sem constraints únicas além da PK.
-
-`usuario.id = usuario_publico.id` é uma relação lógica 1 para 0..1, sem FK, porque as tabelas ficam em bancos diferentes. Depois de cada `commit` que cria ou altera um usuário (cadastro, edição de perfil, troca ou redefinição de senha, semeadura), `app/autenticacao/mensagens.py` publica a mensagem JSON `usuario.perfil_publicado`; o assinante grava a réplica pela `InterfaceDadosCompartilhados` (`app/autenticacao/dados_compartilhados.py`), que recebe e devolve só JSON. Uma mensagem com `updatedAt` mais antigo que o da réplica é ignorada. O barramento e a interface rodam hoje no mesmo processo da API; o contrato só com JSON é o que permite trocá-los por um broker e uma chamada remota.
-
-A entrega acontece depois que a conexão do banco próprio volta ao pool. Se o banco compartilhado falhar, a resposta da API é a mesma e o logger `choosen.integracao` registra um WARNING. A resposta só atrasa enquanto a conexão ao banco compartilhado espera: com `CHOOSEN_SHARED_DATABASE_URL` em PostgreSQL, no máximo 5 segundos (`connect_timeout`, acrescentado se a URL não o definir).
-
-O `alembic/env.py` só gerencia as tabelas da Parte 1. As tabelas do `historico` (`historico_visualizacoes` e `historico_preferencias`) são criadas pelo próprio módulo com `create_all` na primeira requisição a essas rotas. Esse módulo lê `DATABASE_URL` (e não `CHOOSEN_DATABASE_URL`) e, sem ela, usa `./choosen.db` relativo ao diretório atual, ou seja, o mesmo arquivo quando o servidor roda em `backend/`.
-
-## Usuário de demonstração
+## Dados de demonstração
 
 ```powershell
-python -m app.autenticacao.semear
+python -m app.semear
 ```
 
-Só roda com `CHOOSEN_ENV=development` (o padrão); em outro ambiente recusa e sai com código 1. Cria ou restaura `victor@email.com` / `choosen123` (nome `Victor Mendes`, username `victor`, `isCommunityAdmin` e `isSystemAdmin` verdadeiros), sem duplicar o registro. Exige o esquema criado (`alembic upgrade head`).
+Só roda com `CHOOSEN_ENV=development` (o padrão); em outro ambiente recusa e sai com código 1. Exige o esquema criado (`python -m app.db.migrar`). Cada serviço grava só no próprio banco, e o resto chega por mensagem:
+
+- cria ou restaura `victor@email.com` / `choosen123` (nome `Victor Mendes`, username `victor`, `isCommunityAdmin` e `isSystemAdmin` verdadeiros), sem duplicar o registro;
+- cria os autores dos vídeos de demonstração, contas que não entram no sistema (o `hash_senha` delas não é um hash válido);
+- grava as três comunidades com seus nichos e publica os 15 vídeos do catálogo.
+
+`python -m app.autenticacao.semear` cria só os usuários.
 
 ## Rodar
 
@@ -143,22 +188,21 @@ O `app/tests/conftest.py` define `CHOOSEN_ENV=test` e descarta as outras variáv
 
 ## Restaurar o estado inicial do banco
 
-Estado inicial = banco criado pelas migrations com só o usuário de demonstração. Necessário para que duas execuções seguidas dos Testes_Selenium tenham o mesmo resultado. Pare o Backend antes (no Windows o arquivo pode ficar bloqueado enquanto o servidor tem conexões abertas):
+Estado inicial = bancos criados pelas migrations com só os dados de demonstração. Necessário para que duas execuções seguidas dos Testes_Selenium tenham o mesmo resultado. Pare o Backend antes (no Windows os arquivos podem ficar bloqueados enquanto o servidor tem conexões abertas):
 
 ```powershell
-Remove-Item choosen.db -ErrorAction SilentlyContinue
-alembic upgrade head
-alembic -n compartilhado upgrade head
-python -m app.autenticacao.semear
+Remove-Item choosen*.db -ErrorAction SilentlyContinue
+python -m app.db.migrar
+python -m app.semear
 ```
 
-(Com `CHOOSEN_SHARED_DATABASE_URL` apontando para outro banco, esvazie também a tabela `usuario_publico` dele.)
+(Com as variáveis `CHOOSEN_*_DATABASE_URL` apontando para PostgreSQL, apague e recrie esses bancos.)
 
-Isso também apaga as contas criadas pelos testes, as sessões e os dados do `historico` gravados no mesmo arquivo.
+Isso também apaga as contas criadas pelos testes, as sessões, as listas e o histórico.
 
 ## Testes_Selenium
 
-Exigem o frontend em `http://localhost:5173`, o Backend em `http://localhost:8000` com `CHOOSEN_ENV=development` e o usuário de demonstração semeado (de preferência com o banco no estado inicial):
+Exigem o frontend em `http://localhost:5173`, o Backend em `http://localhost:8000` com `CHOOSEN_ENV=development` e os dados de demonstração semeados (de preferência com os bancos no estado inicial):
 
 ```powershell
 # na raiz do repositório
@@ -178,15 +222,15 @@ Mensagem de conexão (Requisito 15.7), conferida à mão porque a suíte precisa
 
 Divergência já existente, não causada pela Parte 1: `test_app.py` procura textos em inglês (`Hi, Victor`, `Profile Settings`, aba `Profile`) que o frontend atual exibe em português (`Olá, Victor`, `Configurações do perfil`, `Perfil`). Falhas por esses textos não são regressão da autenticação.
 
-## Integração com as partes 2 a 5
+## Integração entre os microserviços
 
-`app/main.py` também inclui os routers de `comunidades` e `historico`, que ainda não exigem sessão (o `historico` usa o cabeçalho provisório `X-Usuario`). Regra para as partes 2 a 5 (detalhes na docstring de `obter_usuario_atual` em `app/autenticacao/api.py`):
+`app/plataforma.py` monta os cinco serviços: o banco próprio de cada um, o outbox ligado ao barramento, o consumidor de mensagens e o cliente da API de Dados Compartilhados. As rotas pegam o serviço em `request.app.state.plataforma`.
 
-- Incluir cada router em `main.py` com `dependencies=[Depends(obter_usuario_atual)]`, para que todos os seus endpoints exijam sessão válida (sem ela: `401 sessao_invalida`).
-- O endpoint que precisa do usuário recebe o perfil público (sem token nem hash de senha) declarando um parâmetro `usuario = Depends(obter_usuario_atual)`; o FastAPI reaproveita o resultado da dependência do router.
+- Todo endpoint das partes 2 a 5 exige sessão: o router entra no `main.py` com `dependencies=[Depends(obter_usuario_atual)]`, ou o endpoint declara `usuario = Depends(obter_usuario_atual)` (sem sessão: `401 sessao_invalida`).
 - De `app.autenticacao`, importar só `obter_usuario_atual` (de `app.autenticacao.api`) e `buscar_por_id` (de `app.autenticacao.servico`). Nunca ler `modelo.py` nem as tabelas `usuario` e `sessao` diretamente.
-- Para ler dados de usuário a partir de outro microserviço, usar o banco compartilhado pela dependência `obter_dados_compartilhados` (de `app.autenticacao.dados_compartilhados`), que devolve só a leitura (`buscar_usuario_publico`). Só a autenticação grava a réplica. `obter_usuario_atual` e `buscar_por_id` continuam valendo.
-- Para decidir permissão (por exemplo, `isSystemAdmin`), usar `obter_usuario_atual`, que lê o banco próprio. A réplica pode estar atrasada.
+- Dados de outro serviço (nome e foto de um usuário, uma comunidade, um vídeo) vêm do banco compartilhado pelo cliente do próprio serviço, por exemplo `plataforma.clientes["videos"].listar("usuario_publico", usuario_id=[...])`. Só o que a `permissao` deixa.
+- Mudança que outro serviço precisa saber vira mensagem: `outbox.registrar(sessao, tipo, chave, conteudo)` dentro da mesma transação, e o tipo entra em `app/infraestrutura/catalogo.py`. Um serviço nunca chama outro direto.
+- Para decidir permissão (por exemplo, `isSystemAdmin`), usar `obter_usuario_atual`, que lê o banco próprio da autenticação. A cópia em `usuario_publico` pode estar atrasada.
 
 ```python
 from fastapi import Depends
@@ -195,4 +239,4 @@ from app.autenticacao.api import obter_usuario_atual
 app.include_router(meu_router, prefix="/api/v1", dependencies=[Depends(obter_usuario_atual)])
 ```
 
-(O router do `historico` já declara `prefix="/api/v1"`; nesse caso, inclua sem `prefix`.)
+(Os routers de `historico`, `busca_listas` e `videos` já declaram `prefix="/api/v1"`; nesse caso, inclua sem `prefix`.)
