@@ -54,6 +54,14 @@ export const communities = [
 
 const communitiesById = new Map(communities.map((community) => [community.id, community]))
 
+// Troca o catálogo pelo que veio da API (app/catalogo.js). O array e o mapa são
+// alterados no lugar porque vários módulos os importam diretamente.
+export function substituirComunidades(novas) {
+  communities.splice(0, communities.length, ...novas)
+  communitiesById.clear()
+  for (const community of communities) communitiesById.set(community.id, community)
+}
+
 export function findCommunity(communityId) {
   return communitiesById.get(communityId) ?? null
 }

@@ -29,6 +29,7 @@ import {
 import { findCommunity, partitionCommunities } from '../2-comunidades/modelo/communities'
 import { participarNaComunidade } from '../2-comunidades/servico'
 import { hydrate } from '../3-videos/modelo/findsIndex'
+import { carregarCatalogo } from './catalogo'
 import { recentlyWatched } from '../5-historico/modelo/usage'
 import { buildUrl, homeState, parseUrl } from './navigation'
 import './App.css'
@@ -140,11 +141,39 @@ function App() {
     recordViewRef.current(findId, seconds)
   }, [])
 
+  // Catálogo de vídeos e comunidades da API, carregado uma vez depois do login
+  // (app/catalogo.js). `versao` muda quando o catálogo é trocado, para refazer
+  // os cálculos que dependem dele. Nos testes fica o catálogo de exemplo.
+  const [catalogo, setCatalogo] = useState(() => ({
+    status: import.meta.env.MODE === 'test' ? 'pronto' : 'pendente',
+    versao: 0,
+  }))
+  useEffect(() => {
+    if (!user || catalogo.status !== 'pendente') return undefined
+    let ativo = true
+    carregarCatalogo()
+      .catch(() => null)
+      .finally(() => {
+        if (ativo) setCatalogo((atual) => ({ status: 'pronto', versao: atual.versao + 1 }))
+      })
+    return () => {
+      ativo = false
+    }
+  }, [user, catalogo.status])
+
   // Aderidas (mais recentes primeiro) e sugeridas (ordem do catálogo).
-  const { joined, suggested } = useMemo(() => partitionCommunities(memberships), [memberships])
+  const { joined, suggested } = useMemo(
+    () => partitionCommunities(memberships),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [memberships, catalogo.versao],
+  )
 
   // Requisito 7.1: os quatro eventos mais recentes, já com o find anexado.
-  const recent = useMemo(() => hydrate(recentlyWatched(events, 4)), [events])
+  const recent = useMemo(
+    () => hydrate(recentlyWatched(events, 4)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [events, catalogo.versao],
+  )
 
   useEffect(() => {
     const loadingTimer = setTimeout(() => setIsLoading(false), 1500)
@@ -313,7 +342,7 @@ function App() {
   // Splash enquanto o tempo mínimo corre ou a sessão salva é confirmada: nem a
   // Tela_Inicio nem a Tela_Login aparecem antes da resposta (10.6). O limite de
   // 10 s fica com a Comunicacao_Frontend.
-  if (isLoading || authStatus === 'verificando') {
+  if (isLoading || authStatus === 'verificando' || (user && catalogo.status !== 'pronto' && redefinicao === null)) {
     return (
       <main className="loading-page" aria-label="Carregando Choosen">
         <div className="loading-content"><div className="loading-mark" aria-hidden="true"><span className="loading-dot" /><span className="loading-dot loading-dot--active" /></div><h1>Choosen</h1><p>Escolha o que você assiste.</p></div>
